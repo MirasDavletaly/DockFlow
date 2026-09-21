@@ -23,6 +23,19 @@ export interface BankDetails {
   accounts: BankAccount[];
 }
 
+/**
+ * Свидетельство о постановке на учёт по НДС.
+ *
+ * Печатается в счетах на оплату и счетах-фактурах: покупателю нужно видеть,
+ * что продавец — плательщик НДС, и по какому свидетельству.
+ */
+export interface VatCertificate {
+  series: string;
+  number: string;
+  /** Дата выдачи: в реквизитах её часто не присылают. */
+  issuedAt?: string;
+}
+
 /** Налоговый орган по месту регистрации: нужен в налоговых формах и ЭСФ. */
 export interface TaxOffice {
   /** Наименование управления, как оно пишется в документах. */
@@ -45,6 +58,11 @@ export interface Company {
   address: string;
   /** Юридический адрес на английском. */
   addressEn?: string;
+  /**
+   * Фактический адрес, если отличается от юридического. В документ идёт
+   * юридический, а этот — для корреспонденции и шапки бланка.
+   */
+  actualAddress?: string;
   /** Почтовый индекс: в шапке бланка он стоит перед адресом. */
   postalCode?: string;
   /** КБе — код бенефициара, нужен в платёжных документах. */
@@ -54,6 +72,7 @@ export interface Company {
   website?: string;
   bank?: BankDetails;
   taxOffice?: TaxOffice;
+  vat?: VatCertificate;
   /** Руководитель: он подписывает документы. */
   directorName: string;
   directorTitle: string;

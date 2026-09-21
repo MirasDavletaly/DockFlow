@@ -92,6 +92,7 @@ export default function DashboardPage() {
               <Requisite label={t.company.kbe} value={company.kbe} mono />
               <Requisite label={t.company.address} value={addressLine(company)} />
               <Requisite label={t.company.addressEn} value={company.addressEn} />
+              <Requisite label={t.company.actualAddress} value={company.actualAddress} />
               <Requisite label={t.company.phone} value={company.phone} />
               <Requisite label={t.company.email} value={company.email} />
               <Requisite
@@ -104,6 +105,7 @@ export default function DashboardPage() {
               <Requisite label={t.company.bik} value={company.bank?.bik} mono />
               <Requisite label={t.company.taxOffice} value={company.taxOffice?.name} />
               <Requisite label={t.company.taxOfficeBin} value={company.taxOffice?.bin} mono />
+              <Requisite label={t.company.vat} value={vatLine(company)} />
             </dl>
 
             {company.bank === undefined ? null : (
@@ -155,6 +157,15 @@ function countBy(documents: { status: string }[], status: string): number {
 /** Индекс и адрес одной строкой. Без индекса запятая не появляется. */
 function addressLine(company: Company): string {
   return [company.postalCode, company.address].filter(isFilled).join(', ');
+}
+
+/** Свидетельство НДС: «серия 27001 № 1010058». */
+function vatLine(company: Company): string | undefined {
+  const vat = company.vat;
+  if (vat === undefined) return undefined;
+
+  const issued = isFilled(vat.issuedAt) ? ` от ${vat.issuedAt}` : '';
+  return `серия ${vat.series} № ${vat.number}${issued}`;
 }
 
 function isFilled(value: string | undefined): value is string {

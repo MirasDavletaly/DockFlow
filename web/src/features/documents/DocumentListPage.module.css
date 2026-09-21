@@ -1,0 +1,104 @@
+.page {
+  min-height: 100vh;
+}
+
+.body {
+  padding: var(--space-8) var(--space-9) var(--space-11);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.table thead th {
+  padding: var(--space-4) var(--space-5);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--accent-soft);
+}
+
+.colNumber {
+  width: 110px;
+  white-space: nowrap;
+}
+
+.colStatus {
+  width: 160px;
+}
+
+.colDate {
+  width: 110px;
+  white-space: nowrap;
+  color: var(--ink-500);
+}
+
+.link {
+  color: var(--ink-900);
+}
+
+.link:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.muted {
+  color: var(--ink-200);
+}
+
+.empty {
+  display: grid;
+  gap: var(--space-6);
+  justify-items: start;
+  max-width: 44ch;
+  padding: var(--space-9) 0;
+}
+
+.emptyBody {
+  color: var(--ink-500);
+}
+
+.emptyAction {
+  padding: var(--space-4) var(--space-7);
+  background: var(--accent);
+  color: var(--accent-on);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.emptyAction:hover {
+  background: var(--accent-hover);
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .body {
+    padding: var(--space-7) var(--space-6) var(--space-10);
+  }
+
+  .colStatus,
+  .colDate {
+    display: none;
+  }
+}

@@ -1,0 +1,251 @@
+/*
+  Лист А4.
+
+  Размеры заданы в миллиметрах: строка документа на экране должна содержать
+  примерно столько же знаков, сколько на бумаге, иначе предпросмотр обманывает
+  и документ при печати «разъезжается».
+*/
+
+.sheet {
+  position: relative;
+  width: var(--sheet-width);
+  min-height: 297mm;
+  padding: var(--sheet-padding-y) var(--sheet-padding-x);
+  background: var(--paper);
+  box-shadow: var(--shadow-sheet);
+
+  font-family: var(--font-doc);
+  font-size: 11.5pt;
+  line-height: 1.5;
+  color: #000;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Водяной знак ─────────────────────────────────────────────────────── */
+
+.watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+
+  font-family: var(--font-ui);
+  font-size: 84pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(138, 109, 29, 0.09);
+
+  transform: rotate(-32deg);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Шапка компании ───────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #000;
+}
+
+.headerMark {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--accent);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.headerName {
+  font-weight: 700;
+  font-size: 11pt;
+  line-height: 1.25;
+}
+
+.headerLine {
+  margin-top: 2px;
+  font-size: 8.5pt;
+  color: #333;
+}
+
+/* ── Номер и дата ─────────────────────────────────────────────────────── */
+
+.numberRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 10.5pt;
+}
+
+.numberCell {
+  white-space: nowrap;
+}
+
+.numberValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.numberBlank {
+  color: #888;
+  letter-spacing: 0.06em;
+}
+
+/* ── Заголовки ────────────────────────────────────────────────────────── */
+
+.title {
+  margin: 20px 0 0;
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  font-size: 11.5pt;
+  text-align: center;
+}
+
+.orderWord {
+  margin: 18px 0 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+/* ── Текст ────────────────────────────────────────────────────────────── */
+
+.preamble,
+.paragraph {
+  margin-top: 12px;
+  text-align: justify;
+  text-indent: 12mm;
+  hyphens: auto;
+}
+
+.preamble {
+  text-indent: 0;
+}
+
+.numbered {
+  margin: 0;
+  padding-left: 18px;
+  text-align: justify;
+}
+
+.numbered li {
+  margin-top: 8px;
+  padding-left: 4px;
+}
+
+.basis {
+  margin-top: 16px;
+}
+
+.basisLabel {
+  font-weight: 700;
+}
+
+/* ── Подстановка значений ─────────────────────────────────────────────── */
+
+/*
+  Незаполненное место — это пропуск на бланке, а не «ошибка». Показываем
+  подчёркиванием, как в бумажном бланке: человек сразу видит, сколько дыр
+  осталось в документе.
+*/
+.blank {
+  border-bottom: 1px solid #9aa3b1;
+  white-space: pre;
+}
+
+.blankActive,
+.valueActive {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-radius: 1px;
+}
+
+.blankActive {
+  border-bottom-color: var(--accent);
+}
+
+.value {
+  /* Подставленное значение ничем не выделяется: в документе оно такой же
+     текст, как и остальное. Выделение включается только для поля, на
+     котором стоит курсор в форме. */
+  background: none;
+}
+
+/* ── Подпись ──────────────────────────────────────────────────────────── */
+
+.signature {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.signatureRole {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.signatureLine {
+  flex: 1;
+  min-width: 40mm;
+  border-bottom: 1px solid #000;
+  transform: translateY(-2px);
+}
+
+.signatureName {
+  white-space: nowrap;
+}
+
+/* ── Ознакомление ─────────────────────────────────────────────────────── */
+
+.acquaint {
+  margin-top: 22px;
+  font-size: 10.5pt;
+}
+
+.acquaintTitle {
+  margin-bottom: 10px;
+}
+
+.acquaintRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 90mm;
+}
+
+.acquaintLine {
+  flex: 1;
+  border-bottom: 1px solid #000;
+  transform: translateY(-2px);
+}
+
+.acquaintHint {
+  font-size: 8.5pt;
+  color: #555;
+  white-space: nowrap;
+}

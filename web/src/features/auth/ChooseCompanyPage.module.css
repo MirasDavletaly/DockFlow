@@ -1,0 +1,80 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-9);
+  background: var(--surface);
+}
+
+.inner {
+  width: 100%;
+  max-width: 560px;
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.body {
+  margin-top: var(--space-3);
+  color: var(--ink-500);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  padding: var(--space-5) var(--space-6);
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--card-accent);
+  border-radius: var(--radius-sm);
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.card:hover {
+  border-color: var(--line-strong);
+  border-left-color: var(--card-accent);
+  transform: translateX(2px);
+}
+
+.mark {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: var(--card-accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+.meta {
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+}

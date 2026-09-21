@@ -1,0 +1,85 @@
+.field {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-600);
+}
+
+.required {
+  color: var(--state-rejected);
+}
+
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-5);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.input:hover {
+  border-color: var(--ink-300);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.inputInvalid {
+  border-color: var(--state-rejected);
+}
+
+.inputInvalid:focus {
+  box-shadow: 0 0 0 3px var(--state-rejected-soft);
+}
+
+.textarea {
+  height: auto;
+  padding: var(--space-4) var(--space-5);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+.select {
+  appearance: none;
+  padding-right: var(--space-8);
+  /* Стрелка нарисована фоном: системная у select не поддаётся оформлению
+     и в тёмной теме операционной системы выглядит чужеродно. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-400) 50%),
+    linear-gradient(135deg, var(--ink-400) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 15px, calc(100% - 11px) 15px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.unit {
+  position: absolute;
+  right: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+  pointer-events: none;
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--state-rejected);
+}

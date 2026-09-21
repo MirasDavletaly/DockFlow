@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -52,7 +53,9 @@ func TestRecoverKeepsAlreadySentResponse(t *testing.T) {
 	}))
 
 	defer func() {
-		if cause := recover(); cause != http.ErrAbortHandler {
+		cause := recover()
+		err, ok := cause.(error)
+		if !ok || !errors.Is(err, http.ErrAbortHandler) {
 			t.Fatalf("ожидался ErrAbortHandler, получено %v", cause)
 		}
 	}()

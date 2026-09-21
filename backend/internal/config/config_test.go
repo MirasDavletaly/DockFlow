@@ -72,16 +72,16 @@ func TestLoadRejectsBadValues(t *testing.T) {
 		key, value string
 		wantInErr  string
 	}{
-		"неизвестный режим":        {"APP_ENV", "staging", "APP_ENV"},
+		"неизвестный режим":         {"APP_ENV", "staging", "APP_ENV"},
 		"пустая строка как пропуск": {"DATABASE_URL", "   ", "DATABASE_URL"},
-		"чужая схема БД":           {"DATABASE_URL", "mysql://localhost/docflow", "DATABASE_URL"},
-		"не длительность":          {"HTTP_READ_TIMEOUT", "15 секунд", "HTTP_READ_TIMEOUT"},
-		"нулевой таймаут":          {"HTTP_READ_TIMEOUT", "0s", "HTTP_READ_TIMEOUT"},
-		"отрицательный таймаут":    {"SHUTDOWN_TIMEOUT", "-5s", "SHUTDOWN_TIMEOUT"},
-		"не число":                 {"DATABASE_MAX_CONNS", "много", "DATABASE_MAX_CONNS"},
-		"пул вне диапазона":        {"DATABASE_MAX_CONNS", "0", "DATABASE_MAX_CONNS"},
-		"не булево":                {"LOG_JSON", "ага", "LOG_JSON"},
-		"неизвестный уровень":      {"LOG_LEVEL", "verbose", "LOG_LEVEL"},
+		"чужая схема БД":            {"DATABASE_URL", "mysql://localhost/docflow", "DATABASE_URL"},
+		"не длительность":           {"HTTP_READ_TIMEOUT", "15 секунд", "HTTP_READ_TIMEOUT"},
+		"нулевой таймаут":           {"HTTP_READ_TIMEOUT", "0s", "HTTP_READ_TIMEOUT"},
+		"отрицательный таймаут":     {"SHUTDOWN_TIMEOUT", "-5s", "SHUTDOWN_TIMEOUT"},
+		"не число":                  {"DATABASE_MAX_CONNS", "много", "DATABASE_MAX_CONNS"},
+		"пул вне диапазона":         {"DATABASE_MAX_CONNS", "0", "DATABASE_MAX_CONNS"},
+		"не булево":                 {"LOG_JSON", "ага", "LOG_JSON"},
+		"неизвестный уровень":       {"LOG_LEVEL", "verbose", "LOG_LEVEL"},
 	}
 
 	for name, tc := range cases {

@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+var (
+	// ErrNothingToRun — процесс собран неправильно: запускать нечего.
+	ErrNothingToRun = errors.New("нечего запускать: не добавлено ни одной части процесса")
+	// ErrShutdownTimeout — части процесса не завершились за отведённое время.
+	// По нему отличают «остановились сами» от «пришлось бросить как есть».
+	ErrShutdownTimeout = errors.New("остановка не уложилась в отведённое время")
+)
+
 // Component — часть процесса, которую надо запустить и корректно остановить:
 // HTTP-сервер, потребитель очереди, планировщик.
 type Component struct {
@@ -46,7 +54,7 @@ func (r *Runner) Add(c Component) {
 // либо отказа любой из них. Возвращается после того, как всё остановлено.
 func (r *Runner) Run(ctx context.Context, shutdownTimeout time.Duration) error {
 	if len(r.components) == 0 {
-		return errors.New("нечего запускать: не добавлено ни одной части процесса")
+		return ErrNothingToRun
 	}
 
 	var (
@@ -105,7 +113,10 @@ func (r *Runner) Run(ctx context.Context, shutdownTimeout time.Duration) error {
 		if c.Stop == nil {
 			continue
 		}
-		if err := c.Stop(stopCtx); err != nil {
+		// Контекст остановки намеренно отвязан от ctx: к этому моменту ctx уже
+		// отменён сигналом, и унаследованный от него контекст не дал бы частям
+		// процесса ни секунды на завершение начатых обращений.
+		if err := c.Stop(stopCtx); err != nil { //nolint:contextcheck // см. комментарий выше
 			r.logger.Error("не удалось остановить часть процесса",
 				slog.String("component", c.Name),
 				slog.Any("error", err),
@@ -137,7 +148,7 @@ func (r *Runner) Run(ctx context.Context, shutdownTimeout time.Duration) error {
 		)
 		mu.Lock()
 		if failure == nil {
-			failure = errors.New("остановка не уложилась в отведённое время")
+			failure = ErrShutdownTimeout
 		}
 		mu.Unlock()
 	}

@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/url"
 	"os"
 	"strconv"
@@ -141,11 +142,11 @@ func load(lookup LookupFunc) (Config, error) {
 			IdleTimeout:       l.duration("HTTP_IDLE_TIMEOUT", 60*time.Second),
 
 			RequestTimeout: l.duration("HTTP_REQUEST_TIMEOUT", 20*time.Second),
-			MaxBodyBytes:   int64(l.bytes("HTTP_MAX_BODY_BYTES", 1<<20)),
+			MaxBodyBytes:   l.bytes("HTTP_MAX_BODY_BYTES", 1<<20),
 		},
 		Database: Database{
 			URL:              l.requiredURL("DATABASE_URL", "postgres", "postgresql"),
-			MaxConns:         int32(l.intInRange("DATABASE_MAX_CONNS", 10, 1, 1000)),
+			MaxConns:         l.int32InRange("DATABASE_MAX_CONNS", 10, 1, 1000),
 			StatementTimeout: l.duration("DATABASE_STATEMENT_TIMEOUT", 5*time.Second),
 		},
 		Redis: Redis{
@@ -209,8 +210,12 @@ type loader struct {
 	errs   []error
 }
 
+// ErrInvalid — признак того, что процесс не запустился именно из-за настроек,
+// а не из-за недоступной зависимости. По нему это отличают вызывающий код и тесты.
+var ErrInvalid = errors.New("неверная настройка окружения")
+
 func (l *loader) fail(key, reason string) {
-	l.errs = append(l.errs, fmt.Errorf("%s: %s", key, reason))
+	l.errs = append(l.errs, fmt.Errorf("%w: %s: %s", ErrInvalid, key, reason))
 }
 
 func (l *loader) err() error {
@@ -297,12 +302,17 @@ func (l *loader) duration(key string, def time.Duration) time.Duration {
 	return parsed
 }
 
-func (l *loader) intInRange(key string, def, minValue, maxValue int) int {
+// intInRange разбирает целое в заданных границах.
+//
+// Разрядность задаётся явно (bitSize), а не приведением после разбора: приведение
+// int -> int32 на 64-битной платформе способно молча изменить значение, и такой
+// дефект в настройке пула соединений искали бы долго.
+func (l *loader) intInRange(key string, def, minValue, maxValue int64, bitSize int) int64 {
 	v, ok := l.raw(key)
 	if !ok {
 		return def
 	}
-	parsed, err := strconv.Atoi(v)
+	parsed, err := strconv.ParseInt(v, 10, bitSize)
 	if err != nil {
 		l.fail(key, "ожидается целое число")
 		return def
@@ -314,8 +324,21 @@ func (l *loader) intInRange(key string, def, minValue, maxValue int) int {
 	return parsed
 }
 
-func (l *loader) bytes(key string, def int) int {
-	return l.intInRange(key, def, 1024, 64<<20)
+func (l *loader) int32InRange(key string, def, minValue, maxValue int32) int32 {
+	v := l.intInRange(key, int64(def), int64(minValue), int64(maxValue), 32)
+
+	// Разбор уже ограничен 32 битами и заданными границами, но проверка стоит
+	// явно: приведение без неё нельзя проверить глазами, а молча испорченное
+	// значение в настройке пула соединений искали бы долго.
+	if v < math.MinInt32 || v > math.MaxInt32 {
+		l.fail(key, "значение не помещается в 32 бита")
+		return def
+	}
+	return int32(v)
+}
+
+func (l *loader) bytes(key string, def int64) int64 {
+	return l.intInRange(key, def, 1024, 64<<20, 64)
 }
 
 func (l *loader) level(key string, def slog.Level) slog.Level {

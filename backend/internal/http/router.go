@@ -81,7 +81,7 @@ func liveHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 type readyPayload struct {
-	Status string                `json:"status"`
+	Status string                 `json:"status"`
 	Checks []observability.Result `json:"checks,omitempty"`
 }
 

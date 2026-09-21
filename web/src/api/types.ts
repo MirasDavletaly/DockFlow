@@ -156,6 +156,12 @@ export interface DocumentRecord {
   templateId: string;
   companyId: string;
   title: string;
+  /**
+   * Пояснение для реестра: чем этот документ отличается от соседних.
+   * Заполняется по желанию и в сам документ не попадает — в приказе нет
+   * места для заметки делопроизводителя.
+   */
+  description: string;
   status: DocumentStatus;
   /** Номер появляется только при утверждении, до этого его нет. */
   number: string | null;

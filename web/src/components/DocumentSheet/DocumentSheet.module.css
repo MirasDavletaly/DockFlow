@@ -109,6 +109,12 @@
   letter-spacing: 0.06em;
 }
 
+.numberHighlight {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-radius: 1px;
+}
+
 /* ── Заголовки ────────────────────────────────────────────────────────── */
 
 .title {
@@ -173,8 +179,11 @@
   осталось в документе.
 */
 .blank {
+  display: inline-block;
+  min-width: 34mm;
+  height: 1em;
+  vertical-align: -0.15em;
   border-bottom: 1px solid #9aa3b1;
-  white-space: pre;
 }
 
 .blankActive,

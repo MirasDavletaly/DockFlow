@@ -35,6 +35,9 @@ interface SessionValue {
   createDocument: (input: {
     templateId: string;
     title: string;
+    /** Номер вводится вручную и может остаться пустым. */
+    number: string;
+    description: string;
     values: Record<string, string>;
   }) => DocumentRecord;
   findDocument: (id: string) => DocumentRecord | undefined;
@@ -55,12 +58,30 @@ function readPersisted(): Persisted {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (raw === null) return empty;
-    return { ...empty, ...(JSON.parse(raw) as Partial<Persisted>) };
+
+    const parsed = { ...empty, ...(JSON.parse(raw) as Partial<Persisted>) };
+    return { ...parsed, documents: parsed.documents.map(normalizeDocument) };
   } catch {
     // Хранилище может быть недоступно: приватное окно, запрет на сайт,
     // переполнение. Это не повод не открыть страницу.
     return empty;
   }
+}
+
+/**
+ * Приводит запись из хранилища к текущему виду.
+ *
+ * Во вкладке могут лежать документы, сохранённые прежней версией сайта, —
+ * у них нет полей, появившихся позже. Без этого на экране оказалось бы
+ * «undefined» вместо описания.
+ */
+function normalizeDocument(raw: DocumentRecord): DocumentRecord {
+  return {
+    ...raw,
+    description: typeof raw.description === 'string' ? raw.description : '',
+    number: typeof raw.number === 'string' && raw.number !== '' ? raw.number : null,
+    authorName: typeof raw.authorName === 'string' ? raw.authorName : '',
+  };
 }
 
 function writePersisted(state: Persisted): void {
@@ -118,16 +139,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const createDocument = useCallback<SessionValue['createDocument']>(
-    ({ templateId, title, values }) => {
+    ({ templateId, title, number, description, values }) => {
       const record: DocumentRecord = {
         id: `d-${Date.now().toString(36)}`,
         templateId,
         companyId: companyId ?? '',
         title,
-        // Новый документ всегда черновик: номер присваивается только при
-        // утверждении, и до этого его нет (CLAUDE.md, п. 3.4).
+        description: description.trim(),
         status: 'draft' satisfies DocumentStatus,
-        number: null,
+        // Номер вводит человек. Это отступление от CLAUDE.md, п. 3.4, где
+        // номер присваивает сервер при утверждении из счётчика под
+        // блокировкой: ручной ввод не защищает ни от дублей, ни от дыр.
+        // Сделано по прямому указанию (см. docs/questions.md, Q17).
+        // Пустая строка остаётся null — «без номера», а не номер «».
+        number: number.trim() === '' ? null : number.trim(),
         createdAt: new Date().toISOString(),
         values,
         authorName: user?.displayName ?? '',

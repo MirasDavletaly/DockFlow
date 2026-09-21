@@ -35,6 +35,10 @@ export default function DocumentFormPage() {
   const template = templateId === undefined ? undefined : findTemplate(templateId);
 
   const [values, setValues] = useState<Record<string, string>>({});
+  // Номер и описание не входят в шаблон: номер — реквизит регистрации,
+  // описание вообще не печатается. Держим их отдельно от снимка полей.
+  const [number, setNumber] = useState('');
+  const [description, setDescription] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [activeField, setActiveField] = useState<string | null>(null);
 
@@ -91,6 +95,8 @@ export default function DocumentFormPage() {
     const record = createDocument({
       templateId: doc.id,
       title: doc.title,
+      number,
+      description,
       values,
     });
     navigate(`/documents/${record.id}?saved=1`);
@@ -141,6 +147,28 @@ export default function DocumentFormPage() {
                 </div>
               </fieldset>
             ))}
+
+            <fieldset className={styles.group}>
+              <legend className={styles.groupTitle}>{t.form.registrationGroup}</legend>
+              <div className={styles.groupFields}>
+                <Field
+                  def={NUMBER_FIELD}
+                  value={number}
+                  invalid={false}
+                  onChange={setNumber}
+                  onFocus={() => setActiveField(NUMBER_FIELD.id)}
+                  onBlur={() => setActiveField(null)}
+                />
+                <Field
+                  def={DESCRIPTION_FIELD}
+                  value={description}
+                  invalid={false}
+                  onChange={setDescription}
+                  onFocus={() => setActiveField(DESCRIPTION_FIELD.id)}
+                  onBlur={() => setActiveField(null)}
+                />
+              </div>
+            </fieldset>
           </div>
 
           <footer className={styles.formFooter}>
@@ -177,6 +205,7 @@ export default function DocumentFormPage() {
               values={values}
               company={company}
               date={today}
+              number={number.trim() === '' ? null : number.trim()}
               draft
               activeFieldId={activeField}
             />
@@ -186,6 +215,29 @@ export default function DocumentFormPage() {
     </div>
   );
 }
+
+/**
+ * Номер и описание описаны теми же FieldDef, что и поля шаблона: так они
+ * выглядят и ведут себя как остальная форма, но в снимок значений документа
+ * не попадают.
+ */
+const NUMBER_FIELD: FieldDef = {
+  id: '@number',
+  kind: 'text',
+  label: t.form.numberLabel,
+  hint: t.form.numberHint,
+  required: false,
+  group: t.form.registrationGroup,
+};
+
+const DESCRIPTION_FIELD: FieldDef = {
+  id: '@description',
+  kind: 'textarea',
+  label: t.form.descriptionLabel,
+  hint: t.form.descriptionHint,
+  required: false,
+  group: t.form.registrationGroup,
+};
 
 interface Group {
   title: string;

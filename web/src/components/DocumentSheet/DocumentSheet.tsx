@@ -23,7 +23,10 @@ interface Props {
   company: Company;
   /** Дата документа. */
   date: string;
-  /** Номер появляется только при утверждении. */
+  /**
+   * Номер документа. Вводится вручную при заполнении и может отсутствовать:
+   * тогда в листе стоит прочерк, как на неподписанном бланке.
+   */
   number?: string | null;
   /** Ставить ли водяной знак «Черновик». */
   draft?: boolean;
@@ -54,14 +57,15 @@ export function DocumentSheet({
       const isActive = activeFieldId !== null && run.field === activeFieldId;
 
       if (resolved === '') {
+        // Пропуск рисуется шириной в CSS, а не повторёнными пробелами:
+        // невидимые символы в исходнике не видно при правке, и ширина
+        // пропуска скакала бы вслед за шрифтом.
         return (
           <span
             key={key}
             className={isActive ? `${styles.blank} ${styles.blankActive}` : styles.blank}
             aria-label={t.form.emptyPlaceholder}
-          >
-            {' '.repeat(12)}
-          </span>
+          />
         );
       }
 
@@ -92,20 +96,27 @@ export function DocumentSheet({
           </header>
         );
 
-      case 'doc-number':
+      case 'doc-number': {
+        // Номер вводится вручную в группе «Регистрация», поэтому он тоже
+        // подсвечивается, когда курсор стоит в своём поле.
+        const numberActive = activeFieldId === '@number';
+        const numberClass = [
+          number === null ? styles.numberBlank : styles.numberValue,
+          numberActive ? styles.numberHighlight : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
         return (
           <div key={key} className={styles.numberRow}>
             <span className={styles.numberCell}>
               №&nbsp;
-              <span className={number ? styles.numberValue : styles.numberBlank}>
-                {number ?? t.sheet.numberPlaceholder}
-              </span>
+              <span className={numberClass}>{number ?? t.sheet.numberPlaceholder}</span>
             </span>
-            <span className={styles.numberCell}>
-              от {formatDocumentDate(date)}
-            </span>
+            <span className={styles.numberCell}>от {formatDocumentDate(date)}</span>
           </div>
         );
+      }
 
       case 'title':
         return (

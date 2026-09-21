@@ -6,23 +6,86 @@
   padding: var(--space-8) var(--space-9) var(--space-11);
 }
 
+.count {
+  margin-bottom: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+/* На узком экране реестр прокручивается вбок целиком, а не ломает столбцы:
+   в журнале регистрации важно видеть строку целиком. */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
 .table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
-  background: var(--paper);
-  border: 1px solid var(--line);
 }
 
 .table thead th {
-  padding: var(--space-4) var(--space-5);
+  padding: 0;
   text-align: left;
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface-raised);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Заголовок без сортировки — обычный текст, чтобы не обещать нажатие. */
+.table thead th.colTitle,
+.table thead th.colDescription {
+  padding: var(--space-4) var(--space-5);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--ink-400);
-  border-bottom: 1px solid var(--line-strong);
-  white-space: nowrap;
+}
+
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: none;
+  border: none;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+  text-decoration: underline;
+  text-decoration-color: var(--ink-200);
+  text-underline-offset: 3px;
+  transition: color 120ms ease;
+}
+
+.sortButton:hover {
+  color: var(--ink-900);
+  text-decoration-color: var(--ink-400);
+}
+
+.sortButtonActive {
+  color: var(--accent);
+  text-decoration-color: var(--accent-line);
+}
+
+.sortMark {
+  font-size: 8px;
+  line-height: 1;
+  color: var(--ink-200);
+}
+
+.sortButtonActive .sortMark {
+  color: var(--accent);
 }
 
 .table tbody td {
@@ -39,19 +102,59 @@
   background: var(--accent-soft);
 }
 
+/* ── Столбцы ──────────────────────────────────────────────────────────── */
+
 .colNumber {
-  width: 110px;
+  width: 130px;
   white-space: nowrap;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* «б/н» — принятое в делопроизводстве обозначение документа без номера.
+   Оно честнее прочерка: документ существует, номер ему ещё не присвоен. */
+.noNumber {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-300);
+}
+
+.colTitle {
+  min-width: 220px;
+}
+
+.colDescription {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.description {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-500);
+  font-size: var(--text-sm);
 }
 
 .colStatus {
   width: 160px;
 }
 
+.colAuthor {
+  width: 170px;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
 .colDate {
-  width: 110px;
+  width: 120px;
   white-space: nowrap;
   color: var(--ink-500);
+  font-size: var(--text-sm);
 }
 
 .link {
@@ -66,6 +169,8 @@
 .muted {
   color: var(--ink-200);
 }
+
+/* ── Пусто ────────────────────────────────────────────────────────────── */
 
 .empty {
   display: grid;
@@ -95,10 +200,5 @@
 @media (max-width: 720px) {
   .body {
     padding: var(--space-7) var(--space-6) var(--space-10);
-  }
-
-  .colStatus,
-  .colDate {
-    display: none;
   }
 }

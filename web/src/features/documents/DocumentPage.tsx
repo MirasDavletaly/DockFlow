@@ -89,6 +89,13 @@ export default function DocumentPage() {
             </div>
           </dl>
 
+          {record.description === '' ? null : (
+            <div className={styles.description}>
+              <div className={styles.descriptionTitle}>{t.document.meta.description}</div>
+              <p className={styles.descriptionBody}>{record.description}</p>
+            </div>
+          )}
+
           <p className={styles.hint}>{t.document.printHint}</p>
           <p className={styles.note}>{t.document.serverPdfNote}</p>
         </aside>

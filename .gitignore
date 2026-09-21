@@ -1,0 +1,31 @@
+# Секреты
+.env
+.env.*
+!.env.example
+
+# Go
+/backend/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Node
+node_modules/
+/web/dist/
+/web/.vite/
+*.tsbuildinfo
+
+# Инструменты
+/bin/
+/tmp/
+
+# Локальные данные контейнеров
+/infra/.data/
+
+# Редакторы и ОС
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

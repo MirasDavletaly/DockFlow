@@ -164,7 +164,7 @@ function vatLine(company: Company): string | undefined {
   const vat = company.vat;
   if (vat === undefined) return undefined;
 
-  const issued = isFilled(vat.issuedAt) ? ` от ${vat.issuedAt}` : '';
+  const issued = isFilled(vat.issuedAt) ? ` от ${formatShortDate(vat.issuedAt)}` : '';
   return `серия ${vat.series} № ${vat.number}${issued}`;
 }
 

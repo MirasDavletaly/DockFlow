@@ -1,9 +1,13 @@
 /**
  * Компании группы.
  *
- * Все четыре заведены по настоящим реквизитам (ответ на Q16,
+ * Все шесть заведены по настоящим реквизитам (ответ на Q16,
  * `docs/questions.md`). У каждой БИН проверен по контрольной цифре, все
  * счета — по mod-97, БИК соответствует банку.
+ *
+ * Компаний шесть, а `CLAUDE.md` и `docs/architecture.md` говорят о группе из
+ * четырёх. Для кода это ничего не меняет — изоляция устроена по `company_id`,
+ * а не по их числу, — но расхождение отмечено в Q22.
  *
  * Вымышленных компаний здесь больше нет. Если появится новая и её реквизиты
  * ещё не пришли, ей ставится `placeholder: true` — тогда интерфейс скажет,
@@ -157,6 +161,90 @@ export const companies: Company[] = [
     vat: {
       series: '27001',
       number: '1010058',
+    },
+  },
+  {
+    id: 'c-greenspark-power',
+    name: 'ТОО «GREEN SPARK POWER 01»',
+    legalName:
+      'Товарищество с ограниченной ответственностью «GREEN SPARK POWER 01» (ГРИН СПАРК ПАУЕР 01)',
+    legalNameEn: '«GREEN SPARK POWER 01» LLP',
+    bin: '250340002027',
+    postalCode: '090500',
+    address:
+      'Республика Казахстан, Западно-Казахстанская область, Жанибекский район, Жанибекский сельский округ, село Жанибек, улица Мусина, дом 10, квартира 2',
+    addressEn:
+      'Republic of Kazakhstan, West Kazakhstan Region, Zhanibek District, Zhanibek village, Musin Street, house 10, apartment 2',
+    // Представительство в Астане, по тому же адресу, что и Kazakhstan New
+    // Technologies LLP.
+    actualAddress:
+      'Z05T3E5, город Астана, район Есиль, проспект Мәңгілік Ел, 55/16, блок C3.1, офисы 333/334',
+    phone: '+7 (7172) 73-49-72',
+    email: 'info@green-spark.net',
+    directorName: 'Танатаров Амир Маратович',
+    directorTitle: 'Генеральный директор',
+    directorTitleGenitive: 'Генерального директора',
+    // Падеж вписан по общему правилу, ждёт подтверждения — Q22.
+    directorNameGenitive: 'Танатарова Амира Маратовича',
+    // Основание полномочий не прислано. Q22.
+    directorBasis: 'Устава',
+    // Место составления документов: взят юридический адрес. Если документы
+    // составляются в астанинском представительстве — поменяется. Q22.
+    city: 'Жанибек',
+    // Фирменный цвет и логотип не присланы.
+    accent: '#1f6b4a',
+    monogram: 'GS',
+    bank: {
+      name: 'АО «Народный Банк Казахстана»',
+      bik: 'HSBKKZKX',
+      accounts: [
+        { iban: 'KZ15601A181017418051', currency: 'KZT' },
+        { iban: 'KZ17601A181018104581', currency: 'USD' },
+        { iban: 'KZ63601A181017850971', currency: 'EUR' },
+      ],
+    },
+  },
+  {
+    id: 'c-greensparklimited',
+    name: 'ТОО «GREENSPARKLIMITED»',
+    legalName:
+      'Товарищество с ограниченной ответственностью «GREENSPARKLIMITED» (ГРИНСПАРКЛИМИТЕД)',
+    legalNameEn: '«GREENSPARKLIMITED» LLP',
+    bin: '170340025267',
+    postalCode: '090300',
+    address:
+      'Республика Казахстан, Западно-Казахстанская область, Бурлинский район, город Аксай, Промышленная зона, здание 225Н',
+    // В английском написании буква «Н» в «225Н» прислана кириллической;
+    // здесь латинская N. Сверка — Q22.
+    addressEn:
+      'West Kazakhstan Region, Burlin district, Aksai city, Industrial Zone, building 225N',
+    phone: '+7 (71133) 41-228, вн. 144',
+    directorName: 'Самал Кабешова',
+    directorNameEn: 'Samal Kabeshova',
+    directorTitle: 'Генеральный директор',
+    directorTitleGenitive: 'Генерального директора',
+    // Имя прислано в порядке «имя фамилия», в отличие от остальных компаний.
+    // «Самал» в русском не склоняется, фамилия склоняется. Ждёт проверки — Q22.
+    directorNameGenitive: 'Самал Кабешовой',
+    // Основание полномочий не прислано. Q22.
+    directorBasis: 'Устава',
+    city: 'Аксай',
+    // Фирменный цвет и логотип не присланы.
+    accent: '#3d7a2f',
+    monogram: 'GL',
+    bank: {
+      name: 'АО «Банк ЦентрКредит»',
+      bik: 'KCJBKZKX',
+      accounts: [
+        { iban: 'KZ348562203102127074', currency: 'KZT' },
+        { iban: 'KZ878562203202127106', currency: 'USD' },
+        { iban: 'KZ078562203202127091', currency: 'EUR' },
+      ],
+    },
+    vat: {
+      series: '27001',
+      number: '1004155',
+      issuedAt: '2017-04-10',
     },
   },
 ];

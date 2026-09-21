@@ -18,7 +18,7 @@ import { formatShortDate, partOfDay } from '@/utils/format';
 
 import styles from './DashboardPage.module.css';
 
-import type { Company } from '@/api/types';
+import type { Company, HeadOffice } from '@/api/types';
 
 export default function DashboardPage() {
   const { user, documents, company } = useSession();
@@ -106,6 +106,18 @@ export default function DashboardPage() {
               <Requisite label={t.company.taxOffice} value={company.taxOffice?.name} />
               <Requisite label={t.company.taxOfficeBin} value={company.taxOffice?.bin} mono />
               <Requisite label={t.company.vat} value={vatLine(company)} />
+
+              {/* Головной офис есть не у всех: строки появляются только там,
+                  где он действительно есть. */}
+              {company.headOffice === undefined ? null : (
+                <>
+                  <Requisite label={t.company.headOffice} value={company.headOffice.address} />
+                  <Requisite
+                    label={t.company.headOfficeContacts}
+                    value={headOfficeContacts(company.headOffice)}
+                  />
+                </>
+              )}
             </dl>
 
             {company.bank === undefined ? null : (
@@ -157,6 +169,12 @@ function countBy(documents: { status: string }[], status: string): number {
 /** Индекс и адрес одной строкой. Без индекса запятая не появляется. */
 function addressLine(company: Company): string {
   return [company.postalCode, company.address].filter(isFilled).join(', ');
+}
+
+/** Телефон, почта и PEC головного офиса одной строкой. */
+function headOfficeContacts(office: HeadOffice): string | undefined {
+  const parts = [office.phone, office.email, office.pec].filter(isFilled);
+  return parts.length === 0 ? undefined : parts.join(' · ');
 }
 
 /** Свидетельство НДС: «серия 27001 № 1010058». */

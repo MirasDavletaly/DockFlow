@@ -36,6 +36,20 @@ export interface VatCertificate {
   issuedAt?: string;
 }
 
+/**
+ * Головной офис за рубежом.
+ *
+ * У компании с иностранным участием он стоит на бланке рядом с казахстанским
+ * адресом, поэтому хранится вместе с реквизитами, а не в заметках.
+ */
+export interface HeadOffice {
+  address: string;
+  phone?: string;
+  email?: string;
+  /** Итальянская сертифицированная почта: для официальной переписки. */
+  pec?: string;
+}
+
 /** Налоговый орган по месту регистрации: нужен в налоговых формах и ЭСФ. */
 export interface TaxOffice {
   /** Наименование управления, как оно пишется в документах. */
@@ -73,6 +87,7 @@ export interface Company {
   bank?: BankDetails;
   taxOffice?: TaxOffice;
   vat?: VatCertificate;
+  headOffice?: HeadOffice;
   /** Руководитель: он подписывает документы. */
   directorName: string;
   directorTitle: string;

@@ -1,11 +1,11 @@
 /**
  * Компании группы.
  *
- * Все шесть заведены по настоящим реквизитам (ответ на Q16,
+ * Все семь заведены по настоящим реквизитам (ответ на Q16,
  * `docs/questions.md`). У каждой БИН проверен по контрольной цифре, все
  * счета — по mod-97, БИК соответствует банку.
  *
- * Компаний шесть, а `CLAUDE.md` и `docs/architecture.md` говорят о группе из
+ * Компаний семь, а `CLAUDE.md` и `docs/architecture.md` говорят о группе из
  * четырёх. Для кода это ничего не меняет — изоляция устроена по `company_id`,
  * а не по их числу, — но расхождение отмечено в Q22.
  *
@@ -214,10 +214,12 @@ export const companies: Company[] = [
     postalCode: '090300',
     address:
       'Республика Казахстан, Западно-Казахстанская область, Бурлинский район, город Аксай, Промышленная зона, здание 225Н',
-    // В английском написании буква «Н» в «225Н» прислана кириллической;
-    // здесь латинская N. Сверка — Q22.
+    // Буква в «225Н» прислана кириллической (U+041D) внутри латинской
+    // строки. В реквизитах EFFEGI EURASIA — то же здание — она латинская
+    // «H», и на вид это одно и то же. Приведено к «225H», чтобы одно
+    // здание не значилось в системе двумя разными строками. Сверка — Q22.
     addressEn:
-      'West Kazakhstan Region, Burlin district, Aksai city, Industrial Zone, building 225N',
+      'West Kazakhstan Region, Burlin district, Aksai city, Industrial Zone, building 225H',
     phone: '+7 (71133) 41-228, вн. 144',
     directorName: 'Самал Кабешова',
     directorNameEn: 'Samal Kabeshova',
@@ -245,6 +247,55 @@ export const companies: Company[] = [
       series: '27001',
       number: '1004155',
       issuedAt: '2017-04-10',
+    },
+  },
+  {
+    id: 'c-effegi',
+    name: 'ТОО «EFFEGI EURASIA»',
+    legalName: 'Товарищество с ограниченной ответственностью «EFFEGI EURASIA»',
+    legalNameEn: '«EFFEGI EURASIA» LLP',
+    bin: '250740021286',
+    postalCode: '090300',
+    // То же здание, что у ТОО «GREENSPARKLIMITED».
+    address:
+      'Республика Казахстан, Западно-Казахстанская область, Бурлинский район, город Аксай, Промышленная зона, здание 225Н',
+    addressEn:
+      'West Kazakhstan Region, Aksai, Industrial Zone, building 225H',
+    phone: '+7 707 444 15 75',
+    email: 'info@effegi.kz',
+    directorName: 'Нурдаулет Хамит',
+    directorNameEn: 'Nurdaulet Khamit',
+    directorTitle: 'Генеральный директор',
+    directorTitleGenitive: 'Генерального директора',
+    // Тот же человек руководит ТОО «ExLumen», но там он записан как
+    // «Хамит Нурдаулет Алмазович» — фамилия первой и с отчеством. Падеж
+    // вписан по присланному здесь порядку и ждёт сверки — Q23.
+    directorNameGenitive: 'Нурдаулета Хамита',
+    // Основание полномочий не прислано. Q23.
+    directorBasis: 'Устава',
+    city: 'Аксай',
+    // Фирменный цвет и логотип не присланы.
+    accent: '#6b2f3b',
+    monogram: 'EE',
+    bank: {
+      name: 'АО «Банк ЦентрКредит»',
+      bik: 'KCJBKZKX',
+      accounts: [
+        { iban: 'KZ308562203148625357', currency: 'KZT' },
+        { iban: 'KZ428562203248625739', currency: 'USD' },
+        { iban: 'KZ028562203248625780', currency: 'EUR' },
+      ],
+    },
+    vat: {
+      series: '27001',
+      number: '2002070',
+      issuedAt: '2025-07-18',
+    },
+    headOffice: {
+      address: 'Via Lombardia 2/A, 20068 Peschiera Borromeo (MI), Italy',
+      phone: '+39 041 54 77 444',
+      email: 'effegi@effegigroup.it',
+      pec: 'effegisistemiidrodinamicisrl@legalmail.it',
     },
   },
 ];

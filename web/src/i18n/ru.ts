@@ -83,6 +83,8 @@ export const ru = {
     taxOffice: 'Налоговый орган',
     taxOfficeBin: 'БИН налогового органа',
     vat: 'Свидетельство НДС',
+    headOffice: 'Головной офис',
+    headOfficeContacts: 'Связь с головным офисом',
     missing: 'не заполнено',
     missingHint: 'Реквизит ещё не прислан — см. docs/data-request.md.',
     placeholderTitle: 'Реквизиты условные',

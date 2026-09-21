@@ -79,6 +79,8 @@ export const ru = {
     bank: 'Банк',
     bik: 'БИК',
     accounts: 'Счета',
+    taxOffice: 'Налоговый орган',
+    taxOfficeBin: 'БИН налогового органа',
     missing: 'не заполнено',
     missingHint: 'Реквизит ещё не прислан — см. docs/data-request.md.',
     placeholderTitle: 'Реквизиты условные',

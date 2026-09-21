@@ -102,6 +102,8 @@ export default function DashboardPage() {
               <Requisite label={t.company.basis} value={company.directorBasis} />
               <Requisite label={t.company.bank} value={company.bank?.name} />
               <Requisite label={t.company.bik} value={company.bank?.bik} mono />
+              <Requisite label={t.company.taxOffice} value={company.taxOffice?.name} />
+              <Requisite label={t.company.taxOfficeBin} value={company.taxOffice?.bin} mono />
             </dl>
 
             {company.bank === undefined ? null : (

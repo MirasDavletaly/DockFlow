@@ -23,6 +23,14 @@ export interface BankDetails {
   accounts: BankAccount[];
 }
 
+/** Налоговый орган по месту регистрации: нужен в налоговых формах и ЭСФ. */
+export interface TaxOffice {
+  /** Наименование управления, как оно пишется в документах. */
+  name: string;
+  /** БИН самого органа. */
+  bin: string;
+}
+
 /** Компания группы: реквизиты и брендинг. */
 export interface Company {
   id: string;
@@ -45,6 +53,7 @@ export interface Company {
   email?: string;
   website?: string;
   bank?: BankDetails;
+  taxOffice?: TaxOffice;
   /** Руководитель: он подписывает документы. */
   directorName: string;
   directorTitle: string;

@@ -30,9 +30,13 @@ export interface Company {
   name: string;
   /** Полное наименование для документов. */
   legalName: string;
+  /** Наименование на английском: нужно в двуязычных документах и договорах с нерезидентами. */
+  legalNameEn?: string;
   bin: string;
   /** Юридический адрес без индекса: индекс хранится отдельно. */
   address: string;
+  /** Юридический адрес на английском. */
+  addressEn?: string;
   /** Почтовый индекс: в шапке бланка он стоит перед адресом. */
   postalCode?: string;
   /** КБе — код бенефициара, нужен в платёжных документах. */
@@ -52,6 +56,8 @@ export interface Company {
    */
   directorTitleGenitive: string;
   directorNameGenitive: string;
+  /** ФИО руководителя латиницей: подпись в английской версии документа. */
+  directorNameEn?: string;
   /** Основание полномочий: «на основании Устава». */
   directorBasis: string;
   city: string;

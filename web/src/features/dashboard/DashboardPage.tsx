@@ -87,15 +87,18 @@ export default function DashboardPage() {
 
             <dl className={styles.requisites}>
               <Requisite label={t.company.legalName} value={company.legalName} />
+              <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />
               <Requisite label={t.company.bin} value={company.bin} mono />
               <Requisite label={t.company.kbe} value={company.kbe} mono />
               <Requisite label={t.company.address} value={addressLine(company)} />
+              <Requisite label={t.company.addressEn} value={company.addressEn} />
               <Requisite label={t.company.phone} value={company.phone} />
               <Requisite label={t.company.email} value={company.email} />
               <Requisite
                 label={t.company.director}
                 value={`${company.directorTitle} — ${company.directorName}`}
               />
+              <Requisite label={t.company.directorEn} value={company.directorNameEn} />
               <Requisite label={t.company.basis} value={company.directorBasis} />
               <Requisite label={t.company.bank} value={company.bank?.name} />
               <Requisite label={t.company.bik} value={company.bank?.bik} mono />

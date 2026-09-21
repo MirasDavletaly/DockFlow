@@ -78,3 +78,19 @@
   font-size: var(--text-sm);
   color: var(--ink-400);
 }
+
+/* Пометка «условные данные»: та же охра, что у черновика — это предупреждение,
+   а не ошибка, и выглядеть оно должно как карандашная пометка на бланке. */
+.placeholder {
+  flex: none;
+  margin-left: auto;
+  padding: 2px var(--space-3);
+  border: 1px solid var(--state-draft);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--state-draft);
+  white-space: nowrap;
+}

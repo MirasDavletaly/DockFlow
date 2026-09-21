@@ -47,6 +47,15 @@ export default function ChooseCompanyPage() {
                     <span className={styles.name}>{company.name}</span>
                     <span className={styles.meta}>{company.city} · {company.directorName}</span>
                   </span>
+
+                  {/* Вымышленные компании помечены здесь, а не только внутри:
+                      выбор делается на этом экране, и знать про условные
+                      реквизиты нужно до него, а не после. */}
+                  {company.placeholder === true ? (
+                    <span className={styles.placeholder} title={t.auth.companyPlaceholderHint}>
+                      {t.auth.companyPlaceholder}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );

@@ -81,7 +81,13 @@ export function DocumentSheet({
     const key = `b-${index}`;
 
     switch (block.kind) {
-      case 'company-header':
+      case 'company-header': {
+        // Шапка бланка: индекс с адресом одной строкой, реквизиты — следующей.
+        // Незаполненные реквизиты не печатаются вовсе: разделитель без значения
+        // на бумаге читается как потерянный реквизит.
+        const addressLine = [company.postalCode, company.address].filter(isFilled).join(', ');
+        const requisites = [`БИН ${company.bin}`, company.phone, company.email].filter(isFilled);
+
         return (
           <header key={key} className={styles.header}>
             <div className={styles.headerMark} aria-hidden="true">
@@ -89,12 +95,12 @@ export function DocumentSheet({
             </div>
             <div className={styles.headerText}>
               <div className={styles.headerName}>{company.legalName}</div>
-              <div className={styles.headerLine}>
-                {company.address} · БИН {company.bin}
-              </div>
+              <div className={styles.headerLine}>{addressLine}</div>
+              <div className={styles.headerLine}>{requisites.join(' · ')}</div>
             </div>
           </header>
         );
+      }
 
       case 'doc-number': {
         // Номер вводится вручную в группе «Регистрация», поэтому он тоже
@@ -206,6 +212,11 @@ export function DocumentSheet({
       <div className={styles.content}>{template.body.map(renderBlock)}</div>
     </article>
   );
+}
+
+/** Реквизит заполнен: необязательные поля компании приходят и пустыми. */
+function isFilled(value: string | undefined): value is string {
+  return value !== undefined && value.trim() !== '';
 }
 
 /**

@@ -1,0 +1,381 @@
+/**
+ * English interface strings.
+ *
+ * Typed by `Dictionary`, so a missing or extra key is a compile error rather
+ * than something found on screen later.
+ *
+ * What stays in Russian on purpose: the documents themselves. An order or a
+ * power of attorney is a legal document in the language it is issued in, and
+ * translating its wording here would produce a document nobody can sign.
+ * Switching the language changes the interface, not the paper.
+ */
+import type { Dictionary } from './ru';
+
+export const en: Dictionary = {
+  app: {
+    name: 'DocFlow',
+    tagline: 'Documents of the group',
+  },
+
+  auth: {
+    title: 'Sign in',
+    subtitle: 'Document workflow for the group',
+    login: 'Login',
+    loginHint: 'Issued by the administrator',
+    password: 'Password',
+    submit: 'Sign in',
+    submitting: 'Checking…',
+    failed: 'Wrong login or password',
+    locked: 'Sign-in closed for 15 minutes: five failed attempts in a row',
+    companyTitle: 'Choose a company',
+    companyBody: 'You have access to several companies of the group.',
+    companyPlaceholder: 'sample data',
+    companyPlaceholderHint:
+      'The registration details are invented: documents of this company must not be signed.',
+    noCompanies: 'You have no access to any company yet. Ask the administrator.',
+
+    setupTitle: 'First run',
+    setupBody:
+      'There is no account in the system yet. Create an administrator – they create everyone else.',
+    setupName: 'Your name',
+    setupSubmit: 'Create administrator',
+    passwordRepeat: 'Repeat the password',
+    passwordTooShort: 'The password is shorter than eight characters',
+    passwordMismatch: 'The passwords do not match',
+    loginTaken: 'This login is already taken',
+    loginTooShort: 'The login is shorter than four characters',
+  },
+
+  nav: {
+    create: 'New document',
+    myDocuments: 'My documents',
+    sections: 'Sections',
+    logout: 'Sign out',
+    company: 'Company',
+    switchCompany: 'Switch company',
+    requisites: 'Company details',
+    profile: 'Profile',
+    admin: 'Admin panel',
+    language: 'Language',
+  },
+
+  dashboard: {
+    title: 'Desk',
+    subtitleMorning: 'Good morning',
+    subtitleDay: 'Good afternoon',
+    subtitleEvening: 'Good evening',
+    recentTitle: 'Latest documents',
+    recentEmpty: 'No documents yet. Start with «New document».',
+    recentAll: 'Full registry',
+    quickTitle: 'Frequent documents',
+    quickBody: 'Counted from this company documents: the more often created, the higher.',
+    quickEmptyBody: 'Nothing to count yet: no document has been created in this company.',
+    quickTimes: 'times',
+    counters: {
+      drafts: 'Drafts',
+      saved: 'Saved',
+      mine: 'My documents',
+    },
+  },
+
+  company: {
+    title: 'Company details',
+    body:
+      'These values go into every document. A mismatch with the charter is a reason to stop and say so.',
+    snapshotNote:
+      'Documents already saved keep a snapshot of the details and do not change when you edit here.',
+    legalName: 'Full legal name',
+    legalNameEn: 'Name in English',
+    shortName: 'Short name',
+    bin: 'BIN',
+    kbe: 'KBe',
+    address: 'Registered address',
+    postalCode: 'Postal code',
+    addressEn: 'Address in English',
+    actualAddress: 'Actual address',
+    city: 'City',
+    phone: 'Phone',
+    email: 'Email',
+    website: 'Website',
+    director: 'Head of the company',
+    directorName: 'Full name of the head',
+    directorTitle: 'Position of the head',
+    directorNameGenitive: 'Full name of the head, genitive case',
+    directorTitleGenitive: 'Position of the head, genitive case',
+    genitiveHint: 'Used in the Russian wording «в лице Генерального директора …»',
+    directorEn: 'Head of the company in Latin script',
+    basis: 'Acting on the basis of',
+    bank: 'Bank',
+    bik: 'BIC',
+    accounts: 'Accounts',
+    taxOffice: 'Tax office',
+    taxOfficeBin: 'BIN of the tax office',
+    vat: 'VAT certificate',
+    headOffice: 'Head office',
+    headOfficeContacts: 'Head office contacts',
+    accent: 'Brand colour',
+    monogram: 'Monogram letters',
+    missing: 'not filled in',
+    missingHint: 'The detail has not arrived yet – see docs/data-request.md.',
+    placeholderTitle: 'Sample details',
+    placeholderBody:
+      'The company is here as an example: its BIN is invented and fails the check. Its documents must not be signed.',
+    editAction: 'Edit details',
+    saved: 'Details saved',
+  },
+
+  catalog: {
+    title: 'New document',
+    search: 'Find a document',
+    searchHint: 'For example: order, leave, power of attorney',
+    nothingFound: 'Nothing found',
+    nothingFoundBody: 'Check the spelling or pick a section on the left.',
+    noAccess: 'No section is open to you',
+    noAccessBody: 'Sections are granted by the administrator or the company director.',
+    soon: 'Template in preparation',
+    soonBody: 'The document is in the catalogue, but its template is not filled in yet.',
+    documentsCount: 'documents',
+    allSections: 'All sections',
+  },
+
+  form: {
+    fillTitle: 'Filling in',
+    sheetTitle: 'Document',
+    required: 'Required field',
+    emptyPlaceholder: 'not filled in',
+    save: 'Save document',
+    back: 'To the catalogue',
+    backToDocuments: 'To my documents',
+    selectEmployee: 'Choose an employee',
+    selectEmployeeHint: 'Pick from the company directory or type the full name by hand',
+    employeeManualNote:
+      'The name was typed by hand and goes into the document as is – it is not put into the genitive case.',
+    noEmployees: 'The directory of this company is still empty',
+    selectCounterparty: 'Choose a counterparty',
+    selectOption: 'Choose a value',
+    filled: 'Filled',
+    of: 'of',
+    validationTitle: 'Check the fields',
+    validationBody: 'The document is not saved: with these fields it would be invalid.',
+    dateAfter: 'The date cannot be earlier than',
+    dateNotBefore: 'The date cannot be in the past: a backdated document is invalid',
+    dateNotAfter: 'The date cannot be in the future',
+    registrationGroup: 'Registration',
+    numberLabel: 'Document number',
+    numberHint:
+      'If a number has already been assigned in the register. May be left empty – the document keeps a blank.',
+    subjectLabel: 'Whom it is about',
+    subjectHint: 'Who the document concerns. Shown in the registry and helps to find it later.',
+    descriptionLabel: 'Note',
+    descriptionHint:
+      'Optional. Visible only in «My documents», never printed in the document itself.',
+    legalDraftTitle: 'Draft wording',
+    legalDraftBody:
+      'The wording has not been checked by a lawyer. Have the text approved before the document goes into use.',
+    series: 'Series',
+    draftAutosaved: 'The draft saves itself',
+    draftAutosavedHint:
+      'Leaving the page, reloading and the back button do not lose what you typed: the draft stays in «My documents».',
+    editingDraft: 'Editing a draft',
+    editingSaved: 'Editing a saved document',
+  },
+
+  document: {
+    back: 'To my documents',
+    print: 'Print or save as PDF',
+    printHint: 'The print dialog opens. Choose a printer or «Save as PDF» there.',
+    serverPdfNote:
+      'Building the .docx file on the server comes with the converter – then the document downloads as a ready file.',
+    edit: 'Edit',
+    delete: 'Delete',
+    deleteConfirm:
+      'Delete the document? It disappears from the registry but stays in the activity log.',
+    savedTitle: 'Document saved',
+    savedBody: 'You can print it or save it as PDF.',
+    draftTitle: 'This is a draft',
+    draftBody: 'The draft is visible only to you. It is not printed and not issued.',
+    noNumber: 'no number assigned',
+    snapshotTitle: 'Details as of saving',
+    snapshotBody: 'The document shows the details the company had when it was saved.',
+    meta: {
+      number: 'Number',
+      status: 'State',
+      created: 'Created',
+      updated: 'Changed',
+      author: 'Filled in by',
+      subject: 'Whom it is about',
+      template: 'Template',
+      company: 'Company',
+      description: 'Note',
+    },
+  },
+
+  registry: {
+    title: 'My documents',
+    subtitleOwn: 'Your documents in this company. Columns with an underlined heading can be sorted.',
+    subtitleAll: 'All documents of the company. Columns with an underlined heading can be sorted.',
+    count: 'records',
+    sortAsc: 'ascending',
+    sortDesc: 'descending',
+    noNumber: 'n/n',
+    noNumberHint: 'no number',
+    noValue: '–',
+    open: 'Open',
+    columns: {
+      number: 'Number',
+      title: 'Document',
+      subject: 'Whom it is about',
+      description: 'Note',
+      status: 'State',
+      author: 'Filled in by',
+      created: 'Filled in on',
+    },
+  },
+
+  status: {
+    draft: 'Draft',
+    saved: 'Saved',
+  },
+
+  sheet: {
+    watermark: 'ЧЕРНОВИК',
+    numberPlaceholder: '____',
+    acquaintTitle: 'С приказом ознакомлен:',
+    signatureName: 'подпись',
+    basisTitle: 'Основание:',
+  },
+
+  profile: {
+    title: 'Profile',
+    subtitle: 'Your data and password. Only you see and change them.',
+    avatar: 'Photo',
+    avatarHint: 'A square image up to 512 KB. Shown as a circle.',
+    avatarChoose: 'Choose a file',
+    avatarRemove: 'Remove',
+    avatarTooBig: 'The file is larger than 512 KB',
+    avatarWrongType: 'This is not an image',
+    displayName: 'Name',
+    position: 'Position',
+    phone: 'Phone',
+    email: 'Email',
+    login: 'Login',
+    loginNote: 'The login is changed by the administrator.',
+    role: 'Role',
+    companies: 'Companies',
+    sectionsTitle: 'Sections where you create documents',
+    sectionsAll: 'All sections',
+    sectionsNone: 'None: ask the administrator to open the ones you need',
+    save: 'Save',
+    saved: 'Saved',
+    passwordTitle: 'Change the password',
+    passwordBody:
+      'The password is stored as a hash. It exists in plain text neither in the code nor in the storage.',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    change: 'Change the password',
+    changed: 'Password changed',
+    wrongPassword: 'The current password does not match',
+  },
+
+  admin: {
+    title: 'Admin panel',
+    subtitle: 'Companies, people, documents and the activity log.',
+    confirmTitle: 'Confirm the password',
+    confirmBody: 'The admin panel asks for the password once more so you do not open it by accident.',
+    confirmSubmit: 'Open the panel',
+    confirmFailed: 'The password does not match',
+    leave: 'Leave the panel',
+
+    tabCompanies: 'Companies',
+    tabUsers: 'Users',
+    tabPeople: 'People directory',
+    tabDocuments: 'Documents',
+    tabAudit: 'Activity log',
+    tabSettings: 'Settings',
+
+    companiesBody: 'Companies of the group. Their details go into the documents.',
+    companyAdd: 'Add a company',
+    companyRemoveConfirm:
+      'Delete the company together with its people directory? Documents stay, but the company disappears from the lists.',
+
+    usersBody: 'Accounts. The password is set here and known only to the person it is issued to.',
+    userAdd: 'Add a user',
+    userRemoveConfirm: 'Delete the account?',
+    userLastAdmin: 'This is the last administrator: it cannot be deleted.',
+    userBlocked: 'Blocked',
+    userBlock: 'Block',
+    userUnblock: 'Unblock',
+    userResetPassword: 'Set a new password',
+    userPasswordSet: 'Password set',
+    userRole: 'Role',
+    userCompanies: 'Companies',
+    userSections: 'Sections',
+    userSectionsHint:
+      'For an employee only: a director and an administrator work in every section.',
+    userCreated: 'User created',
+
+    peopleBody:
+      'The people you pick in documents. Each company has its own directory. The names here are samples – replace them with the real ones.',
+    personAdd: 'Add a person',
+    personRemoveConfirm: 'Remove the person from the directory?',
+    personFullName: 'Full name',
+    personGenitive: 'Full name in the genitive case',
+    personGenitiveHint: 'Used in the Russian wording «принять Ахметова Асхата Каировича»',
+    personPosition: 'Position',
+    personUnit: 'Unit',
+
+    documentsBody:
+      'All documents of every company available to you. You can open, correct and delete them.',
+    documentsEmpty: 'No documents yet.',
+    documentDeleted: 'Deleted',
+
+    auditBody: 'Who did what and when. The records are neither edited nor deleted.',
+    auditEmpty: 'No records yet.',
+    auditWhen: 'When',
+    auditWho: 'Who',
+    auditWhat: 'What',
+    auditTarget: 'On what',
+
+    settingsBody: 'Platform settings.',
+    ipTitle: 'Addresses allowed to open the admin panel',
+    ipBody:
+      'One address per line. A browser does not know its own external address, so the list is only stored for now: the server will be the one checking it.',
+    ipPlaceholder: '203.0.113.7',
+    resetTitle: 'Erase everything',
+    resetBody:
+      'Deletes the accounts, directories and documents from this browser and returns to the first run.',
+    resetAction: 'Erase and start over',
+    resetConfirm: 'Erase all data in this browser? This cannot be undone.',
+  },
+
+  demo: {
+    title: 'The password is checked in the browser',
+    body:
+      'This is a working model of the interface, not protection. Accounts, permissions and documents live in this browser and can be bypassed through the developer tools. The real check of password, permissions and address happens on the server, phase 1.',
+  },
+
+  errors: {
+    notFoundTitle: 'Page not found',
+    notFoundBody: 'Check the address or go back to the desk.',
+    notFoundAction: 'To the desk',
+    templateNotFound: 'Template not found',
+    documentNotFound: 'Document not found',
+    noAccessTitle: 'No access',
+    noAccessBody: 'This part is not open to you.',
+  },
+
+  common: {
+    close: 'Close',
+    loading: 'Loading…',
+    cancel: 'Cancel',
+    save: 'Save',
+    add: 'Add',
+    edit: 'Edit',
+    remove: 'Delete',
+    yes: 'Yes',
+    no: 'No',
+    all: 'All',
+    none: 'none',
+    search: 'Search',
+  },
+};

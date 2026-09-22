@@ -209,20 +209,16 @@
 .signature {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  /* Должность слева, фамилия справа, между ними чистое место под подпись.
+     Линии здесь нет намеренно: её на бумаге оставляет ручка, а не бланк. */
+  justify-content: space-between;
+  gap: 24px;
   margin-top: 28px;
 }
 
 .signatureRole {
   font-weight: 700;
   white-space: nowrap;
-}
-
-.signatureLine {
-  flex: 1;
-  min-width: 40mm;
-  border-bottom: 1px solid #000;
-  transform: translateY(-2px);
 }
 
 .signatureName {

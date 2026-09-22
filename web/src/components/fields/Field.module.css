@@ -83,3 +83,12 @@
   font-size: var(--text-sm);
   color: var(--state-rejected);
 }
+
+/* Замечание, а не ошибка: поле заполнено, но значение попадёт в документ
+   не так, как из справочника. Цвет предупреждающий, а не красный. */
+.note {
+  font-size: var(--text-sm);
+  color: var(--state-review);
+  border-left: 2px solid currentColor;
+  padding-left: var(--space-3);
+}

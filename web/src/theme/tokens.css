@@ -41,14 +41,14 @@
   /* ── Состояния документа ─────────────────────────────────────────────── */
   --state-draft: #8a6d1d; /* черновик — охра карандашной пометки */
   --state-draft-soft: #f7f1e0;
-  --state-review: #2f3b8f; /* на согласовании — штемпель */
-  --state-review-soft: #eaecf7;
-  --state-approved: #2f6b55; /* утверждён — зелёная виза */
+  --state-approved: #2f6b55; /* сохранён — зелёная виза */
   --state-approved-soft: #e6f0eb;
-  --state-rejected: #b3362b; /* отклонён — красная печать */
+  /* Предупреждение и ошибка на форме. Состояний документа теперь два,
+     но эти два цвета нужны сообщениям. */
+  --state-review: #2f3b8f;
+  --state-review-soft: #eaecf7;
+  --state-rejected: #b3362b;
   --state-rejected-soft: #f8e9e7;
-  --state-archived: #5a6273;
-  --state-archived-soft: #eceef1;
 
   /* ── Шрифты ──────────────────────────────────────────────────────────── */
   --font-ui: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;

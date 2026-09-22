@@ -202,3 +202,38 @@
     padding: var(--space-7) var(--space-6) var(--space-10);
   }
 }
+
+/* «Для кого» — по этому столбцу документ ищут глазами чаще всего:
+   сначала «чей приказ», потом всё остальное. */
+.colSubject {
+  width: 20%;
+  min-width: 140px;
+}
+
+.colActions {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.delete {
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--state-rejected);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+}
+
+/* Кнопка удаления не мозолит глаза: она появляется, когда строка под
+   курсором или в фокусе клавиатуры. Реестр читают, а не чистят. */
+tr:hover .delete,
+.delete:focus-visible {
+  opacity: 1;
+}
+
+.delete:hover {
+  text-decoration: underline;
+}

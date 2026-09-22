@@ -9,11 +9,15 @@
  * Поле, на котором стоит курсор, подсвечивается в листе. Это единственная
  * связь между двумя половинами экрана, и она же отвечает на вопрос
  * «а куда попадёт то, что я сейчас ввожу».
+ *
+ * Ничего из введённого не теряется. Черновик пишется сам через полсекунды
+ * после последнего нажатия клавиши, а также при уходе со страницы, при
+ * перезагрузке и при закрытии вкладки. Кнопка «назад» и случайно закрытая
+ * вкладка перестают быть потерей работы.
  */
-import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { findEmployee } from '@/api/mock/directory';
 import { findSection } from '@/api/mock/sections';
 import { findTemplate } from '@/api/mock/templates';
 import { DocumentSheet } from '@/components/DocumentSheet/DocumentSheet';
@@ -23,26 +27,98 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
 import { useSession } from '@/store/session';
 
+import { dateBounds, checkField, validateFields } from './validation';
+
 import styles from './DocumentFormPage.module.css';
 
-import type { FieldDef } from '@/api/types';
+import type { Company, FieldDef } from '@/api/types';
+
+/** Через сколько после последнего нажатия клавиши черновик уходит в хранилище. */
+const AUTOSAVE_DELAY_MS = 600;
 
 export default function DocumentFormPage() {
   const { templateId } = useParams<{ templateId: string }>();
+  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { company, createDocument } = useSession();
+  const { company, employees, saveDocument, findDocument } = useSession();
 
   const template = templateId === undefined ? undefined : findTemplate(templateId);
 
-  const [values, setValues] = useState<Record<string, string>>({});
-  // Номер и описание не входят в шаблон: номер — реквизит регистрации,
-  // описание вообще не печатается. Держим их отдельно от снимка полей.
-  const [number, setNumber] = useState('');
-  const [description, setDescription] = useState('');
+  // Правим существующую запись, если её идентификатор пришёл в адресе.
+  const editingId = params.get('doc');
+  const existing = editingId === null ? undefined : findDocument(editingId);
+
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    existing === undefined ? initialValues(template?.fields ?? [], company) : existing.values,
+  );
+  // Номер, описание и «для кого» не входят в шаблон: номер — реквизит
+  // регистрации, остальные два вообще не печатаются. Держим их отдельно.
+  const [number, setNumber] = useState(existing?.number ?? '');
+  const [description, setDescription] = useState(existing?.description ?? '');
+  const [subject, setSubject] = useState(existing?.subject ?? '');
   const [showErrors, setShowErrors] = useState(false);
   const [activeField, setActiveField] = useState<string | null>(null);
 
   const groups = useMemo(() => groupFields(template?.fields ?? []), [template]);
+
+  // Идентификатор черновика. Первое автосохранение его заводит, дальше та же
+  // запись правится — нового документа при каждом нажатии клавиши не появляется.
+  const draftId = useRef<string | null>(existing?.id ?? null);
+  const dirty = useRef(false);
+  const savedManually = useRef(false);
+
+  const snapshot = useRef({ values, number, description, subject, title: template?.title ?? '' });
+  snapshot.current = { values, number, description, subject, title: template?.title ?? '' };
+
+  const flushDraft = useCallback(() => {
+    if (!dirty.current || savedManually.current || template === undefined) return;
+
+    const current = snapshot.current;
+    const empty =
+      Object.values(current.values).every((v) => v.trim() === '') &&
+      current.number.trim() === '' &&
+      current.description.trim() === '' &&
+      current.subject.trim() === '';
+
+    // Пустую форму в черновики не пишем: человек открыл документ, посмотрел
+    // и ушёл — реестр не должен зарастать пустышками.
+    if (empty) return;
+
+    const record = saveDocument({
+      ...(draftId.current === null ? {} : { id: draftId.current }),
+      templateId: template.id,
+      title: template.title,
+      number: current.number,
+      description: current.description,
+      subject: current.subject,
+      values: current.values,
+      status: 'draft',
+    });
+
+    draftId.current = record.id;
+    dirty.current = false;
+  }, [saveDocument, template]);
+
+  // Отложенная запись: через полсекунды после последнего нажатия клавиши.
+  useEffect(() => {
+    if (!dirty.current) return undefined;
+
+    const timer = window.setTimeout(flushDraft, AUTOSAVE_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [values, number, description, subject, flushDraft]);
+
+  // Перезагрузка, закрытие вкладки и переход по внешней ссылке. `pagehide`
+  // срабатывает и там, где `beforeunload` не срабатывает (мобильный Safari).
+  useEffect(() => {
+    window.addEventListener('pagehide', flushDraft);
+    window.addEventListener('beforeunload', flushDraft);
+    return () => {
+      window.removeEventListener('pagehide', flushDraft);
+      window.removeEventListener('beforeunload', flushDraft);
+      // Уход на другой экран сайта, в том числе кнопкой «назад».
+      flushDraft();
+    };
+  }, [flushDraft]);
 
   if (template === undefined || company === null) {
     return (
@@ -57,10 +133,13 @@ export default function DocumentFormPage() {
   // сужение типа не сохраняется — поэтому берём уже проверенные значения.
   const doc = template;
   const today = new Date().toISOString().slice(0, 10);
-  const missing = template.fields.filter((f) => f.required && (values[f.id] ?? '') === '');
-  const filledCount = template.fields.filter((f) => (values[f.id] ?? '') !== '').length;
+  const problems = validateFields(doc.fields, values);
+  const filledCount = doc.fields.filter((f) => (values[f.id] ?? '') !== '').length;
 
   function setValue(field: FieldDef, next: string) {
+    dirty.current = true;
+    savedManually.current = false;
+
     setValues((prev) => {
       const updated = { ...prev, [field.id]: next };
 
@@ -68,50 +147,72 @@ export default function DocumentFormPage() {
       // Их можно поправить: в приказе иногда нужна формулировка, отличная от
       // штатного наименования, — но начинать с пустых полей незачем.
       if (field.kind === 'employee') {
-        const employee = findEmployee(next);
+        const employee = employees.find((e) => e.id === next);
         if (employee !== undefined) {
-          if (prev['position'] === undefined || prev['position'] === '') {
-            updated['position'] = employee.position;
-          }
-          if (prev['unit'] === undefined || prev['unit'] === '') {
-            updated['unit'] = employee.unit;
-          }
+          if ((prev['position'] ?? '') === '') updated['position'] = employee.position;
+          if ((prev['unit'] ?? '') === '') updated['unit'] = employee.unit;
+          if ((prev['positionFrom'] ?? '') === '') updated['positionFrom'] = employee.position;
         }
       }
 
       return updated;
     });
+
+    // «Для кого» заполняется само по выбранному работнику: спрашивать то,
+    // что система уже знает, значит заставлять вводить дважды.
+    if (field.kind === 'employee' && subject.trim() === '') {
+      const employee = employees.find((e) => e.id === next);
+      setSubject(employee?.fullName ?? next);
+    }
+  }
+
+  function markDirty() {
+    dirty.current = true;
+    savedManually.current = false;
   }
 
   function handleSave() {
-    if (missing.length > 0) {
+    if (problems.length > 0) {
       setShowErrors(true);
-      const first = document.getElementById(`field-${missing[0]?.id ?? ''}`);
+      const first = document.getElementById(`field-${problems[0]?.fieldId ?? ''}`);
       first?.focus();
       first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       return;
     }
 
-    const record = createDocument({
+    const record = saveDocument({
+      ...(draftId.current === null ? {} : { id: draftId.current }),
       templateId: doc.id,
       title: doc.title,
       number,
       description,
+      subject,
       values,
+      status: 'saved',
     });
+
+    savedManually.current = true;
+    dirty.current = false;
     navigate(`/documents/${record.id}?saved=1`);
   }
 
-  const section = findSection(template.sectionId);
-  const subsection = section?.subsections.find((s) => s.id === template.subsectionId);
+  const section = findSection(doc.sectionId);
+  const subsection = section?.subsections.find((s) => s.id === doc.subsectionId);
   const path = [section?.title, subsection?.title].filter(Boolean).join(' › ');
+
+  const registration = registrationFields();
+
+  const problemOf = (fieldId: string): string | null => {
+    if (!showErrors) return null;
+    return problems.find((p) => p.fieldId === fieldId)?.message ?? null;
+  };
 
   return (
     <div className={styles.page}>
       <PageHeader
-        eyebrow={`${path} · ${t.form.series} ${template.series}`}
-        title={template.title}
-        subtitle={template.purpose}
+        eyebrow={`${path} · ${t.form.series} ${doc.series}`}
+        title={doc.title}
+        subtitle={doc.purpose}
         actions={
           <Link className={styles.backLink} to="/create">
             {t.form.back}
@@ -122,7 +223,13 @@ export default function DocumentFormPage() {
       <div className={styles.split}>
         <section className={styles.formColumn} aria-label={t.form.fillTitle}>
           <div className={styles.formBody}>
-            {showErrors && missing.length > 0 ? (
+            {existing === undefined ? null : (
+              <div className={styles.editingNote} role="status">
+                {existing.status === 'draft' ? t.form.editingDraft : t.form.editingSaved}
+              </div>
+            )}
+
+            {showErrors && problems.length > 0 ? (
               <div className={styles.validation} role="alert">
                 <div className={styles.validationTitle}>{t.form.validationTitle}</div>
                 <p className={styles.validationBody}>{t.form.validationBody}</p>
@@ -138,7 +245,12 @@ export default function DocumentFormPage() {
                       key={def.id}
                       def={def}
                       value={values[def.id] ?? ''}
-                      invalid={showErrors && def.required && (values[def.id] ?? '') === ''}
+                      // Ошибка показывается сразу, как только её исправили или
+                      // создали заново: ждать нажатия «Сохранить» второй раз
+                      // незачем, человек уже знает, что не так.
+                      problem={problemOf(def.id) ?? (showErrors ? null : liveProblem(def, values, doc.fields))}
+                      employees={employees}
+                      bounds={dateBounds(def, values)}
                       onChange={(next) => setValue(def, next)}
                       onFocus={() => setActiveField(def.id)}
                       onBlur={() => setActiveField(null)}
@@ -152,35 +264,54 @@ export default function DocumentFormPage() {
               <legend className={styles.groupTitle}>{t.form.registrationGroup}</legend>
               <div className={styles.groupFields}>
                 <Field
-                  def={NUMBER_FIELD}
-                  value={number}
-                  invalid={false}
-                  onChange={setNumber}
-                  onFocus={() => setActiveField(NUMBER_FIELD.id)}
+                  def={registration.subject}
+                  value={subject}
+                  onChange={(next) => {
+                    markDirty();
+                    setSubject(next);
+                  }}
+                  onFocus={() => setActiveField(registration.subject.id)}
                   onBlur={() => setActiveField(null)}
                 />
                 <Field
-                  def={DESCRIPTION_FIELD}
+                  def={registration.number}
+                  value={number}
+                  onChange={(next) => {
+                    markDirty();
+                    setNumber(next);
+                  }}
+                  onFocus={() => setActiveField(registration.number.id)}
+                  onBlur={() => setActiveField(null)}
+                />
+                <Field
+                  def={registration.description}
                   value={description}
-                  invalid={false}
-                  onChange={setDescription}
-                  onFocus={() => setActiveField(DESCRIPTION_FIELD.id)}
+                  onChange={(next) => {
+                    markDirty();
+                    setDescription(next);
+                  }}
+                  onFocus={() => setActiveField(registration.description.id)}
                   onBlur={() => setActiveField(null)}
                 />
               </div>
             </fieldset>
+
+            <p className={styles.autosave}>
+              <span className={styles.autosaveTitle}>{t.form.draftAutosaved}</span>{' '}
+              {t.form.draftAutosavedHint}
+            </p>
           </div>
 
           <footer className={styles.formFooter}>
             <div className={styles.progress}>
               <span className={styles.progressText}>
                 {t.form.filled} <span className="tabular">{filledCount}</span> {t.form.of}{' '}
-                <span className="tabular">{template.fields.length}</span>
+                <span className="tabular">{doc.fields.length}</span>
               </span>
               <span className={styles.progressTrack} aria-hidden="true">
                 <span
                   className={styles.progressFill}
-                  style={{ width: `${(filledCount / template.fields.length) * 100}%` }}
+                  style={{ width: `${(filledCount / doc.fields.length) * 100}%` }}
                 />
               </span>
             </div>
@@ -192,7 +323,7 @@ export default function DocumentFormPage() {
         </section>
 
         <section className={styles.sheetColumn} aria-label={t.form.sheetTitle}>
-          {template.reviewed ? null : (
+          {doc.reviewed ? null : (
             <div className={styles.legalNotice}>
               <div className={styles.legalTitle}>{t.form.legalDraftTitle}</div>
               <p className={styles.legalBody}>{t.form.legalDraftBody}</p>
@@ -201,7 +332,7 @@ export default function DocumentFormPage() {
 
           <SheetViewport>
             <DocumentSheet
-              template={template}
+              template={doc}
               values={values}
               company={company}
               date={today}
@@ -217,27 +348,75 @@ export default function DocumentFormPage() {
 }
 
 /**
- * Номер и описание описаны теми же FieldDef, что и поля шаблона: так они
- * выглядят и ведут себя как остальная форма, но в снимок значений документа
- * не попадают.
+ * Ошибка, которую видно до нажатия «Сохранить».
+ *
+ * Пустое обязательное поле так не подсвечивается: человек ещё не дошёл до
+ * него. А вот дата возвращения раньше даты выезда — уже ошибка, и сказать
+ * о ней нужно сразу, а не после нажатия кнопки.
  */
-const NUMBER_FIELD: FieldDef = {
-  id: '@number',
-  kind: 'text',
-  label: t.form.numberLabel,
-  hint: t.form.numberHint,
-  required: false,
-  group: t.form.registrationGroup,
-};
+function liveProblem(
+  def: FieldDef,
+  values: Record<string, string>,
+  fields: FieldDef[],
+): string | null {
+  if ((values[def.id] ?? '') === '') return null;
+  return checkField(def, values, fields);
+}
 
-const DESCRIPTION_FIELD: FieldDef = {
-  id: '@description',
-  kind: 'textarea',
-  label: t.form.descriptionLabel,
-  hint: t.form.descriptionHint,
-  required: false,
-  group: t.form.registrationGroup,
-};
+/** Значения по умолчанию: реквизиты компании, которые человек может поправить. */
+function initialValues(fields: FieldDef[], company: Company | null): Record<string, string> {
+  const values: Record<string, string> = {};
+  if (company === null) return values;
+
+  for (const field of fields) {
+    if (field.defaultFrom === undefined) continue;
+    if (!field.defaultFrom.startsWith('@company.')) continue;
+
+    const key = field.defaultFrom.slice('@company.'.length) as keyof Company;
+    const value = company[key];
+    if (typeof value === 'string' && value !== '') values[field.id] = value;
+  }
+
+  return values;
+}
+
+/**
+ * Номер, «для кого» и описание описаны теми же FieldDef, что и поля шаблона:
+ * так они выглядят и ведут себя как остальная форма, но в снимок значений
+ * документа не попадают.
+ *
+ * Собираются функцией, а не константой: константа прочитала бы словарь один
+ * раз при загрузке модуля, и после переключения языка подписи остались бы
+ * на прежнем.
+ */
+function registrationFields(): { number: FieldDef; subject: FieldDef; description: FieldDef } {
+  return {
+    number: {
+      id: '@number',
+      kind: 'text',
+      label: t.form.numberLabel,
+      hint: t.form.numberHint,
+      required: false,
+      group: t.form.registrationGroup,
+    },
+    subject: {
+      id: '@subject',
+      kind: 'text',
+      label: t.form.subjectLabel,
+      hint: t.form.subjectHint,
+      required: false,
+      group: t.form.registrationGroup,
+    },
+    description: {
+      id: '@description',
+      kind: 'textarea',
+      label: t.form.descriptionLabel,
+      hint: t.form.descriptionHint,
+      required: false,
+      group: t.form.registrationGroup,
+    },
+  };
+}
 
 interface Group {
   title: string;

@@ -12,6 +12,7 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import { can, canDeleteDocument } from '@/access/policy';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
@@ -23,18 +24,15 @@ import styles from './DocumentListPage.module.css';
 
 import type { DocumentRecord, DocumentStatus } from '@/api/types';
 
-type Column = 'number' | 'status' | 'author' | 'created';
+type Column = 'number' | 'subject' | 'status' | 'author' | 'created';
 type Direction = 'asc' | 'desc';
 
-const COLUMNS: Column[] = ['number', 'status', 'author', 'created'];
+const COLUMNS: Column[] = ['number', 'subject', 'status', 'author', 'created'];
 
 /** Порядок состояний — по ходу жизни документа, а не по алфавиту. */
 const STATUS_ORDER: Record<DocumentStatus, number> = {
   draft: 0,
-  review: 1,
-  approved: 2,
-  rejected: 3,
-  archived: 4,
+  saved: 1,
 };
 
 /**
@@ -44,8 +42,14 @@ const STATUS_ORDER: Record<DocumentStatus, number> = {
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
 export default function DocumentListPage() {
-  const { documents } = useSession();
+  const { documents, user, company, deleteDocument } = useSession();
   const [params, setParams] = useSearchParams();
+
+  // Что человек тут видит, решает политика: работник — только свои, директор
+  // и администратор — все документы компании. Список приходит из сессии уже
+  // отфильтрованным, здесь только подпись под заголовком.
+  const subject = { user, companyId: company?.id ?? null };
+  const seesAll = can(subject, 'documents.viewAll');
 
   const sortBy = parseColumn(params.get('sort'));
   const direction: Direction = params.get('dir') === 'asc' ? 'asc' : 'desc';
@@ -64,7 +68,10 @@ export default function DocumentListPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title={t.registry.title} subtitle={t.registry.subtitle} />
+      <PageHeader
+        title={t.registry.title}
+        subtitle={seesAll ? t.registry.subtitleAll : t.registry.subtitleOwn}
+      />
 
       <div className={styles.body}>
         {documents.length === 0 ? (
@@ -93,6 +100,14 @@ export default function DocumentListPage() {
                       />
                     </th>
                     <th className={styles.colTitle}>{t.registry.columns.title}</th>
+                    <th className={styles.colSubject} aria-sort={ariaSort(sortBy, 'subject', direction)}>
+                      <SortButton
+                        column="subject"
+                        active={sortBy === 'subject'}
+                        direction={direction}
+                        onClick={toggleSort}
+                      />
+                    </th>
                     <th className={styles.colDescription}>{t.registry.columns.description}</th>
                     <th className={styles.colStatus} aria-sort={ariaSort(sortBy, 'status', direction)}>
                       <SortButton
@@ -118,6 +133,7 @@ export default function DocumentListPage() {
                         onClick={toggleSort}
                       />
                     </th>
+                    <th className={styles.colActions} aria-label={t.common.remove} />
                   </tr>
                 </thead>
 
@@ -140,9 +156,17 @@ export default function DocumentListPage() {
                         </Link>
                       </td>
 
+                      <td className={styles.colSubject}>
+                        {doc.subject === '' ? (
+                          <span className={styles.muted}>{t.registry.noValue}</span>
+                        ) : (
+                          doc.subject
+                        )}
+                      </td>
+
                       <td className={styles.colDescription}>
                         {doc.description === '' ? (
-                          <span className={styles.muted}>{t.registry.noDescription}</span>
+                          <span className={styles.muted}>{t.registry.noValue}</span>
                         ) : (
                           <span className={styles.description} title={doc.description}>
                             {doc.description}
@@ -158,6 +182,20 @@ export default function DocumentListPage() {
 
                       <td className={cx(styles.colDate, 'tabular')}>
                         {formatShortDate(doc.createdAt)}
+                      </td>
+
+                      <td className={styles.colActions}>
+                        {canDeleteDocument(subject, doc) ? (
+                          <button
+                            type="button"
+                            className={styles.delete}
+                            onClick={() => {
+                              if (window.confirm(t.document.deleteConfirm)) deleteDocument(doc.id);
+                            }}
+                          >
+                            {t.common.remove}
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))}
@@ -227,6 +265,9 @@ function sortDocuments(
         if (b.number === null) return -1;
         return sign * collator.compare(a.number, b.number);
       }
+
+      case 'subject':
+        return sign * a.subject.localeCompare(b.subject, 'ru');
 
       case 'status':
         return sign * (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);

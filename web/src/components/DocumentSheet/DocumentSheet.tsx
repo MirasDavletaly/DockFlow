@@ -9,7 +9,8 @@
  * Тот же компонент печатается: класс .print-root оставляет на бумаге только
  * лист (см. styles/print.css).
  */
-import { findCounterparty, findEmployee } from '@/api/mock/directory';
+import { findCounterparty } from '@/api/mock/directory';
+import { findEmployeeIn } from '@/store/db';
 import { t } from '@/i18n';
 import { formatDocumentDate, formatMoney } from '@/utils/format';
 
@@ -178,10 +179,12 @@ export function DocumentSheet({
         );
 
       case 'signature':
+        // Линии между должностью и фамилией нет: на бумаге её рисует не
+        // бланк, а подпись. Пустая линия в готовом документе читается как
+        // место, которое забыли заполнить.
         return (
           <div key={key} className={styles.signature}>
             <span className={styles.signatureRole}>{company.directorTitle}</span>
-            <span className={styles.signatureLine} aria-hidden="true" />
             <span className={styles.signatureName}>{company.directorName}</span>
           </div>
         );
@@ -244,7 +247,9 @@ function resolveField(
   switch (def?.kind) {
     case 'employee':
       // В приказах работник стоит в родительном падеже: «принять Ахметова».
-      return findEmployee(raw)?.fullNameGenitive ?? '';
+      // Если ФИО вписано руками, а не выбрано из справочника компании, падежа
+      // у него нет — оно идёт в документ как есть. Форма об этом предупреждает.
+      return findEmployeeIn(company.id, raw)?.fullNameGenitive ?? raw;
     case 'counterparty':
       return findCounterparty(raw)?.name ?? '';
     case 'date':

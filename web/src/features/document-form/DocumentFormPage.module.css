@@ -222,3 +222,28 @@
     padding: var(--space-7) var(--space-6) var(--space-10);
   }
 }
+
+/* Правим существующую запись, а не заводим новую: это нужно сказать сразу,
+   иначе человек решит, что создаёт копию. */
+.editingNote {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+/* Обещание, что работа не пропадёт. Стоит внизу формы, рядом с кнопкой. */
+.autosave {
+  margin-top: var(--space-5);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--ink-400);
+}
+
+.autosaveTitle {
+  font-weight: 600;
+  color: var(--ink-700);
+}

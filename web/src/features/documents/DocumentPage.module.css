@@ -181,3 +181,55 @@
     padding: var(--space-5) var(--space-6);
   }
 }
+
+/* Черновик: тот же формат сообщения, что и «сохранён», но охрой. */
+.draftNote {
+  padding: var(--space-5);
+  background: var(--state-draft-soft);
+  border-left: 2px solid var(--state-draft);
+}
+
+.draftNote .savedTitle {
+  color: var(--state-draft);
+}
+
+/* Реквизиты в этом документе заморожены снимком. */
+.snapshot {
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border-left: 2px solid var(--line-strong);
+}
+
+.edit {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--ink-600);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.edit:hover {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.delete {
+  height: 38px;
+  padding: 0 var(--space-6);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--state-rejected);
+  background: var(--paper);
+  border: 1px solid var(--state-rejected-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.delete:hover {
+  border-color: var(--state-rejected);
+}

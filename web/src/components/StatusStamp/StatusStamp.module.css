@@ -25,22 +25,7 @@
   background: var(--state-draft-soft);
 }
 
-.review {
-  color: var(--state-review);
-  background: var(--state-review-soft);
-}
-
-.approved {
+.saved {
   color: var(--state-approved);
   background: var(--state-approved-soft);
-}
-
-.rejected {
-  color: var(--state-rejected);
-  background: var(--state-rejected-soft);
-}
-
-.archived {
-  color: var(--state-archived);
-  background: var(--state-archived-soft);
 }

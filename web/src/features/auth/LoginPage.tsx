@@ -4,9 +4,14 @@
  * Слева — «стол»: тёмная половина с именем системы. Справа — белый лист с
  * формой. Тот же приём, что и на рабочих экранах, поэтому человек узнаёт
  * систему ещё до того, как вошёл.
+ *
+ * Ответ на неудачу всегда один и тот же: «неверный логин или пароль». По
+ * разнице в сообщениях подбирают существующие логины (CLAUDE.md, п. 3.8).
+ * Отдельно называется только блокировка после пяти попыток: человек должен
+ * понимать, почему правильный пароль перестал работать.
  */
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import { t } from '@/i18n';
 import { useSession } from '@/store/session';
@@ -15,31 +20,37 @@ import styles from './LoginPage.module.css';
 
 import type { FormEvent } from 'react';
 
-const MIN_LENGTH = 4;
-
 export default function LoginPage() {
-  const { signIn } = useSession();
+  const { signIn, firstRun } = useSession();
   const navigate = useNavigate();
 
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  function handleSubmit(event: FormEvent) {
+  // Учётных записей ещё нет: войти некем, сначала заводится администратор.
+  if (firstRun) return <Navigate to="/setup" replace />;
+
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    // Ответ одинаковый независимо от того, что именно не так: по разнице
-    // в сообщениях подбирают существующие логины (CLAUDE.md, п. 3.8).
-    if (login.trim().length < MIN_LENGTH || password.length < MIN_LENGTH) {
-      setFailed(true);
+    setBusy(true);
+    setError(null);
+
+    const result = await signIn(login, password);
+    setBusy(false);
+
+    if (result === 'locked') {
+      setError(t.auth.locked);
+      return;
+    }
+    if (result === 'failed') {
+      setError(t.auth.failed);
       return;
     }
 
-    setBusy(true);
-    setFailed(false);
-    signIn(login.trim());
-    navigate('/choose-company', { replace: true });
+    navigate('/', { replace: true });
   }
 
   return (
@@ -56,7 +67,7 @@ export default function LoginPage() {
       </aside>
 
       <section className={styles.sheet}>
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <form className={styles.form} onSubmit={(e) => void handleSubmit(e)} noValidate>
           <h1 className={styles.title}>{t.auth.title}</h1>
 
           <label className={styles.field}>
@@ -85,19 +96,19 @@ export default function LoginPage() {
             />
           </label>
 
-          {failed ? (
+          {error === null ? null : (
             <p className={styles.error} role="alert">
-              {t.auth.failed}
+              {error}
             </p>
-          ) : null}
+          )}
 
           <button className={styles.submit} type="submit" disabled={busy}>
             {busy ? t.auth.submitting : t.auth.submit}
           </button>
 
           <div className={styles.demo}>
-            <div className={styles.demoTitle}>{t.auth.demoTitle}</div>
-            <p className={styles.demoBody}>{t.auth.demoBody}</p>
+            <div className={styles.demoTitle}>{t.demo.title}</div>
+            <p className={styles.demoBody}>{t.demo.body}</p>
           </div>
         </form>
       </section>

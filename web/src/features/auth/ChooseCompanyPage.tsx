@@ -7,7 +7,6 @@
  */
 import { useNavigate } from 'react-router-dom';
 
-import { companies } from '@/api/mock/companies';
 import { t } from '@/i18n';
 import { useSession } from '@/store/session';
 import { buildAccentPalette } from '@/theme/color';
@@ -15,7 +14,10 @@ import { buildAccentPalette } from '@/theme/color';
 import styles from './ChooseCompanyPage.module.css';
 
 export default function ChooseCompanyPage() {
-  const { selectCompany } = useSession();
+  // Список компаний берётся из учётной записи, а не из полного справочника:
+  // компания, к которой человеку не выдали доступ, не должна даже
+  // упоминаться на экране (CLAUDE.md, п. 3.1).
+  const { selectCompany, companies } = useSession();
   const navigate = useNavigate();
 
   function choose(companyId: string) {
@@ -28,6 +30,8 @@ export default function ChooseCompanyPage() {
       <div className={styles.inner}>
         <h1 className={styles.title}>{t.auth.companyTitle}</h1>
         <p className={styles.body}>{t.auth.companyBody}</p>
+
+        {companies.length === 0 ? <p className={styles.body}>{t.auth.noCompanies}</p> : null}
 
         <ul className={styles.list}>
           {companies.map((company) => {

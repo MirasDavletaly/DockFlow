@@ -8,10 +8,12 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import { canUseSection } from '@/access/policy';
 import { sections } from '@/api/mock/sections';
 import { catalogEntries } from '@/api/mock/templates';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { useSession } from '@/store/session';
 
 import styles from './CatalogPage.module.css';
 
@@ -20,18 +22,31 @@ import type { CatalogEntry } from '@/api/types';
 export default function CatalogPage() {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
+  const { user } = useSession();
 
   const activeSection = params.get('section');
 
+  /**
+   * Разделы «по юрисдикции»: человек видит только те, которые ему открыты.
+   * По умолчанию запрещено — список приходит из учётной записи, а не из
+   * полного каталога с вычитанием (CLAUDE.md, п. 3.2).
+   */
+  const allowed = useMemo(
+    () => sections.filter((section) => canUseSection(user, section.id)),
+    [user],
+  );
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
+    const allowedIds = new Set(allowed.map((s) => s.id));
 
     return catalogEntries.filter((entry) => {
+      if (!allowedIds.has(entry.sectionId)) return false;
       if (activeSection !== null && entry.sectionId !== activeSection) return false;
       if (needle === '') return true;
       return entry.title.toLowerCase().includes(needle);
     });
-  }, [activeSection, query]);
+  }, [activeSection, allowed, query]);
 
   /** Группируем по разделу и подразделу — так же, как документы лежат в деле. */
   const grouped = useMemo(() => groupEntries(visible), [visible]);
@@ -51,7 +66,6 @@ export default function CatalogPage() {
     <div className={styles.page}>
       <PageHeader
         title={t.catalog.title}
-        subtitle={t.catalog.subtitle}
         actions={
           <label className={styles.searchWrap}>
             <input
@@ -74,7 +88,7 @@ export default function CatalogPage() {
         >
           {t.catalog.allSections}
         </button>
-        {sections.map((section) => (
+        {allowed.map((section) => (
           <button
             key={section.id}
             type="button"
@@ -89,7 +103,12 @@ export default function CatalogPage() {
       </div>
 
       <div className={styles.body}>
-        {visible.length === 0 ? (
+        {allowed.length === 0 ? (
+          <div className={styles.empty}>
+            <h2 className={styles.emptyTitle}>{t.catalog.noAccess}</h2>
+            <p className={styles.emptyBody}>{t.catalog.noAccessBody}</p>
+          </div>
+        ) : visible.length === 0 ? (
           <div className={styles.empty}>
             <h2 className={styles.emptyTitle}>{t.catalog.nothingFound}</h2>
             <p className={styles.emptyBody}>{t.catalog.nothingFoundBody}</p>

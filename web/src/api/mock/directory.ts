@@ -1,13 +1,22 @@
 /**
- * Условный справочник: работники и контрагенты.
+ * Условный справочник людей и контрагентов.
  *
- * Это краткие карточки — ФИО, должность, отдел. ИИН и оклада здесь нет
+ * Это краткие карточки – ФИО, должность, отдел. ИИН и оклада здесь нет
  * намеренно: их видит только кадровик с отдельным правом (CLAUDE.md, п. 3.10),
  * и на сайт они попадают отдельным запросом, а не вместе со списком выбора.
+ *
+ * Этот файл – только заготовка первого запуска. Живой справочник лежит в
+ * хранилище (`@/store/db`) и правится в админ-панели: у каждой компании свой,
+ * работник одной компании не появляется в списке выбора другой.
+ *
+ * Имена условные. Их нужно заменить настоящими людьми компаний.
  */
 import type { Counterparty, EmployeeBrief } from '@/api/types';
 
-export const employees: EmployeeBrief[] = [
+/** Заготовка карточки: компанию проставляет хранилище при первом запуске. */
+export type EmployeeSeed = Omit<EmployeeBrief, 'companyId'>;
+
+export const employees: EmployeeSeed[] = [
   {
     id: 'e-1',
     fullName: 'Ахметов Асхат Каирович',
@@ -72,10 +81,6 @@ export const counterparties: Counterparty[] = [
     address: 'г. Шымкент, ул. Байтурсынова, 8',
   },
 ];
-
-export function findEmployee(id: string): EmployeeBrief | undefined {
-  return employees.find((e) => e.id === id);
-}
 
 export function findCounterparty(id: string): Counterparty | undefined {
   return counterparties.find((c) => c.id === id);

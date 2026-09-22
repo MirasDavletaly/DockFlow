@@ -94,3 +94,18 @@
   color: var(--state-draft);
   white-space: nowrap;
 }
+
+/* Логотип вместо букв: своя рамка, потому что фон у логотипа собственный. */
+.markLogo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 36px;
+}
+
+.logo {
+  max-width: 92px;
+  max-height: 36px;
+  object-fit: contain;
+}

@@ -111,8 +111,14 @@ export function DocumentSheet({
 
         return (
           <header key={key} className={styles.header}>
+            {/* Логотип компании – он же стоит в шапке настоящих бланков.
+                Пока логотипа нет, его место занимают буквы из monogram. */}
             <div className={styles.headerMark} aria-hidden="true">
-              {company.monogram}
+              {company.logo === undefined ? (
+                <span className={styles.headerMonogram}>{company.monogram}</span>
+              ) : (
+                <img className={styles.headerLogo} src={company.logo} alt="" />
+              )}
             </div>
             <div className={styles.headerText}>
               <div className={styles.headerName}>{company.legalName}</div>

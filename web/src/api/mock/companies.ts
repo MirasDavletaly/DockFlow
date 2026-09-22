@@ -9,10 +9,23 @@
  * четырёх. Для кода это ничего не меняет — изоляция устроена по `company_id`,
  * а не по их числу, — но расхождение отмечено в Q22.
  *
+ * Логотипы присланы отдельно и лежат в `src/assets/logos`. Они печатаются
+ * в шапке каждого документа – там же, где стоят на ваших бланках. Файл
+ * подключается импортом, а не строкой base64: так он попадает в сборку
+ * отдельной частью и не раздувает исходник.
+ *
  * Вымышленных компаний здесь больше нет. Если появится новая и её реквизиты
  * ещё не пришли, ей ставится `placeholder: true` — тогда интерфейс скажет,
  * что данные условные, и документ от её имени подписывать нельзя.
  */
+import effegiLogo from '@/assets/logos/effegi-eurasia.png';
+import algoritmiLogo from '@/assets/logos/algoritmi-kz.png';
+import exlumenLogo from '@/assets/logos/exlumen.png';
+import greenSparkLimitedLogo from '@/assets/logos/green-spark-limited.png';
+import greenSparkPowerLogo from '@/assets/logos/green-spark-power-01.png';
+import kntLogo from '@/assets/logos/kazakhstan-new-technologies.png';
+import novallianceLogo from '@/assets/logos/novalliance.png';
+
 import type { Company } from '@/api/types';
 
 export const companies: Company[] = [
@@ -37,6 +50,7 @@ export const companies: Company[] = [
     // Фирменный цвет не прислан: пока стоит цвет самой системы.
     accent: '#2f3b8f',
     monogram: 'EL',
+    logo: exlumenLogo,
     bank: {
       name: 'АО «Банк ЦентрКредит»',
       bik: 'KCJBKZKX',
@@ -84,6 +98,7 @@ export const companies: Company[] = [
     // Фирменный цвет и логотип не присланы.
     accent: '#1f5c4a',
     monogram: 'KN',
+    logo: kntLogo,
     bank: {
       name: 'АО «Банк ЦентрКредит»',
       bik: 'KCJBKZKX',
@@ -128,6 +143,7 @@ export const companies: Company[] = [
     // Фирменный цвет и логотип не присланы.
     accent: '#8a4b1f',
     monogram: 'AK',
+    logo: algoritmiLogo,
     bank: {
       name: 'АО «Банк ЦентрКредит»',
       bik: 'KCJBKZKX',
@@ -169,6 +185,7 @@ export const companies: Company[] = [
     // ждёт исходник логотипа (Q21).
     accent: '#3f4e9e',
     monogram: 'NA',
+    logo: novallianceLogo,
     bank: {
       name: 'АО «Народный Банк Казахстана»',
       bik: 'HSBKKZKX',
@@ -216,6 +233,7 @@ export const companies: Company[] = [
     // Фирменный цвет и логотип не присланы.
     accent: '#1f6b4a',
     monogram: 'GS',
+    logo: greenSparkPowerLogo,
     bank: {
       name: 'АО «Народный Банк Казахстана»',
       bik: 'HSBKKZKX',
@@ -263,6 +281,7 @@ export const companies: Company[] = [
     // Фирменный цвет и логотип не присланы.
     accent: '#3d7a2f',
     monogram: 'GL',
+    logo: greenSparkLimitedLogo,
     bank: {
       name: 'АО «Банк ЦентрКредит»',
       bik: 'KCJBKZKX',
@@ -306,6 +325,7 @@ export const companies: Company[] = [
     // Фирменный цвет и логотип не присланы.
     accent: '#6b2f3b',
     monogram: 'EE',
+    logo: effegiLogo,
     bank: {
       name: 'АО «Банк ЦентрКредит»',
       bik: 'KCJBKZKX',

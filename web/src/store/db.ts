@@ -127,15 +127,32 @@ function migrate(raw: Partial<Database>): Database {
     version: VERSION,
     // Компании и справочник людей правятся в админ-панели, поэтому берутся
     // из хранилища. Если их там нет — подставляется исходный набор.
-    companies: raw.companies !== undefined && raw.companies.length > 0
-      ? raw.companies
-      : base.companies,
+    companies:
+      raw.companies !== undefined && raw.companies.length > 0
+        ? raw.companies.map((company) => withSeedLogo(company, base.companies))
+        : base.companies,
     employees: raw.employees ?? base.employees,
     users: raw.users ?? [],
     documents,
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: raw.settings?.adminIpAllowList ?? [] },
   };
+}
+
+/**
+ * Подставляет логотип компании из исходного набора.
+ *
+ * В браузере может лежать база, записанная до того, как логотипы появились.
+ * Без этого человек, уже пользовавшийся системой, увидел бы документы с
+ * буквами вместо знака компании, пока не переустановит всё заново.
+ *
+ * Свой логотип, загруженный на странице реквизитов, не трогаем: он новее.
+ */
+function withSeedLogo(company: Company, seeded: Company[]): Company {
+  if (company.logo !== undefined) return company;
+
+  const original = seeded.find((c) => c.id === company.id);
+  return original?.logo === undefined ? company : { ...company, logo: original.logo };
 }
 
 export function saveDb(next: Database): void {

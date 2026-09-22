@@ -57,10 +57,23 @@
 
 .headerMark {
   flex: none;
-  width: 34px;
-  height: 34px;
   display: grid;
   place-items: center;
+  min-width: 34px;
+  max-width: 28mm;
+}
+
+.headerLogo {
+  max-width: 28mm;
+  max-height: 14mm;
+  object-fit: contain;
+}
+
+.headerMonogram {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
 
   font-family: var(--font-ui);
   font-size: 12px;

@@ -112,6 +112,29 @@ describe('шапка бланка', () => {
     expect(text.indexOf('ЖАУАПКЕРШІЛІГІ')).toBeLessThan(text.indexOf('Товарищество'));
   });
 
+  it('логотип стоит в шапке, а без него – буквы компании', () => {
+    render(
+      <DocumentSheet
+        template={template('hr-hire-order')}
+        values={{}}
+        company={{ ...company, logo: 'data:image/png;base64,iVBORw0KGgo=' }}
+        date="2026-09-22"
+      />,
+    );
+    expect(container.querySelector('img')).not.toBeNull();
+
+    render(
+      <DocumentSheet
+        template={template('hr-hire-order')}
+        values={{}}
+        company={company}
+        date="2026-09-22"
+      />,
+    );
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('GS');
+  });
+
   it('город печатается на трёх языках, а без переводов – только по-русски', () => {
     render(
       <DocumentSheet

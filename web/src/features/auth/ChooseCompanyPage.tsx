@@ -44,8 +44,17 @@ export default function ChooseCompanyPage() {
                   onClick={() => choose(company.id)}
                   style={{ '--card-accent': palette.accent } as React.CSSProperties}
                 >
-                  <span className={styles.mark} aria-hidden="true">
-                    {company.monogram}
+                  {/* Компанию выбирают глазами: логотип узнают быстрее,
+                      чем название. Букв хватает, пока логотипа нет. */}
+                  <span
+                    className={company.logo === undefined ? styles.mark : styles.markLogo}
+                    aria-hidden="true"
+                  >
+                    {company.logo === undefined ? (
+                      company.monogram
+                    ) : (
+                      <img className={styles.logo} src={company.logo} alt="" />
+                    )}
                   </span>
                   <span className={styles.text}>
                     <span className={styles.name}>{company.name}</span>

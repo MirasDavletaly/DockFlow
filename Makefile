@@ -77,9 +77,12 @@ check: lint vet vuln test tidy-check web-check check-catalog gen-check migrate-c
 # ── Сайт ─────────────────────────────────────────────────────────────────────
 
 .PHONY: web-check
-web-check: ## Типы, линтер и тесты сайта
-	@echo "не реализовано: сайт появится на шаге 0.10" >&2
-	@exit 1
+web-check: ## Типы, тесты и сборка сайта
+	cd $(WEB) && npm run typecheck && npm run test && npx vite build
+
+.PHONY: web-test
+web-test: ## Только тесты сайта
+	cd $(WEB) && npm run test
 
 # ── Каталог, генерация, миграции ─────────────────────────────────────────────
 

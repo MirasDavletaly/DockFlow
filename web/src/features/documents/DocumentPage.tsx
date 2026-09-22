@@ -169,7 +169,6 @@ export default function DocumentPage() {
                 company={sheetCompany}
                 date={record.createdAt}
                 number={record.number}
-                draft={isDraft}
                 {...(record.peopleSnapshot === undefined
                   ? {}
                   : { people: record.peopleSnapshot })}

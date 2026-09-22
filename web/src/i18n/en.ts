@@ -259,7 +259,6 @@ export const en: Dictionary = {
   },
 
   sheet: {
-    watermark: 'ЧЕРНОВИК',
     numberPlaceholder: '____',
     employer: 'Жұмыс беруші / Работодатель / Employer:',
     acquaintKk: 'Таныстым:',

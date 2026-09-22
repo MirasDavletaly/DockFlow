@@ -51,8 +51,6 @@ interface Props {
    * тогда в листе стоит прочерк, как на неподписанном бланке.
    */
   number?: string | null;
-  /** Ставить ли водяной знак «Черновик». */
-  draft?: boolean;
   /** Поле, на котором сейчас стоит курсор в форме: подсвечивается в листе. */
   activeFieldId?: string | null;
   /**
@@ -68,7 +66,6 @@ export function DocumentSheet({
   company,
   date,
   number = null,
-  draft = false,
   activeFieldId = null,
   people,
 }: Props) {
@@ -324,13 +321,11 @@ export function DocumentSheet({
     }
   }
 
+  // Водяного знака на листе нет: документ должен выглядеть ровно так, как
+  // он выйдет на бумагу. Что запись ещё черновик, видно рядом с листом –
+  // штампом состояния и пометкой на странице документа.
   return (
     <article className={styles.sheet} lang="ru">
-      {draft ? (
-        <div className={styles.watermark} aria-hidden="true">
-          {t.sheet.watermark}
-        </div>
-      ) : null}
       <div className={styles.content}>{template.body.map(renderBlock)}</div>
     </article>
   );

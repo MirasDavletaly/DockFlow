@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { blankTemplates } from '@/api/mock/templates-blank';
+import { templates } from '@/api/mock/templates';
 import { DocumentSheet } from './DocumentSheet';
 import { resetDb, updateDb } from '@/store/db';
 
@@ -498,5 +499,51 @@ describe('три поля на три языка', () => {
         expect(['employee', 'daysWords'], `${tpl.id}: ${field.id}`).toContain(field.id);
       }
     }
+  });
+});
+
+describe('одноязычные приказы', () => {
+  /**
+   * Приказ о командировке перевода пока не имеет, но бланк у него тот же:
+   * шапка на трёх языках, город и дата, «Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER»,
+   * «Б Ұ Й Ы Р А М Ы Н», подпись с чертой и лист ознакомления. Отличается
+   * только тело – оно в одну колонку, потому что текст есть лишь по-русски.
+   */
+  it('выходят на том же бланке, что и трёхъязычные', () => {
+    const trip = templates.find((tpl) => tpl.id === 'hr-trip-order');
+    expect(trip).toBeDefined();
+    if (trip === undefined) return;
+
+    render(
+      <DocumentSheet template={trip} values={{}} company={company} date="2026-09-22" />,
+    );
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK LIMITED»');
+    expect(text).toContain('Ақсай қ./г. Аксай / Aksai city');
+    expect(text).toContain('Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER');
+    expect(text).toContain('Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:');
+    expect(text).toContain('Жұмыс беруші / Работодатель / Employer:');
+    expect(text).toContain('Бас Директоры');
+    expect(text).toContain('General Director');
+    expect(text).toContain('Таныстым:');
+    expect(text).toContain('(Аты-Жөні / Ф.И.О. / full name) Қолы / Подпись / Signature');
+  });
+});
+
+describe('водяной знак', () => {
+  it('слова «ЧЕРНОВИК» на листе нет', () => {
+    // Лист должен выглядеть ровно так, как выйдет на бумагу. Что запись ещё
+    // черновик, видно рядом с листом – штампом состояния.
+    render(
+      <DocumentSheet
+        template={template('hr-hire-order')}
+        values={{}}
+        company={company}
+        date="2026-09-22"
+      />,
+    );
+
+    expect(container.textContent).not.toContain('ЧЕРНОВИК');
   });
 });

@@ -129,7 +129,7 @@ function migrate(raw: Partial<Database>): Database {
     // из хранилища. Если их там нет — подставляется исходный набор.
     companies:
       raw.companies !== undefined && raw.companies.length > 0
-        ? raw.companies.map((company) => withSeedLogo(company, base.companies))
+        ? raw.companies.map((company) => withSeedDefaults(company, base.companies))
         : base.companies,
     employees: raw.employees ?? base.employees,
     users: raw.users ?? [],
@@ -140,19 +140,37 @@ function migrate(raw: Partial<Database>): Database {
 }
 
 /**
- * Подставляет логотип компании из исходного набора.
+ * Дополняет карточку компании тем, чего в ней ещё нет.
  *
- * В браузере может лежать база, записанная до того, как логотипы появились.
- * Без этого человек, уже пользовавшийся системой, увидел бы документы с
- * буквами вместо знака компании, пока не переустановит всё заново.
+ * В браузере лежит база, записанная прежней версией сайта. Реквизитов,
+ * появившихся позже – казахского наименования, города на трёх языках,
+ * должности руководителя на казахском и английском, логотипа, – там нет
+ * вовсе. Без этого человек, уже пользовавшийся системой, видел бы документы
+ * без казахской строки в шапке и без «Бас директор» в подписи, пока не стёр
+ * бы всё и не завёл заново.
  *
- * Свой логотип, загруженный на странице реквизитов, не трогаем: он новее.
+ * Заполняется только отсутствующее. Пустая строка – это осознанно очищенный
+ * реквизит, и её мы не трогаем; правка на странице реквизитов тоже новее
+ * исходного набора и остаётся как есть.
  */
-function withSeedLogo(company: Company, seeded: Company[]): Company {
-  if (company.logo !== undefined) return company;
-
+function withSeedDefaults(company: Company, seeded: Company[]): Company {
   const original = seeded.find((c) => c.id === company.id);
-  return original?.logo === undefined ? company : { ...company, logo: original.logo };
+  if (original === undefined) return company;
+
+  const missing: Partial<Company> = {};
+  let changed = false;
+
+  for (const key of Object.keys(original) as Array<keyof Company>) {
+    if (company[key] === undefined && original[key] !== undefined) {
+      // Присваивание через Object.assign: по ключу-объединению TypeScript не
+      // сводит тип значения к типу поля, а приводить тут нечего – значение
+      // взято из карточки того же вида.
+      Object.assign(missing, { [key]: original[key] });
+      changed = true;
+    }
+  }
+
+  return changed ? { ...company, ...missing } : company;
 }
 
 export function saveDb(next: Database): void {

@@ -72,6 +72,72 @@ describe('трёхъязычная шапка', () => {
   });
 });
 
+describe('база, записанная прежней версией сайта', () => {
+  /**
+   * Ровно тот случай, который человек увидел у себя: компании заведены в
+   * браузере раньше, чем появились казахское наименование, город на трёх
+   * языках и должность руководителя на казахском и английском. Документ
+   * выходил без казахской строки в шапке и без «Бас директор» в подписи.
+   */
+  it('получает реквизиты, появившиеся позже', () => {
+    localStorage.clear();
+    resetDb();
+
+    const before = loadDb();
+    localStorage.setItem(
+      'docflow.local.db',
+      JSON.stringify({
+        ...before,
+        companies: before.companies.map(
+          ({
+            legalNameKk: _kk,
+            cityKk: _cityKk,
+            cityEn: _cityEn,
+            directorTitleKk: _titleKk,
+            directorTitleEn: _titleEn,
+            logo: _logo,
+            ...rest
+          }) => rest,
+        ),
+      }),
+    );
+
+    reloadDb();
+
+    for (const company of loadDb().companies) {
+      expect(company.legalNameKk, company.name).toBeTruthy();
+      expect(company.cityKk, company.name).toBeTruthy();
+      expect(company.cityEn, company.name).toBeTruthy();
+      expect(company.directorTitleKk, company.name).toBeTruthy();
+      expect(company.directorTitleEn, company.name).toBeTruthy();
+      expect(company.logo, company.name).toBeTruthy();
+    }
+  });
+
+  it('не трогает то, что человек поправил сам', () => {
+    localStorage.clear();
+    resetDb();
+
+    const before = loadDb();
+    localStorage.setItem(
+      'docflow.local.db',
+      JSON.stringify({
+        ...before,
+        companies: before.companies.map((c, i) =>
+          i === 0 ? { ...c, legalNameKk: 'СВОЁ НАИМЕНОВАНИЕ', cityKk: '' } : c,
+        ),
+      }),
+    );
+
+    reloadDb();
+
+    const first = loadDb().companies[0];
+    expect(first?.legalNameKk).toBe('СВОЁ НАИМЕНОВАНИЕ');
+    // Пустая строка – осознанно очищенный реквизит, а не отсутствующий.
+    expect(first?.cityKk).toBe('');
+  });
+});
+
 describe('база, записанная до появления логотипов', () => {
   it('получает логотип при чтении', () => {
     localStorage.clear();

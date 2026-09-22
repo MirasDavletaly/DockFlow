@@ -37,25 +37,6 @@
   z-index: 1;
 }
 
-/* ── Водяной знак ─────────────────────────────────────────────────────── */
-
-.watermark {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: grid;
-  place-items: center;
-
-  font-family: var(--font-ui);
-  font-size: 84pt;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: rgba(138, 109, 29, 0.07);
-  transform: rotate(-24deg);
-  user-select: none;
-  pointer-events: none;
-}
-
 /* ── Шапка: логотип и наименование на трёх языках ─────────────────────── */
 
 .letterhead {

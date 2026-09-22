@@ -358,7 +358,6 @@ export default function DocumentFormPage() {
               company={company}
               date={today}
               number={number.trim() === '' ? null : number.trim()}
-              draft
               activeFieldId={activeField}
             />
           </SheetViewport>

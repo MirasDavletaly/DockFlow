@@ -26,6 +26,7 @@ import {
   appendAudit,
   employeesOf,
   findCompanyIn,
+  findEmployeeIn,
   loadDb,
   newId,
   publicUser,
@@ -368,10 +369,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
         values: input.values,
-        // Снимок реквизитов делается при сохранении, а не у черновика:
-        // черновик ещё не выпущен и должен показывать текущие реквизиты.
+        // Снимок делается при сохранении, а не у черновика: черновик ещё не
+        // выпущен и должен показывать текущие реквизиты и текущий справочник.
         ...(input.status === 'saved' && company !== undefined
           ? { companySnapshot: { ...company } }
+          : {}),
+        ...(input.status === 'saved'
+          ? { peopleSnapshot: peopleReferencedBy(input.values, companyId ?? '') }
           : {}),
         authorId: existing?.authorId ?? user?.id ?? '',
         authorName: existing?.authorName ?? user?.displayName ?? '',
@@ -736,6 +740,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+/**
+ * Карточки людей, на которых ссылаются значения полей.
+ *
+ * Работник лежит в значениях идентификатором, и без снимка правка справочника
+ * переписала бы уже выпущенный документ (CLAUDE.md, п. 3.4). Вписанное руками
+ * ФИО идентификатором не является и в снимок не попадает: оно и так хранится
+ * текстом.
+ */
+function peopleReferencedBy(
+  values: Record<string, string>,
+  companyId: string,
+): Record<string, EmployeeBrief> {
+  const snapshot: Record<string, EmployeeBrief> = {};
+
+  for (const value of Object.values(values)) {
+    if (value === '' || value in snapshot) continue;
+
+    const person = findEmployeeIn(companyId, value);
+    if (person !== undefined) snapshot[value] = { ...person };
+  }
+
+  return snapshot;
 }
 
 /**

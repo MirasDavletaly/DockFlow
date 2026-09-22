@@ -16,7 +16,14 @@ import { formatDocumentDate, formatMoney } from '@/utils/format';
 
 import styles from './DocumentSheet.module.css';
 
-import type { Company, DocBlock, DocumentTemplate, FieldDef, Run } from '@/api/types';
+import type {
+  Company,
+  DocBlock,
+  DocumentTemplate,
+  EmployeeBrief,
+  FieldDef,
+  Run,
+} from '@/api/types';
 
 interface Props {
   template: DocumentTemplate;
@@ -33,6 +40,11 @@ interface Props {
   draft?: boolean;
   /** Поле, на котором сейчас стоит курсор в форме: подсвечивается в листе. */
   activeFieldId?: string | null;
+  /**
+   * Снимок карточек людей из сохранённого документа. Пока его нет (черновик),
+   * фамилии берутся из текущего справочника компании.
+   */
+  people?: Record<string, EmployeeBrief>;
 }
 
 export function DocumentSheet({
@@ -43,6 +55,7 @@ export function DocumentSheet({
   number = null,
   draft = false,
   activeFieldId = null,
+  people,
 }: Props) {
   const fieldsById = new Map<string, FieldDef>(template.fields.map((f) => [f.id, f]));
 
@@ -54,7 +67,7 @@ export function DocumentSheet({
         return <span key={key}>{run.text}</span>;
       }
 
-      const resolved = resolveField(run.field, values, company, fieldsById);
+      const resolved = resolveField(run.field, values, company, fieldsById, people);
       const isActive = activeFieldId !== null && run.field === activeFieldId;
 
       if (resolved === '') {
@@ -233,6 +246,7 @@ function resolveField(
   values: Record<string, string>,
   company: Company,
   fieldsById: Map<string, FieldDef>,
+  people: Record<string, EmployeeBrief> | undefined,
 ): string {
   if (fieldId.startsWith('@company.')) {
     const key = fieldId.slice('@company.'.length) as keyof Company;
@@ -245,11 +259,19 @@ function resolveField(
 
   const def = fieldsById.get(fieldId);
   switch (def?.kind) {
-    case 'employee':
+    case 'employee': {
       // В приказах работник стоит в родительном падеже: «принять Ахметова».
-      // Если ФИО вписано руками, а не выбрано из справочника компании, падежа
-      // у него нет — оно идёт в документ как есть. Форма об этом предупреждает.
-      return findEmployeeIn(company.id, raw)?.fullNameGenitive ?? raw;
+      //
+      // У сохранённого документа фамилия берётся из его собственного снимка:
+      // правка или удаление карточки в справочнике не должна менять уже
+      // выпущенный приказ (CLAUDE.md, п. 3.4). У черновика снимка нет, и он
+      // смотрит в текущий справочник компании.
+      //
+      // Если ФИО вписано руками, а не выбрано из справочника, падежа у него
+      // нет — оно идёт в документ как есть. Форма об этом предупреждает.
+      const person = people?.[raw] ?? findEmployeeIn(company.id, raw);
+      return person?.fullNameGenitive ?? raw;
+    }
     case 'counterparty':
       return findCounterparty(raw)?.name ?? '';
     case 'date':

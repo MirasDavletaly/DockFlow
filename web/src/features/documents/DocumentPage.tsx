@@ -170,6 +170,9 @@ export default function DocumentPage() {
                 date={record.createdAt}
                 number={record.number}
                 draft={isDraft}
+                {...(record.peopleSnapshot === undefined
+                  ? {}
+                  : { people: record.peopleSnapshot })}
               />
             </SheetViewport>
           </div>

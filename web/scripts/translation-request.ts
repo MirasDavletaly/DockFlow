@@ -33,25 +33,15 @@ function runsToText(runs: Run[]): string {
 /**
  * Текст, которому действительно нужен перевод.
  *
- * Слова «ПРИКАЗ» и «ПРИКАЗЫВАЮ» сюда не попадают: их казахский и английский
- * вид известен из ваших же приказов – «Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER» и
- * «Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:». Гонять
- * переводчика по тому, что уже переведено, незачем.
- *
- * Подписи и линии для росписи тоже не в счёт: они одинаковы во всех приказах.
+ * Берётся русская колонка таблиц документа. Слова «ПРИКАЗ» и «ПРИКАЗЫВАЮ»
+ * сюда не попадают: их казахский и английский вид известен из ваших же
+ * приказов и живёт в `api/mock/blank.ts`. Подпись и лист ознакомления тоже
+ * одинаковы во всех документах.
  */
 function phrasesOf(block: DocBlock): string[] {
-  switch (block.kind) {
-    case 'subtitle':
-    case 'paragraph':
-    case 'preamble':
-    case 'basis':
-      return [runsToText(block.runs)];
-    case 'numbered':
-      return block.items.map(runsToText);
-    default:
-      return [];
-  }
+  if (block.kind !== 'tri-table') return [];
+
+  return block.rows.flatMap((row) => (row.ru ?? []).map(runsToText));
 }
 
 function sectionTitle(id: string): string {
@@ -69,10 +59,12 @@ function render(pending: DocumentTemplate[]): string {
   );
   lines.push('');
   lines.push(
-    'Пять документов уже выходят на настоящем бланке группы в три колонки –',
-    'казахскую, русскую и английскую. Их текст взят из ваших же приказов.',
-    'Перечисленные ниже пока печатаются только по-русски: проверенного казахского',
-    'и английского текста для них нет, а выдумывать формулировки приказа нельзя.',
+    'Все документы выходят на одном бланке. У пяти из них тело идёт в три колонки –',
+    'казахскую, русскую и английскую: их текст взят из ваших же приказов.',
+    'Перечисленные ниже пока печатаются в одну колонку, по-русски: проверенного',
+    'казахского и английского текста для них нет, а выдумывать формулировки',
+    'приказа нельзя. Как только перевод вернётся, они станут трёхколоночными',
+    'без единой правки в коде.',
   );
   lines.push('');
   lines.push('## Как это заполнять');
@@ -135,7 +127,8 @@ function render(pending: DocumentTemplate[]): string {
   return lines.join('\n');
 }
 
-const pending = templates.filter((tpl) => tpl.layout === 'simple');
+// Документы, у которых заполнен только один язык: им и нужен перевод.
+const pending = templates.filter((tpl) => tpl.langs.length === 1);
 const out = resolve(import.meta.dirname, '..', '..', 'docs', 'translation-request.md');
 
 writeFileSync(out, render(pending), 'utf8');

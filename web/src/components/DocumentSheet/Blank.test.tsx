@@ -144,7 +144,7 @@ describe('шапка бланка', () => {
         date="2026-09-22"
       />,
     );
-    expect(container.textContent).toContain('Ақсай қ. / г. Аксай / Aksai city');
+    expect(container.textContent).toContain('Ақсай қ./г. Аксай / Aksai city');
 
     const { cityKk: _kk, cityEn: _en, ...plain } = company;
     render(
@@ -306,6 +306,132 @@ describe('все бланки', () => {
     for (const tpl of blankTemplates) {
       if (tpl.layout === 'order') expect(tpl.langs).toEqual(['kk', 'ru', 'en']);
       if (tpl.layout === 'poa') expect(tpl.langs).toEqual(['ru', 'en']);
+    }
+  });
+});
+
+describe('сверка с присланным приказом', () => {
+  /**
+   * Приказ «AL Nurdaulet KNT» – тот самый образец, по которому сделан бланк.
+   * Собираем его теми же данными и сверяем лист построчно: так видно, что
+   * оформление совпало не «примерно», а дословно.
+   */
+  const knt: Company = {
+    ...company,
+    name: 'Kazakhstan New Technologies LLP',
+    legalName:
+      'Партнерство с ограниченной ответственностью «Kazakhstan New Technologies LLP»',
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «KAZAKHSTAN NEW TECHNOLOGIES LLP»',
+    legalNameEn: 'KAZAKHSTAN NEW TECHNOLOGIES LLP',
+    city: 'Астана',
+    cityKk: 'Астана',
+    cityEn: 'Astana',
+    directorName: 'Ихсанова С.Т.',
+    directorNameEn: 'Sofiya Ikhsanova',
+    directorTitle: 'Генеральный директор',
+    directorTitleKk: 'Бас директор',
+    directorTitleEn: 'General director',
+  };
+
+  const lawyer: EmployeeBrief = {
+    id: 'c-test:e-9',
+    companyId: 'c-test',
+    fullName: 'Хамит Нурдаулет Алмазулы',
+    fullNameGenitive: 'Хамит Нурдаулет Алмазулы',
+    fullNameKk: 'Хамит Нурдаулет Алмазұлы',
+    fullNameKkDative: 'Хамит Нурдаулет Алмазұлы',
+    fullNameEn: 'Nurdaulet Khamit',
+    position: 'Юристу',
+    positionKk: 'Заңгерге',
+    positionEn: 'Lawyer',
+    unit: 'Юридический отдел',
+  };
+
+  it('лист повторяет образец строка за строкой', () => {
+    updateDb((db) => ({ ...db, employees: [lawyer] }));
+
+    render(
+      <DocumentSheet
+        template={template('hr-vacation-order')}
+        values={{
+          employee: lawyer.id,
+          position: 'Юристу',
+          positionKk: 'Заңгерге',
+          positionEn: 'Lawyer',
+          days: '24',
+          daysWords: 'двадцать четыре',
+          from: '2026-09-04',
+          to: '2026-09-27',
+          workedFrom: '2025-06-01',
+          workedTo: '2026-09-03',
+          applicationDate: '2026-09-02',
+        }}
+        company={knt}
+        date="2026-09-02"
+        number="07-26-ЛС"
+      />,
+    );
+
+    const text = (container.textContent ?? '').replace(/\s+/g, ' ');
+
+    // Шапка, город и дата, заголовок с номером.
+    expect(text).toContain('ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «KAZAKHSTAN NEW TECHNOLOGIES LLP»');
+    expect(text).toContain('Астана қ./г. Астана / Astana city');
+    expect(text).toContain('02.09.2026');
+    expect(text).toContain('Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER № 07-26-ЛС');
+    expect(text).toContain('Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:');
+
+    // Тело: русская колонка дословно как в образце.
+    expect(text).toContain(
+      'Предоставить ежегодный оплачиваемый трудовой отпуск Юристу Хамит Нурдаулет Алмазулы ' +
+        'продолжительностью 24 (двадцать четыре) календарных дней с 04.09.2026 по 27.09.2026 ' +
+        'включительно, за период работы с 01.06.2025 по 03.09.2026.',
+    );
+    expect(text).toContain(
+      'Бухгалтерии рассчитать отпускные дни за отработанный период работы в срок и в ' +
+        'порядке, установленные действующим законодательством Республики Казахстан.',
+    );
+    expect(text).toContain(
+      'Основание: личное заявление Хамит Нурдаулет Алмазулы от 02.09.2026 года.',
+    );
+
+    // Подпись и лист ознакомления.
+    expect(text).toContain('Жұмыс беруші / Работодатель / Employer:');
+    expect(text).toContain('Бас директор');
+    expect(text).toContain('Ихсанова С.Т. / Sofiya Ikhsanova');
+    expect(text).toContain('General director');
+    expect(text).toContain('Таныстым:');
+    expect(text).toContain('Ознакомлен:');
+    expect(text).toContain('I have read and understood');
+    expect(text).toContain('(Аты-Жөні / Ф.И.О. / full name) Қолы / Подпись / Signature');
+  });
+
+  it('блоки идут в том же порядке, что в образце', () => {
+    render(
+      <DocumentSheet
+        template={template('hr-vacation-order')}
+        values={{}}
+        company={knt}
+        date="2026-09-02"
+      />,
+    );
+
+    const text = (container.textContent ?? '').replace(/\s+/g, ' ');
+    const order = [
+      'ЖАУАПКЕРШІЛІГІ',
+      'Астана қ./г. Астана',
+      'Б Ұ Й Р Ы Қ',
+      '«Жыл сайынғы еңбек демалысын беру туралы»',
+      'Б Ұ Й Ы Р А М Ы Н',
+      'Жұмыс беруші',
+      'Таныстым:',
+    ];
+
+    let previous = -1;
+    for (const mark of order) {
+      const at = text.indexOf(mark);
+      expect(at, mark).toBeGreaterThan(previous);
+      previous = at;
     }
   });
 });

@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DocumentSheet } from './DocumentSheet';
+import { orderBody } from '@/api/mock/blank';
 import { resetDb, updateDb } from '@/store/db';
 
 import type { Company, DocumentTemplate, EmployeeBrief } from '@/api/types';
@@ -40,15 +41,15 @@ const template: DocumentTemplate = {
   profile: 'standard',
   purpose: 'Тестовый приказ.',
   reviewed: false,
-  layout: 'simple',
+  layout: 'order',
   langs: ['ru'],
   fields: [
     { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
   ],
-  body: [
-    { kind: 'paragraph', runs: [{ text: 'Принять ' }, { field: 'employee' }, { text: '.' }] },
-    { kind: 'signature' },
-  ],
+  body: orderBody({
+    subject: { ru: [[{ text: 'О приёме на работу', bold: true }]] },
+    body: { ru: [[{ text: 'Принять ' }, { field: 'employee' }, { text: '.' }]] },
+  }),
 };
 
 const person: EmployeeBrief = {
@@ -159,7 +160,7 @@ describe('снимок справочника', () => {
 });
 
 describe('подпись', () => {
-  it('стоит должность и фамилия, линии между ними нет', () => {
+  it('стоят должность, черта для росписи и фамилия', () => {
     render(
       <DocumentSheet
         template={template}
@@ -172,9 +173,11 @@ describe('подпись', () => {
     expect(container.textContent).toContain('Генеральный директор');
     expect(container.textContent).toContain('Хамит Нурдаулет Алмазович');
 
-    // Линию рисовал отдельный пустой элемент. Его быть не должно.
+    // Черта под подпись стоит на той же строке, что и русская должность –
+    // так в образце. Проверяем, что она вообще есть: это место для настоящей
+    // подписи руководителя.
     const signature = container.querySelector('[class*="signature"]');
     expect(signature).not.toBeNull();
-    expect(container.innerHTML).not.toContain('signatureLine');
+    expect(container.innerHTML).toContain('signatureLine');
   });
 });

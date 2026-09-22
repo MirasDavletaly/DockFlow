@@ -12,6 +12,7 @@
  * Поля, начинающиеся с «@», подставляются системой, а не человеком:
  * реквизиты компании, руководитель, город, дата и номер документа.
  */
+import { DOCUMENT_WORDS, documentBody, orderBody } from '@/api/mock/blank';
 import { blankTemplates } from '@/api/mock/templates-blank';
 
 import type { CatalogEntry, DocumentTemplate } from '@/api/types';
@@ -33,9 +34,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Служебная поездка работника с выдачей аванса на расходы.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -76,41 +78,34 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { afterField: 'from' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О направлении в командировку' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'О направлении в командировку', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Направить ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ', в командировку в г. ' },
-            { field: 'city' },
-            { text: ', ' },
-            { field: 'organization' },
-            { text: ', сроком на ' },
-            { field: 'days' },
-            { text: ' календарных дней с ' },
-            { field: 'from' },
-            { text: ' по ' },
-            { field: 'to' },
-            { text: '.' },
-          ],
-          [{ text: 'Цель командировки: ' }, { field: 'purpose' }, { text: '.' }],
-          [{ text: 'Бухгалтерии выдать аванс на командировочные расходы до даты выезда.' }],
-          [{ text: 'Работнику представить авансовый отчёт в установленный срок после возвращения.' }],
+                      { text: 'Направить ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: ', в командировку в г. ' },
+                      { field: 'city' },
+                      { text: ', ' },
+                      { field: 'organization' },
+                      { text: ', сроком на ' },
+                      { field: 'days' },
+                      { text: ' календарных дней с ' },
+                      { field: 'from' },
+                      { text: ' по ' },
+                      { field: 'to' },
+                      { text: '.' },
+                    ],
+                    [{ text: 'Цель командировки: ' }, { field: 'purpose' }, { text: '.' }],
+                    [{ text: 'Бухгалтерии выдать аванс на командировочные расходы до даты выезда.' }],
+                    [{ text: 'Работнику представить авансовый отчёт в установленный срок после возвращения.' }],
+          [{ text: 'Основание: ', bold: true }, { text: 'служебная записка руководителя подразделения' }]
         ],
       },
-      { kind: 'basis', runs: [{ text: 'служебная записка руководителя подразделения' }] },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -122,9 +117,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Перевод работника на другую должность или в другое подразделение.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -171,54 +167,42 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { notAfter: 'today' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О переводе на другую должность' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'О переводе на другую должность', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Перевести ' },
-            { field: 'employee' },
-            { text: ' с должности «' },
-            { field: 'positionFrom' },
-            { text: '» на должность «' },
-            { field: 'position' },
-            { text: '» в подразделение «' },
-            { field: 'unit' },
-            { text: '» с ' },
-            { field: 'transferDate' },
-            { text: '.' },
-          ],
-          [
-            { text: 'Установить должностной оклад в размере ' },
-            { field: 'salary' },
-            { text: ' тенге в месяц с даты перевода.' },
-          ],
-          [
-            {
-              text:
-                'Отделу кадров внести запись о переводе в трудовую книжку и личную карточку ' +
-                'работника, бухгалтерии – производить начисление по новому окладу.',
-            },
-          ],
+                      { text: 'Перевести ' },
+                      { field: 'employee' },
+                      { text: ' с должности «' },
+                      { field: 'positionFrom' },
+                      { text: '» на должность «' },
+                      { field: 'position' },
+                      { text: '» в подразделение «' },
+                      { field: 'unit' },
+                      { text: '» с ' },
+                      { field: 'transferDate' },
+                      { text: '.' },
+                    ],
+                    [
+                      { text: 'Установить должностной оклад в размере ' },
+                      { field: 'salary' },
+                      { text: ' тенге в месяц с даты перевода.' },
+                    ],
+                    [
+                      {
+                        text:
+                          'Отделу кадров внести запись о переводе в трудовую книжку и личную карточку ' +
+                          'работника, бухгалтерии – производить начисление по новому окладу.',
+                      },
+                    ],
+          [{ text: 'Основание: ', bold: true }, { text: 'дополнительное соглашение к трудовому договору от ' },
+                    { field: 'agreementDate' },
+                    { text: ' № ' },
+                    { field: 'agreementNumber' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [
-          { text: 'дополнительное соглашение к трудовому договору от ' },
-          { field: 'agreementDate' },
-          { text: ' № ' },
-          { field: 'agreementNumber' },
-        ],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -232,9 +216,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Изменение должностного оклада работника с определённой даты.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -272,52 +257,40 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { notAfter: 'today' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'Об изменении должностного оклада' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'Об изменении должностного оклада', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Установить ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ', должностной оклад в размере ' },
-            { field: 'salary' },
-            { text: ' тенге в месяц с ' },
-            { field: 'fromDate' },
-            { text: '.' },
-          ],
-          [
-            {
-              text:
-                'Бухгалтерии производить начисление заработной платы с учётом настоящего приказа.',
-            },
-          ],
-          [
-            {
-              text:
-                'Отделу кадров внести изменение в штатное расписание и личную карточку работника.',
-            },
-          ],
+                      { text: 'Установить ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: ', должностной оклад в размере ' },
+                      { field: 'salary' },
+                      { text: ' тенге в месяц с ' },
+                      { field: 'fromDate' },
+                      { text: '.' },
+                    ],
+                    [
+                      {
+                        text:
+                          'Бухгалтерии производить начисление заработной платы с учётом настоящего приказа.',
+                      },
+                    ],
+                    [
+                      {
+                        text:
+                          'Отделу кадров внести изменение в штатное расписание и личную карточку работника.',
+                      },
+                    ],
+          [{ text: 'Основание: ', bold: true }, { text: 'дополнительное соглашение к трудовому договору от ' },
+                    { field: 'agreementDate' },
+                    { text: ' № ' },
+                    { field: 'agreementNumber' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [
-          { text: 'дополнительное соглашение к трудовому договору от ' },
-          { field: 'agreementDate' },
-          { text: ' № ' },
-          { field: 'agreementNumber' },
-        ],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -329,9 +302,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Прекращение трудовых отношений с работником и окончательный расчёт.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -386,54 +360,42 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { notAfter: 'today' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О расторжении трудового договора' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'О расторжении трудового договора', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Расторгнуть трудовой договор с ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ' подразделения «' },
-            { field: 'unit' },
-            { text: '», ' },
-            { field: 'reason' },
-            { text: '. Последний рабочий день – ' },
-            { field: 'dismissDate' },
-            { text: '.' },
-          ],
-          [
-            { text: 'Бухгалтерии произвести окончательный расчёт, включая компенсацию за ' },
-            { field: 'compensationDays' },
-            { text: ' календарных дней неиспользованного трудового отпуска.' },
-          ],
-          [
-            {
-              text:
-                'Отделу кадров выдать работнику трудовую книжку и справку о заработной плате ' +
-                'в день увольнения.',
-            },
-          ],
+                      { text: 'Расторгнуть трудовой договор с ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: ' подразделения «' },
+                      { field: 'unit' },
+                      { text: '», ' },
+                      { field: 'reason' },
+                      { text: '. Последний рабочий день – ' },
+                      { field: 'dismissDate' },
+                      { text: '.' },
+                    ],
+                    [
+                      { text: 'Бухгалтерии произвести окончательный расчёт, включая компенсацию за ' },
+                      { field: 'compensationDays' },
+                      { text: ' календарных дней неиспользованного трудового отпуска.' },
+                    ],
+                    [
+                      {
+                        text:
+                          'Отделу кадров выдать работнику трудовую книжку и справку о заработной плате ' +
+                          'в день увольнения.',
+                      },
+                    ],
+          [{ text: 'Основание: ', bold: true }, { text: 'трудовой договор от ' },
+                    { field: 'contractDate' },
+                    { text: ' № ' },
+                    { field: 'contractNumber' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [
-          { text: 'трудовой договор от ' },
-          { field: 'contractDate' },
-          { text: ' № ' },
-          { field: 'contractNumber' },
-        ],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -445,9 +407,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Возвращение работника из отпуска с его согласия. Остаток переносится.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -487,41 +450,31 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { notAfter: 'today' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'Об отзыве из трудового отпуска' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'Об отзыве из трудового отпуска', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Отозвать ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ', из ежегодного оплачиваемого трудового отпуска с ' },
-            { field: 'recallDate' },
-            { text: '. Причина: ' },
-            { field: 'reason' },
-            { text: '.' },
-          ],
-          [
-            { text: 'Неиспользованную часть отпуска продолжительностью ' },
-            { field: 'remainingDays' },
-            { text: ' календарных дней предоставить в согласованный с работником срок.' },
-          ],
-          [{ text: 'Бухгалтерии произвести перерасчёт отпускных выплат.' }],
+                      { text: 'Отозвать ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: ', из ежегодного оплачиваемого трудового отпуска с ' },
+                      { field: 'recallDate' },
+                      { text: '. Причина: ' },
+                      { field: 'reason' },
+                      { text: '.' },
+                    ],
+                    [
+                      { text: 'Неиспользованную часть отпуска продолжительностью ' },
+                      { field: 'remainingDays' },
+                      { text: ' календарных дней предоставить в согласованный с работником срок.' },
+                    ],
+                    [{ text: 'Бухгалтерии произвести перерасчёт отпускных выплат.' }],
+          [{ text: 'Основание: ', bold: true }, { text: 'письменное согласие работника от ' }, { field: 'consentDate' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [{ text: 'письменное согласие работника от ' }, { field: 'consentDate' }],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -533,9 +486,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Премия, благодарность или иное поощрение работника за результат.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -574,41 +528,31 @@ const simpleTemplates: DocumentTemplate[] = [
         dateLimits: { notAfter: 'today' },
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О поощрении работника' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'О поощрении работника', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Поощрить ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: '. Вид поощрения: ' },
-            { field: 'kind' },
-            { text: '. За ' },
-            { field: 'reason' },
-            { text: '.' },
-          ],
-          [
-            { text: 'Бухгалтерии выплатить премию в размере ' },
-            { field: 'amount' },
-            { text: ' тенге в ближайшую выплату заработной платы.' },
-          ],
-          [{ text: 'Отделу кадров внести сведения о поощрении в личную карточку работника.' }],
+                      { text: 'Поощрить ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: '. Вид поощрения: ' },
+                      { field: 'kind' },
+                      { text: '. За ' },
+                      { field: 'reason' },
+                      { text: '.' },
+                    ],
+                    [
+                      { text: 'Бухгалтерии выплатить премию в размере ' },
+                      { field: 'amount' },
+                      { text: ' тенге в ближайшую выплату заработной платы.' },
+                    ],
+                    [{ text: 'Отделу кадров внести сведения о поощрении в личную карточку работника.' }],
+          [{ text: 'Основание: ', bold: true }, { text: 'представление руководителя подразделения от ' }, { field: 'memoDate' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [{ text: 'представление руководителя подразделения от ' }, { field: 'memoDate' }],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -621,9 +565,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Замечание или выговор работнику. Объяснительная обязательна до приказа.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -670,49 +615,37 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Основание',
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О применении дисциплинарного взыскания' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
+    body: orderBody({
+      subject: { ru: [[{ text: 'О применении дисциплинарного взыскания', bold: true }]] },
+      body: {
+        ru: [
           [
-            { text: 'Применить к ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ', дисциплинарное взыскание в виде «' },
-            { field: 'penalty' },
-            { text: '» за нарушение, допущенное ' },
-            { field: 'violationDate' },
-            { text: ': ' },
-            { field: 'violation' },
-            { text: '.' },
-          ],
-          [
-            {
-              text:
-                'Отделу кадров ознакомить работника с настоящим приказом под подпись ' +
-                'и приобщить приказ к материалам личного дела.',
-            },
-          ],
+                      { text: 'Применить к ' },
+                      { field: 'employee' },
+                      { text: ', ' },
+                      { field: 'position' },
+                      { text: ', дисциплинарное взыскание в виде «' },
+                      { field: 'penalty' },
+                      { text: '» за нарушение, допущенное ' },
+                      { field: 'violationDate' },
+                      { text: ': ' },
+                      { field: 'violation' },
+                      { text: '.' },
+                    ],
+                    [
+                      {
+                        text:
+                          'Отделу кадров ознакомить работника с настоящим приказом под подпись ' +
+                          'и приобщить приказ к материалам личного дела.',
+                      },
+                    ],
+          [{ text: 'Основание: ', bold: true }, { text: 'объяснительная работника от ' },
+                    { field: 'explanationDate' },
+                    { text: ', акт № ' },
+                    { field: 'actNumber' }]
         ],
       },
-      {
-        kind: 'basis',
-        runs: [
-          { text: 'объяснительная работника от ' },
-          { field: 'explanationDate' },
-          { text: ', акт № ' },
-          { field: 'actNumber' },
-        ],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
+    }),
   },
 
   {
@@ -724,9 +657,10 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Подтверждает место работы и должность. Выдаётся по заявлению работника.',
     reviewed: false,
-    // Одноязычный лист: проверенного казахского и английского текста
-    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
-    layout: 'simple',
+    // Бланк тот же, что у остальных документов, но тело выходит в одну
+    // колонку: проверенного казахского и английского текста ещё нет.
+    // Список фраз для переводчика – docs/translation-request.md.
+    layout: 'order',
     langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
@@ -749,32 +683,25 @@ const simpleTemplates: DocumentTemplate[] = [
         hint: 'Например: по месту требования, в банк, в посольство',
       },
     ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'СПРАВКА' },
-      {
-        kind: 'paragraph',
-        runs: [
-          { text: 'Выдана ' },
-          { field: 'employee' },
-          { text: ' в том, что он(а) работает в организации ' },
-          { field: '@company.legalName' },
-          { text: ' в должности «' },
-          { field: 'position' },
-          { text: '» в подразделении «' },
-          { field: 'unit' },
-          { text: '» с ' },
-          { field: 'startDate' },
-          { text: ' по настоящее время.' },
+    body: documentBody({
+      words: DOCUMENT_WORDS.certificate,
+      body: {
+        ru: [
+          [{ text: 'Выдана ' },
+                    { field: 'employee' },
+                    { text: ' в том, что он(а) работает в организации ' },
+                    { field: '@company.legalName' },
+                    { text: ' в должности «' },
+                    { field: 'position' },
+                    { text: '» в подразделении «' },
+                    { field: 'unit' },
+                    { text: '» с ' },
+                    { field: 'startDate' },
+                    { text: ' по настоящее время.' }],
+          [{ text: 'Справка выдана для предъявления: ' }, { field: 'destination' }, { text: '.' }]
         ],
       },
-      {
-        kind: 'paragraph',
-        runs: [{ text: 'Справка выдана для предъявления: ' }, { field: 'destination' }, { text: '.' }],
-      },
-      { kind: 'signature' },
-    ],
+    }),
   },
 ];
 

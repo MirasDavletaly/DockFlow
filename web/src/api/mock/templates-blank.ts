@@ -125,29 +125,32 @@ export const blankTemplates: DocumentTemplate[] = [
         rows: [
           {
             kk: [
+              [{ text: '«Жұмысқа қабылдау туралы»', bold: true }],
               [
                 {
                   text:
-                    '«Жұмысқа қабылдау туралы» ҚР Еңбек Кодексінің 2015 жылғы 23 қарашадағы ' +
-                    '№ 414-V ҚРЗ 34-бабына сәйкес',
+                    'ҚР Еңбек Кодексінің 2015 жылғы 23 қарашадағы № 414-V ҚРЗ ' +
+                    '34-бабына сәйкес',
                 },
               ],
             ],
             ru: [
+              [{ text: '«О приеме на работу»', bold: true }],
               [
                 {
                   text:
-                    '«О приеме на работу» В соответствии со статьей 34 Трудового Кодекса РК ' +
-                    'от 23 ноября 2015 г. № 414-V',
+                    'В соответствии со статьей 34 Трудового Кодекса РК от 23 ноября ' +
+                    '2015 г. № 414-V',
                 },
               ],
             ],
             en: [
+              [{ text: '“Employment order”', bold: true }],
               [
                 {
                   text:
-                    '“Employment order” In accordance with Article 34 of the Labor Code of the ' +
-                    'Republic of Kazakhstan dated November 23, 2015 No. 414-V',
+                    'In accordance with Article 34 of the Labor Code of the Republic ' +
+                    'of Kazakhstan dated November 23, 2015 No. 414-V',
                 },
               ],
             ],
@@ -342,31 +345,16 @@ export const blankTemplates: DocumentTemplate[] = [
         rows: [
           {
             kk: [
-              [
-                {
-                  text:
-                    '«Жыл сайынғы еңбек демалысын беру туралы» ' +
-                    `${LABOUR_CODE.kk} 87-бабының 2-тармағына сәйкес.`,
-                },
-              ],
+              [{ text: '«Жыл сайынғы еңбек демалысын беру туралы»', bold: true }],
+              [{ text: `${LABOUR_CODE.kk} 87-бабының 2-тармағына сәйкес.` }],
             ],
             ru: [
-              [
-                {
-                  text:
-                    '«О предоставлении ежегодного трудового отпуска» В соответствии с пунктом 2 ' +
-                    `статьи 87 ${LABOUR_CODE.ru}.`,
-                },
-              ],
+              [{ text: '«О предоставлении ежегодного трудового отпуска»', bold: true }],
+              [{ text: `В соответствии с пунктом 2 статьи 87 ${LABOUR_CODE.ru}.` }],
             ],
             en: [
-              [
-                {
-                  text:
-                    '“On annual vacation leave” In accordance with paragraph 2 of Article 87 ' +
-                    `${LABOUR_CODE.en}.`,
-                },
-              ],
+              [{ text: '“On annual vacation leave”', bold: true }],
+              [{ text: `In accordance with paragraph 2 of Article 87 ${LABOUR_CODE.en}.` }],
             ],
           },
         ],
@@ -564,32 +552,33 @@ export const blankTemplates: DocumentTemplate[] = [
         rows: [
           {
             kk: [
+              [{ text: '«Жалақысы сақталмайтын демалысын беру туралы»', bold: true }],
               [
                 {
                   text:
-                    '«Жалақысы сақталмайтын демалысын беру туралы» Қазақстан Республикасының ' +
-                    '2015 жылғы 23 қарашадағы № 414-V Еңбек кодексінің 87-бабының ' +
-                    '5-тармағының 1-тармақшасына сәйкес.',
+                    'Қазақстан Республикасының 2015 жылғы 23 қарашадағы № 414-V ' +
+                    'Еңбек кодексінің 87-бабының 5-тармағының 1-тармақшасына сәйкес.',
                 },
               ],
             ],
             ru: [
+              [{ text: '«О предоставлении отпуска без сохранения заработной платы»', bold: true }],
               [
                 {
                   text:
-                    '«О предоставлении отпуска без сохранения заработной платы» В соответствии ' +
-                    'с подпунктом 1, пункта 5 статьи 87 Трудового Кодекса РК от 23 ноября ' +
-                    '2015 года №414-V.',
+                    'В соответствии с подпунктом 1, пункта 5 статьи 87 Трудового ' +
+                    'Кодекса РК от 23 ноября 2015 года №414-V.',
                 },
               ],
             ],
             en: [
+              [{ text: '“On granting unpaid leave”', bold: true }],
               [
                 {
                   text:
-                    '“On granting unpaid leave” In accordance with subparagraph 1, paragraph 5 ' +
-                    'of Article 87 of the Labor Code of the Republic of Kazakhstan dated ' +
-                    'November 23, 2015 No. 414-V.',
+                    'In accordance with subparagraph 1, paragraph 5 of Article 87 of ' +
+                    'the Labor Code of the Republic of Kazakhstan dated November 23, ' +
+                    '2015 No. 414-V.',
                 },
               ],
             ],
@@ -747,8 +736,8 @@ export const blankTemplates: DocumentTemplate[] = [
         rows: [
           {
             kk: [
+              [{ text: '«Директорды тағайындау туралы»', bold: true }],
               [
-                { text: '«Директорды тағайындау туралы» ' },
                 { field: '@company.legalNameKk', fallback: '@company.legalName' },
                 { text: ' қатысушыларының ' },
                 { field: 'decisionDate' },
@@ -756,8 +745,9 @@ export const blankTemplates: DocumentTemplate[] = [
               ],
             ],
             ru: [
+              [{ text: '«О назначении Директора»', bold: true }],
               [
-                { text: '«О назначении Директора» На основании решения участников ' },
+                { text: 'На основании решения участников ' },
                 { field: '@company.name' },
                 { text: ' от ' },
                 { field: 'decisionDate' },
@@ -765,9 +755,9 @@ export const blankTemplates: DocumentTemplate[] = [
               ],
             ],
             en: [
+              [{ text: '“On the appointment of the Director”', bold: true }],
               [
-                { text: '“On the appointment of the Director” Based on the decision of the ' },
-                { text: 'participants of ' },
+                { text: 'Based on the decision of the participants of ' },
                 { field: '@company.legalNameEn', fallback: '@company.legalName' },
                 { text: ' dated ' },
                 { field: 'decisionDate' },

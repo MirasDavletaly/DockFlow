@@ -257,7 +257,11 @@ export const ru = {
   sheet: {
     watermark: 'ЧЕРНОВИК',
     numberPlaceholder: '____',
-    acquaintTitle: 'С приказом ознакомлен:',
+    employer: 'Жұмыс беруші / Работодатель / Employer:',
+    acquaintKk: 'Таныстым:',
+    acquaintEn: 'I have read and understood',
+    signatureCaption: '(Аты-Жөні / Ф.И.О. / full name) Қолы / Подпись / Signature',
+    acquaintTitle: 'Ознакомлен:',
     signatureName: 'подпись',
     basisTitle: 'Основание:',
   },

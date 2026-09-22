@@ -1,22 +1,32 @@
 /*
   Лист А4.
 
-  Размеры заданы в миллиметрах: строка документа на экране должна содержать
-  примерно столько же знаков, сколько на бумаге, иначе предпросмотр обманывает
-  и документ при печати «разъезжается».
+  Бланк повторяет настоящий документ группы – приказ «AL Nurdaulet KNT».
+  Все размеры сняты с самого файла:
+
+    поля страницы   720 твипов  = 12,7 мм
+    наименование    18 полукегл = 9 пт, полужирный, по центру
+    город и дата    24 полукегл = 12 пт, полужирный
+    заголовок       24 полукегл = 12 пт, полужирный, по центру
+    тело таблицы    20 полукегл = 10 пт, по выключке
+    ознакомление    18 полукегл = 9 пт, курсив
+
+  Шрифт – Times New Roman: им набран образец. Размеры в пунктах, а не в
+  пикселях: документ печатают, и на бумаге он должен совпасть с исходным.
 */
 
 .sheet {
   position: relative;
   width: var(--sheet-width);
   min-height: 297mm;
-  padding: var(--sheet-padding-y) var(--sheet-padding-x);
+  /* Поля страницы как в образце: 720 твипов со всех сторон. */
+  padding: 12.7mm;
   background: var(--paper);
   box-shadow: var(--shadow-sheet);
 
-  font-family: var(--font-doc);
-  font-size: 11.5pt;
-  line-height: 1.5;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 10pt;
+  line-height: 1.25;
   color: #000;
 }
 
@@ -38,262 +48,27 @@
   font-size: 84pt;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: rgba(138, 109, 29, 0.09);
-
-  transform: rotate(-32deg);
+  color: rgba(138, 109, 29, 0.07);
+  transform: rotate(-24deg);
   user-select: none;
   pointer-events: none;
 }
 
-/* ── Шапка компании ───────────────────────────────────────────────────── */
-
-.header {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1.5px solid #000;
-}
-
-.headerMark {
-  flex: none;
-  display: grid;
-  place-items: center;
-  min-width: 34px;
-  max-width: 28mm;
-}
-
-.headerLogo {
-  max-width: 28mm;
-  max-height: 14mm;
-  object-fit: contain;
-}
-
-.headerMonogram {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #fff;
-  background: var(--accent);
-}
-
-.headerText {
-  min-width: 0;
-}
-
-.headerName {
-  font-weight: 700;
-  font-size: 11pt;
-  line-height: 1.25;
-}
-
-.headerLine {
-  margin-top: 2px;
-  font-size: 8.5pt;
-  color: #333;
-}
-
-/* ── Номер и дата ─────────────────────────────────────────────────────── */
-
-.numberRow {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  font-size: 10.5pt;
-}
-
-.numberCell {
-  white-space: nowrap;
-}
-
-.numberValue {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.numberBlank {
-  color: #888;
-  letter-spacing: 0.06em;
-}
-
-.numberHighlight {
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-  border-radius: 1px;
-}
-
-/* ── Заголовки ────────────────────────────────────────────────────────── */
-
-.title {
-  margin: 20px 0 0;
-  font-size: 15pt;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.subtitle {
-  margin: 8px 0 0;
-  font-size: 11.5pt;
-  text-align: center;
-}
-
-.orderWord {
-  margin: 18px 0 8px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-/* ── Текст ────────────────────────────────────────────────────────────── */
-
-.preamble,
-.paragraph {
-  margin-top: 12px;
-  text-align: justify;
-  text-indent: 12mm;
-  hyphens: auto;
-}
-
-.preamble {
-  text-indent: 0;
-}
-
-.numbered {
-  margin: 0;
-  padding-left: 18px;
-  text-align: justify;
-}
-
-.numbered li {
-  margin-top: 8px;
-  padding-left: 4px;
-}
-
-.basis {
-  margin-top: 16px;
-}
-
-.basisLabel {
-  font-weight: 700;
-}
-
-/* ── Подстановка значений ─────────────────────────────────────────────── */
-
-/*
-  Незаполненное место — это пропуск на бланке, а не «ошибка». Показываем
-  подчёркиванием, как в бумажном бланке: человек сразу видит, сколько дыр
-  осталось в документе.
-*/
-.blank {
-  display: inline-block;
-  min-width: 34mm;
-  height: 1em;
-  vertical-align: -0.15em;
-  border-bottom: 1px solid #9aa3b1;
-}
-
-.blankActive,
-.valueActive {
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-  border-radius: 1px;
-}
-
-.blankActive {
-  border-bottom-color: var(--accent);
-}
-
-.value {
-  /* Подставленное значение ничем не выделяется: в документе оно такой же
-     текст, как и остальное. Выделение включается только для поля, на
-     котором стоит курсор в форме. */
-  background: none;
-}
-
-/* ── Подпись ──────────────────────────────────────────────────────────── */
-
-.signature {
-  display: flex;
-  align-items: baseline;
-  /* Должность слева, фамилия справа, между ними чистое место под подпись.
-     Линии здесь нет намеренно: её на бумаге оставляет ручка, а не бланк. */
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: 28px;
-}
-
-.signatureRole {
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.signatureName {
-  white-space: nowrap;
-}
-
-/* ── Ознакомление ─────────────────────────────────────────────────────── */
-
-.acquaint {
-  margin-top: 22px;
-  font-size: 10.5pt;
-}
-
-.acquaintTitle {
-  margin-bottom: 10px;
-}
-
-.acquaintRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  max-width: 90mm;
-}
-
-.acquaintLine {
-  flex: 1;
-  border-bottom: 1px solid #000;
-  transform: translateY(-2px);
-}
-
-.acquaintHint {
-  font-size: 8.5pt;
-  color: #555;
-  white-space: nowrap;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   Бланк приказа: три колонки
-
-   Повторяет настоящие документы группы. Приказ выпускается сразу на казахском
-   и русском — так требует закон о языках, — а английская колонка нужна там,
-   где есть иностранные участники и работники-нерезиденты. Колонки стоят рядом
-   в таблице без линий: в Word это layout-таблица, здесь — grid.
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ── Шапка: логотип и наименование на трёх языках ─────────────────────── */
 
 .letterhead {
-  display: flex;
-  align-items: center;
-  gap: 8mm;
-  padding-bottom: 3mm;
+  display: grid;
+  gap: 2mm;
 }
 
 .letterheadMark {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32mm;
+  display: flex;
+  align-items: center;
   min-height: 12mm;
 }
 
 .letterheadLogo {
-  max-width: 32mm;
+  max-width: 45mm;
   max-height: 16mm;
   object-fit: contain;
 }
@@ -312,26 +87,26 @@
 }
 
 .letterheadNames {
-  flex: 1;
-  min-width: 0;
   text-align: center;
 }
 
 .letterheadName {
-  font-size: 9.5pt;
+  font-size: 9pt;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
-/* Город слева, дата справа — одна строка под наименованием. */
+/* ── Город и дата ─────────────────────────────────────────────────────── */
+
 .placeDate {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8mm;
-  margin-top: 4mm;
-  font-size: 10pt;
+  margin-top: 5mm;
+
+  font-size: 12pt;
   font-weight: 700;
 }
 
@@ -343,23 +118,25 @@
   flex: none;
 }
 
-/* «Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER № 51-26-ЛС» */
+/* ── Заголовок и строка распоряжения ──────────────────────────────────── */
+
 .orderTitle {
   margin-top: 6mm;
-  font-size: 11pt;
+  font-size: 12pt;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.3;
   text-align: center;
 }
 
-/* «Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:» */
 .triLine {
   margin-top: 5mm;
-  font-size: 10.5pt;
+  font-size: 12pt;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.3;
   text-align: center;
 }
+
+/* ── Тело: колонки по числу языков, без линий ─────────────────────────── */
 
 .triTable {
   margin-top: 4mm;
@@ -367,16 +144,16 @@
 
 .triRow {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5mm;
+  /* Число колонок ставит компонент: три языка или один. */
+  gap: 4mm;
   align-items: start;
-  padding: 2mm 0;
+  padding: 1.5mm 0;
 }
 
 .triCell {
   min-width: 0;
-  font-size: 9pt;
-  line-height: 1.35;
+  font-size: 10pt;
+  line-height: 1.25;
   text-align: justify;
   hyphens: auto;
 }
@@ -385,54 +162,115 @@
   margin-top: 2mm;
 }
 
-/* Подпись: должность столбиком на трёх языках слева, ФИО справа. */
-.triSignature {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10mm;
-  margin-top: 10mm;
-  font-size: 10pt;
+/* ── Подпись ──────────────────────────────────────────────────────────── */
+
+.signature {
+  margin-top: 8mm;
+  font-size: 12pt;
   font-weight: 700;
 }
 
-.triSignatureRole {
-  line-height: 1.35;
+.signatureCaption {
+  margin-bottom: 5mm;
 }
 
-.triSignatureName {
+.signatureRoles {
+  display: grid;
+}
+
+.signatureRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4mm;
+  line-height: 1.3;
+}
+
+.signatureRole {
+  flex: none;
+}
+
+/* Черта, на которой расписывается руководитель. В образце она есть: это
+   место для настоящей подписи, а не незаполненный реквизит. */
+.signatureLine {
+  flex: 1;
+  min-width: 30mm;
+  border-bottom: 1px solid #000;
+  transform: translateY(-1mm);
+}
+
+.signatureName {
   flex: none;
   white-space: nowrap;
 }
 
-/* Лист ознакомления. Линия здесь нужна: на ней расписывается работник. */
-.triAcquaint {
-  margin-top: 12mm;
+/* ── Лист ознакомления ────────────────────────────────────────────────── */
+
+.acquaint {
+  margin-top: 14mm;
   font-size: 9pt;
+  font-style: italic;
   line-height: 1.35;
 }
 
-.triAcquaintTitle {
-  margin-bottom: 6mm;
-}
-
-.triAcquaintLine {
+.acquaintLine {
   height: 0;
+  max-width: 95mm;
+  margin: 3mm 0 1mm;
   border-bottom: 1px solid #000;
-  max-width: 90mm;
-}
-
-.triAcquaintHint {
-  margin-top: 1mm;
-  font-size: 7.5pt;
 }
 
 /* «Исполнен»: кто подготовил документ. Мелко, внизу листа. */
 .executor {
-  margin-top: 10mm;
+  margin-top: 8mm;
   font-size: 8pt;
   line-height: 1.35;
-  color: #333;
+}
+
+/* ── Подстановки ──────────────────────────────────────────────────────── */
+
+.value {
+  /* Значение ничем не выделяется: на бумаге оно неотличимо от текста. */
+  white-space: pre-wrap;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+/* Поле, на котором стоит курсор в форме. Только на экране: при печати
+   подсветка снимается (styles/print.css). */
+.valueActive {
+  white-space: pre-wrap;
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-line);
+}
+
+/* Незаполненное поле: пропуск постоянной ширины, как на бланке. */
+.blank {
+  display: inline-block;
+  min-width: 26mm;
+  border-bottom: 1px solid #000;
+  transform: translateY(-1mm);
+}
+
+.blankActive {
+  border-bottom-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ── Номер документа ──────────────────────────────────────────────────── */
+
+.numberValue {
+  font-weight: 700;
+}
+
+.numberBlank {
+  letter-spacing: 0.05em;
+}
+
+.numberHighlight {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-line);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -482,18 +320,17 @@
 .biCell {
   min-width: 0;
   font-size: 9.5pt;
-  line-height: 1.4;
+  line-height: 1.35;
   text-align: justify;
   hyphens: auto;
 }
 
-/* Подпись под доверенностью: черта и подписант по центру листа. */
 .poaSignature {
   margin-top: 14mm;
   text-align: center;
-  font-size: 10pt;
+  font-size: 11pt;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .poaSignatureLine {
@@ -501,12 +338,4 @@
   margin: 0 auto 2mm;
   max-width: 80mm;
   border-bottom: 1px solid #000;
-}
-
-.poaSignatureCompany {
-  font-weight: 700;
-}
-
-.poaSignatureName {
-  font-weight: 700;
 }

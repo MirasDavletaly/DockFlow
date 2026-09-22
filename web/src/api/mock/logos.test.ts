@@ -1,5 +1,5 @@
 /**
- * Логотипы компаний.
+ * Бланк компании: логотип и наименование на трёх языках.
  *
  * Проверяется то, что легко перепутать и трудно заметить: логотип есть у
  * каждой компании, и он у каждой свой. Чужой логотип в шапке приказа – это
@@ -32,6 +32,43 @@ describe('логотипы компаний', () => {
       'c-greensparklimited',
       'c-effegi',
     ]);
+  });
+});
+
+describe('трёхъязычная шапка', () => {
+  // Образец – бланк ТОО «Algoritmi KZ»: логотип и наименование на казахском,
+  // русском и английском. Так должно быть у каждой компании: приказ без
+  // казахской строки в шапке – это документ не по форме.
+  const REQUIRED = [
+    'legalNameKk',
+    'legalNameEn',
+    'cityKk',
+    'cityEn',
+    'directorTitleKk',
+    'directorTitleEn',
+  ] as const;
+
+  it('заполнена у всех семи компаний', () => {
+    for (const company of companies) {
+      for (const key of REQUIRED) {
+        expect(company[key], `${company.name}: ${key}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('наименование на трёх языках у каждой компании разное', () => {
+    for (const company of companies) {
+      expect(company.legalNameKk, company.name).not.toBe(company.legalName);
+      expect(company.legalNameEn, company.name).not.toBe(company.legalName);
+    }
+  });
+
+  it('форма собственности записана так же, как в присланных бланках', () => {
+    for (const company of companies) {
+      expect(company.legalNameKk, company.name).toContain(
+        'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК',
+      );
+    }
   });
 });
 

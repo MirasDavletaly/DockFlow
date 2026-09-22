@@ -33,12 +33,22 @@ export const companies: Company[] = [
     id: 'c-exlumen',
     name: 'ТОО «ExLumen»',
     legalName: 'Товарищество с ограниченной ответственностью «ExLumen»',
+    // Форма собственности записана так же, как в присланных бланках ТОО.
+    // Само наименование – имя собственное и не переводится.
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «ExLumen»',
+    legalNameEn: '«ExLumen» LLP',
     bin: '251040008414',
     kbe: '17',
     postalCode: '060011',
     address: 'Республика Казахстан, город Атырау, улица Бактыгерей Кулманов, строение 113В',
     directorName: 'Хамит Нурдаулет Алмазович',
+    // Латиница взята из карточки ТОО «EFFEGI EURASIA»: там тот же человек
+    // записан как «Nurdaulet Khamit». Написание ФИО в двух компаниях
+    // расходится – docs/questions.md, Q23.
+    directorNameEn: 'Nurdaulet Khamit',
     directorTitle: 'Генеральный директор',
+    directorTitleKk: 'Бас директор',
+    directorTitleEn: 'General Director',
     // Падежи заполнены по общему правилу и ждут подтверждения человека:
     // ошибка здесь попадает прямо в текст приказа (docs/questions.md, Q18).
     directorTitleGenitive: 'Генерального директора',
@@ -47,6 +57,8 @@ export const companies: Company[] = [
     // но это предположение, а не реквизит. Тоже Q18.
     directorBasis: 'Устава',
     city: 'Атырау',
+    cityKk: 'Атырау',
+    cityEn: 'Atyrau',
     // Фирменный цвет не прислан: пока стоит цвет самой системы.
     accent: '#2f3b8f',
     monogram: 'EL',
@@ -140,6 +152,10 @@ export const companies: Company[] = [
     // расхождение не решено (docs/questions.md, Q26), в бланк идёт одно
     // значение отсюда, а не выдуманная тройка.
     city: 'Атырау',
+    // Город взят из карточки, а не из присланного приказа: там стоит
+    // Астана. Какой верен – docs/questions.md, Q26.
+    cityKk: 'Атырау',
+    cityEn: 'Atyrau',
     // Фирменный цвет и логотип не присланы.
     accent: '#8a4b1f',
     monogram: 'AK',
@@ -164,6 +180,8 @@ export const companies: Company[] = [
     // Полное наименование прислано в кратком виде «ТОО NOVALLIANCE».
     // Развёрнуто по общему образцу и ждёт сверки с уставом (Q21).
     legalName: 'Товарищество с ограниченной ответственностью «NOVALLIANCE»',
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «NOVALLIANCE»',
+    legalNameEn: '«NOVALLIANCE» LLP',
     bin: '170840033117',
     postalCode: '090302',
     address:
@@ -176,11 +194,15 @@ export const companies: Company[] = [
     // и доверенности инициалы вместо имени не годятся — Q21.
     directorName: 'Султангалиева А.Т.',
     directorTitle: 'Директор',
+    directorTitleKk: 'Директор',
+    directorTitleEn: 'Director',
     directorTitleGenitive: 'Директора',
     directorNameGenitive: 'Султангалиевой А.Т.',
     // Основание полномочий не прислано; «Устава» — обычное для ТОО. Q21.
     directorBasis: 'Устава',
     city: 'Аксай',
+    cityKk: 'Ақсай',
+    cityEn: 'Aksai',
     // Цвет снят с логотипа на глаз по картинке, точного значения нет:
     // ждёт исходник логотипа (Q21).
     accent: '#3f4e9e',
@@ -219,6 +241,8 @@ export const companies: Company[] = [
     phone: '+7 (7172) 73-49-72',
     email: 'info@green-spark.net',
     directorName: 'Танатаров Амир Маратович',
+    // Латиница из приказа «Приказ EA Aliya»: «Танатаров А. М. / Amir Tanatarov».
+    directorNameEn: 'Amir Tanatarov',
     directorTitle: 'Генеральный директор',
     directorTitleGenitive: 'Генерального директора',
     // Падеж вписан по общему правилу, ждёт подтверждения — Q22.
@@ -230,6 +254,10 @@ export const companies: Company[] = [
     // Здесь Жанибек, в присланном приказе «Приказ EA Aliya» — Аксай.
     // Расхождение не решено (docs/questions.md, Q26).
     city: 'Жанибек',
+    // Здесь Жанибек, в присланном приказе «Приказ EA Aliya» – Аксай.
+    // Расхождение не решено (docs/questions.md, Q26).
+    cityKk: 'Жәнібек',
+    cityEn: 'Zhanibek',
     // Фирменный цвет и логотип не присланы.
     accent: '#1f6b4a',
     monogram: 'GS',
@@ -301,6 +329,7 @@ export const companies: Company[] = [
     id: 'c-effegi',
     name: 'ТОО «EFFEGI EURASIA»',
     legalName: 'Товарищество с ограниченной ответственностью «EFFEGI EURASIA»',
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «EFFEGI EURASIA»',
     legalNameEn: '«EFFEGI EURASIA» LLP',
     bin: '250740021286',
     postalCode: '090300',
@@ -314,6 +343,8 @@ export const companies: Company[] = [
     directorName: 'Нурдаулет Хамит',
     directorNameEn: 'Nurdaulet Khamit',
     directorTitle: 'Генеральный директор',
+    directorTitleKk: 'Бас директор',
+    directorTitleEn: 'General Director',
     directorTitleGenitive: 'Генерального директора',
     // Тот же человек руководит ТОО «ExLumen», но там он записан как
     // «Хамит Нурдаулет Алмазович» — фамилия первой и с отчеством. Падеж
@@ -322,6 +353,8 @@ export const companies: Company[] = [
     // Основание полномочий не прислано. Q23.
     directorBasis: 'Устава',
     city: 'Аксай',
+    cityKk: 'Ақсай',
+    cityEn: 'Aksai',
     // Фирменный цвет и логотип не присланы.
     accent: '#6b2f3b',
     monogram: 'EE',

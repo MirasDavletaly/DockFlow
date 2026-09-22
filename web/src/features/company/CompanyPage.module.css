@@ -234,3 +234,89 @@
     gap: var(--space-2);
   }
 }
+
+/* ── Логотип на бланке ────────────────────────────────────────────────── */
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.logo {
+  max-width: 180px;
+  max-height: 64px;
+  object-fit: contain;
+}
+
+.logoCaption {
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+}
+
+.logoEdit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.logoBox {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 180px;
+  min-height: 64px;
+  padding: var(--space-3);
+  background: var(--paper);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.logoMonogram {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--ink-900);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+}
+
+.logoText {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.logoActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.fileInput {
+  display: none;
+}
+
+.linkButton {
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--state-rejected);
+}

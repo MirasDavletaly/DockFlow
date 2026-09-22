@@ -12,198 +12,18 @@
  * Поля, начинающиеся с «@», подставляются системой, а не человеком:
  * реквизиты компании, руководитель, город, дата и номер документа.
  */
+import { blankTemplates } from '@/api/mock/templates-blank';
+
 import type { CatalogEntry, DocumentTemplate } from '@/api/types';
 
-export const templates: DocumentTemplate[] = [
-  {
-    id: 'hr-hire-order',
-    title: 'Приказ о приёме на работу',
-    sectionId: 'hr',
-    subsectionId: 'hr-personnel-orders',
-    series: 'К',
-    profile: 'standard',
-    purpose: 'Оформляет выход нового работника. Основание – подписанный трудовой договор.',
-    reviewed: false,
-    fields: [
-      {
-        id: 'employee',
-        kind: 'employee',
-        label: 'Работник',
-        required: true,
-        group: 'Работник',
-        hint: 'Должность и подразделение подставятся из справочника',
-      },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
-      { id: 'unit', kind: 'text', label: 'Подразделение', required: true, group: 'Работник' },
-      {
-        id: 'startDate',
-        kind: 'date',
-        label: 'Дата приёма',
-        required: true,
-        group: 'Условия труда',
-        // Приказ о приёме задним числом недействителен: работник вышел на
-        // работу без оформления, и это нарушение, а не опечатка.
-        dateLimits: { notBefore: 'today' },
-      },
-      {
-        id: 'salary',
-        kind: 'money',
-        label: 'Должностной оклад',
-        required: true,
-        unit: '₸',
-        group: 'Условия труда',
-        hint: 'В месяц, до удержаний',
-      },
-      {
-        id: 'probation',
-        kind: 'select',
-        label: 'Испытательный срок',
-        required: true,
-        group: 'Условия труда',
-        options: ['без испытательного срока', 'один месяц', 'два месяца', 'три месяца'],
-      },
-      {
-        id: 'contractNumber',
-        kind: 'text',
-        label: 'Номер трудового договора',
-        required: true,
-        group: 'Основание',
-      },
-      {
-        id: 'contractDate',
-        kind: 'date',
-        label: 'Дата трудового договора',
-        required: true,
-        group: 'Основание',
-        // Договор уже подписан: он основание приказа, а не следствие.
-        dateLimits: { notAfter: 'today' },
-      },
-    ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О приёме на работу' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
-          [
-            { text: 'Принять ' },
-            { field: 'employee' },
-            { text: ' на должность «' },
-            { field: 'position' },
-            { text: '» в подразделение «' },
-            { field: 'unit' },
-            { text: '» с ' },
-            { field: 'startDate' },
-            { text: '.' },
-          ],
-          [
-            { text: 'Установить должностной оклад в размере ' },
-            { field: 'salary' },
-            { text: ' тенге в месяц.' },
-          ],
-          [{ text: 'Установить испытательный срок: ' }, { field: 'probation' }, { text: '.' }],
-          [
-            {
-              text:
-                'Отделу кадров ознакомить работника с настоящим приказом под подпись, ' +
-                'бухгалтерии – произвести начисление заработной платы с даты приёма.',
-            },
-          ],
-        ],
-      },
-      {
-        kind: 'basis',
-        runs: [
-          { text: 'трудовой договор от ' },
-          { field: 'contractDate' },
-          { text: ' № ' },
-          { field: 'contractNumber' },
-        ],
-      },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
-  },
-
-  {
-    id: 'hr-vacation-order',
-    title: 'Приказ о предоставлении отпуска',
-    sectionId: 'hr',
-    subsectionId: 'hr-personnel-orders',
-    series: 'К',
-    profile: 'standard',
-    purpose: 'Ежегодный оплачиваемый трудовой отпуск по заявлению работника.',
-    reviewed: false,
-    fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
-      {
-        id: 'days',
-        kind: 'number',
-        label: 'Продолжительность',
-        required: true,
-        unit: 'кал. дней',
-        group: 'Период отпуска',
-      },
-      {
-        id: 'from',
-        kind: 'date',
-        label: 'Первый день отпуска',
-        required: true,
-        group: 'Период отпуска',
-        dateLimits: { notBefore: 'today' },
-      },
-      {
-        id: 'to',
-        kind: 'date',
-        label: 'Последний день отпуска',
-        required: true,
-        group: 'Период отпуска',
-        dateLimits: { afterField: 'from' },
-      },
-      {
-        id: 'applicationDate',
-        kind: 'date',
-        label: 'Дата заявления работника',
-        required: true,
-        group: 'Основание',
-        dateLimits: { notAfter: 'today' },
-      },
-    ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ПРИКАЗ' },
-      { kind: 'subtitle', runs: [{ text: 'О предоставлении ежегодного оплачиваемого трудового отпуска' }] },
-      { kind: 'order-word', text: 'ПРИКАЗЫВАЮ:' },
-      {
-        kind: 'numbered',
-        items: [
-          [
-            { text: 'Предоставить ' },
-            { field: 'employee' },
-            { text: ', ' },
-            { field: 'position' },
-            { text: ', ежегодный оплачиваемый трудовой отпуск продолжительностью ' },
-            { field: 'days' },
-            { text: ' календарных дней с ' },
-            { field: 'from' },
-            { text: ' по ' },
-            { field: 'to' },
-            { text: '.' },
-          ],
-          [{ text: 'Бухгалтерии произвести расчёт отпускных выплат в установленный срок.' }],
-        ],
-      },
-      { kind: 'basis', runs: [{ text: 'заявление работника от ' }, { field: 'applicationDate' }] },
-      { kind: 'signature' },
-      { kind: 'acquaint' },
-    ],
-  },
-
+/**
+ * Шаблоны на простом одноязычном листе.
+ *
+ * Документы, для которых ещё нет проверенного казахского и английского
+ * текста. Как только перевод придёт, они переезжают в `templates-blank.ts`
+ * на настоящий бланк группы – тот же, что у приказа о приёме на работу.
+ */
+const simpleTemplates: DocumentTemplate[] = [
   {
     id: 'hr-trip-order',
     title: 'Приказ о направлении в командировку',
@@ -213,6 +33,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Служебная поездка работника с выдачей аванса на расходы.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -298,6 +122,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Перевод работника на другую должность или в другое подразделение.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       {
@@ -404,6 +232,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Изменение должностного оклада работника с определённой даты.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -497,6 +329,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Прекращение трудовых отношений с работником и окончательный расчёт.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -609,6 +445,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Возвращение работника из отпуска с его согласия. Остаток переносится.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -693,6 +533,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Премия, благодарность или иное поощрение работника за результат.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -777,6 +621,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Замечание или выговор работнику. Объяснительная обязательна до приказа.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -868,100 +716,6 @@ export const templates: DocumentTemplate[] = [
   },
 
   {
-    id: 'legal-power-single',
-    title: 'Доверенность разовая',
-    sectionId: 'legal',
-    subsectionId: 'legal-powers',
-    series: 'Дов',
-    profile: 'standard',
-    purpose: 'Разовое полномочие работнику: получить товар, подписать акт, представить документы.',
-    reviewed: false,
-    fields: [
-      { id: 'employee', kind: 'employee', label: 'Доверенное лицо', required: true, group: 'Кому' },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Кому' },
-      {
-        id: 'counterparty',
-        kind: 'counterparty',
-        label: 'Организация',
-        required: true,
-        group: 'Полномочия',
-        hint: 'У кого получить или с кем подписать',
-      },
-      {
-        id: 'subject',
-        kind: 'textarea',
-        label: 'Что поручается',
-        required: true,
-        group: 'Полномочия',
-        hint: 'Например: получить товарно-материальные ценности по накладной',
-      },
-      {
-        id: 'basis',
-        kind: 'text',
-        label: 'Действует на основании',
-        required: true,
-        group: 'Кто выдаёт',
-        hint: 'Учредительный документ или доверенность, по которой действует руководитель',
-        // Подставляется из реквизитов компании. У компаний, чей учредительный
-        // документ ещё не прислан, реквизит пуст – тогда человек вписывает
-        // его сам, а в доверенности не остаётся пропуска.
-        defaultFrom: '@company.directorBasis',
-      },
-      {
-        id: 'until',
-        kind: 'date',
-        label: 'Действительна до',
-        required: true,
-        group: 'Срок',
-        dateLimits: { notBefore: 'today' },
-      },
-    ],
-    body: [
-      { kind: 'company-header' },
-      { kind: 'doc-number' },
-      { kind: 'title', text: 'ДОВЕРЕННОСТЬ' },
-      {
-        kind: 'preamble',
-        runs: [
-          { field: '@company.legalName' },
-          { text: ', в лице ' },
-          { field: '@company.directorTitleGenitive' },
-          { text: ' ' },
-          { field: '@company.directorNameGenitive' },
-          { text: ', действующего на основании ' },
-          { field: 'basis' },
-          { text: ', настоящей доверенностью уполномочивает' },
-        ],
-      },
-      {
-        kind: 'paragraph',
-        runs: [
-          // Должность оставлена в кавычках и в именительном падеже: склонять
-          // её вместе с фамилией пришлось бы программно, а это даёт ошибки
-          // прямо в тексте документа.
-          { field: 'employee' },
-          { text: ', занимающего должность «' },
-          { field: 'position' },
-          { text: '», совершить следующие действия: ' },
-          { field: 'subject' },
-          { text: ' в отношениях с организацией ' },
-          { field: 'counterparty' },
-          { text: '.' },
-        ],
-      },
-      {
-        kind: 'paragraph',
-        runs: [
-          { text: 'Доверенность выдана без права передоверия и действительна до ' },
-          { field: 'until' },
-          { text: ' включительно.' },
-        ],
-      },
-      { kind: 'signature' },
-    ],
-  },
-
-  {
     id: 'hr-work-certificate',
     title: 'Справка с места работы',
     sectionId: 'hr',
@@ -970,6 +724,10 @@ export const templates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Подтверждает место работы и должность. Выдаётся по заявлению работника.',
     reviewed: false,
+    // Одноязычный лист: проверенного казахского и английского текста
+    // для этого документа ещё нет. Перевод – в docs/questions.md, Q27.
+    layout: 'simple',
+    langs: ['ru'],
     fields: [
       { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
@@ -1020,6 +778,14 @@ export const templates: DocumentTemplate[] = [
   },
 ];
 
+/**
+ * Все шаблоны системы.
+ *
+ * Сначала те, что стоят на настоящем бланке группы: их человек открывает
+ * чаще, и именно они показывают, как документ выглядит на бумаге.
+ */
+export const templates: DocumentTemplate[] = [...blankTemplates, ...simpleTemplates];
+
 export function findTemplate(id: string): DocumentTemplate | undefined {
   return templates.find((tpl) => tpl.id === id);
 }
@@ -1050,14 +816,12 @@ const soon: Array<[string, string, string]> = [
   ['Претензия', 'legal', 'legal-claims'],
   ['Ответ на претензию', 'legal', 'legal-claims'],
   ['Исковое заявление', 'legal', 'legal-claims'],
-  ['Генеральная доверенность', 'legal', 'legal-powers'],
   ['Приказ об отзыве доверенности', 'legal', 'legal-powers'],
   ['Гарантийное письмо', 'legal', 'legal-other'],
   ['Официальное письмо контрагенту', 'legal', 'legal-other'],
 
   ['Решение единственного участника', 'corporate', 'corporate-decisions'],
   ['Протокол общего собрания участников', 'corporate', 'corporate-decisions'],
-  ['О вступлении в должность директора', 'corporate', 'corporate-orders'],
   ['О создании комиссии', 'corporate', 'corporate-orders'],
   ['О праве подписи документов', 'corporate', 'corporate-orders'],
 

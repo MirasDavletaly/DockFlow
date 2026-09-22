@@ -9,7 +9,7 @@
  * сохранения (CLAUDE.md, п. 3.4). Шаблоны, наоборот, всегда показывают
  * текущие значения — это и просил человек.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { can } from '@/access/policy';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -21,6 +21,9 @@ import { formatShortDate } from '@/utils/format';
 import styles from './CompanyPage.module.css';
 
 import type { Company, HeadOffice } from '@/api/types';
+
+/** Логотип лежит в хранилище строкой data:URL, поэтому размер ограничен. */
+const MAX_LOGO_BYTES = 512 * 1024;
 
 export default function CompanyPage() {
   const { company, user, saveCompany } = useSession();
@@ -90,8 +93,16 @@ export default function CompanyPage() {
 function ReadView({ company }: { company: Company }) {
   return (
     <>
+      {company.logo === undefined ? null : (
+        <div className={styles.logoRow}>
+          <img className={styles.logo} src={company.logo} alt="" />
+          <span className={styles.logoCaption}>{t.company.logo}</span>
+        </div>
+      )}
+
       <dl className={styles.requisites}>
         <Requisite label={t.company.legalName} value={company.legalName} />
+        <Requisite label={t.company.legalNameKk} value={company.legalNameKk} />
         <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />
         <Requisite label={t.company.bin} value={company.bin} mono />
         <Requisite label={t.company.kbe} value={company.kbe} mono />
@@ -105,6 +116,8 @@ function ReadView({ company }: { company: Company }) {
           value={`${company.directorTitle}, ${company.directorName}`}
         />
         <Requisite label={t.company.directorEn} value={company.directorNameEn} />
+        <Requisite label={t.company.directorTitleKk} value={company.directorTitleKk} />
+        <Requisite label={t.company.directorTitleEn} value={company.directorTitleEn} />
         <Requisite label={t.company.basis} value={company.directorBasis} />
         <Requisite label={t.company.bank} value={company.bank?.name} />
         <Requisite label={t.company.bik} value={company.bank?.bik} mono />
@@ -158,6 +171,28 @@ interface EditProps {
  */
 function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
   const set = (patch: Partial<Company>) => onChange({ ...draft, ...patch });
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  function pickLogo(file: File | undefined) {
+    setLogoError(null);
+    if (file === undefined) return;
+
+    if (!file.type.startsWith('image/')) {
+      setLogoError(t.company.logoWrongType);
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError(t.company.logoTooBig);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') set({ logo: reader.result });
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <form
@@ -167,12 +202,73 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
         onSave();
       }}
     >
+      <div className={styles.logoEdit}>
+        <div className={styles.logoBox}>
+          {draft.logo === undefined ? (
+            <span className={styles.logoMonogram} aria-hidden="true">
+              {draft.monogram}
+            </span>
+          ) : (
+            <img className={styles.logo} src={draft.logo} alt="" />
+          )}
+        </div>
+
+        <div className={styles.logoText}>
+          <div className={styles.fieldLabel}>{t.company.logo}</div>
+          <p className={styles.fieldHint}>{t.company.logoHint}</p>
+
+          <div className={styles.logoActions}>
+            <button
+              type="button"
+              className={styles.secondary}
+              onClick={() => fileInput.current?.click()}
+            >
+              {t.company.logoChoose}
+            </button>
+            {draft.logo === undefined ? null : (
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => {
+                  // Логотип именно убирается, а не остаётся пустой строкой:
+                  // пустая строка в src даёт сломанную картинку на бланке.
+                  const { logo: _logo, ...rest } = draft;
+                  onChange(rest);
+                }}
+              >
+                {t.company.logoRemove}
+              </button>
+            )}
+          </div>
+
+          {logoError === null ? null : (
+            <p className={styles.error} role="alert">
+              {logoError}
+            </p>
+          )}
+
+          <input
+            ref={fileInput}
+            className={styles.fileInput}
+            type="file"
+            accept="image/*"
+            onChange={(e) => pickLogo(e.target.files?.[0])}
+          />
+        </div>
+      </div>
+
       <div className={styles.formGrid}>
         <Text label={t.company.shortName} value={draft.name} onChange={(v) => set({ name: v })} />
         <Text
           label={t.company.legalName}
           value={draft.legalName}
           onChange={(v) => set({ legalName: v })}
+        />
+        <Text
+          label={t.company.legalNameKk}
+          value={draft.legalNameKk ?? ''}
+          hint={t.company.legalNameKkHint}
+          onChange={(v) => set({ legalNameKk: v })}
         />
         <Text
           label={t.company.legalNameEn}
@@ -197,6 +293,16 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
           onChange={(v) => set({ actualAddress: v })}
         />
         <Text label={t.company.city} value={draft.city} onChange={(v) => set({ city: v })} />
+        <Text
+          label={t.company.cityKk}
+          value={draft.cityKk ?? ''}
+          onChange={(v) => set({ cityKk: v })}
+        />
+        <Text
+          label={t.company.cityEn}
+          value={draft.cityEn ?? ''}
+          onChange={(v) => set({ cityEn: v })}
+        />
         <Text label={t.company.phone} value={draft.phone ?? ''} onChange={(v) => set({ phone: v })} />
         <Text label={t.company.email} value={draft.email ?? ''} onChange={(v) => set({ email: v })} />
         <Text
@@ -208,6 +314,16 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
           label={t.company.directorName}
           value={draft.directorName}
           onChange={(v) => set({ directorName: v })}
+        />
+        <Text
+          label={t.company.directorTitleKk}
+          value={draft.directorTitleKk ?? ''}
+          onChange={(v) => set({ directorTitleKk: v })}
+        />
+        <Text
+          label={t.company.directorTitleEn}
+          value={draft.directorTitleEn ?? ''}
+          onChange={(v) => set({ directorTitleEn: v })}
         />
         <Text
           label={t.company.directorTitleGenitive}

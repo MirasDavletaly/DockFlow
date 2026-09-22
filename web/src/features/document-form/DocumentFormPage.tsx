@@ -330,6 +330,20 @@ export default function DocumentFormPage() {
             </div>
           )}
 
+          {/* На скольких языках выходит документ. Одноязычный лист – это не
+              то же самое, что бланк компании, и человек должен видеть разницу
+              до того, как понесёт бумагу подписывать. */}
+          {doc.langs.length > 1 ? (
+            <p className={styles.langsNote}>
+              <span className={styles.langsTitle}>{t.form.langsTitle}:</span> {t.form.langsFull}
+            </p>
+          ) : (
+            <div className={styles.langsWarn}>
+              <div className={styles.legalTitle}>{t.form.langsSimpleTitle}</div>
+              <p className={styles.legalBody}>{t.form.langsSimpleBody}</p>
+            </div>
+          )}
+
           <SheetViewport>
             <DocumentSheet
               template={doc}

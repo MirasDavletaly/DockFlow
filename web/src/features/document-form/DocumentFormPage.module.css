@@ -247,3 +247,22 @@
   font-weight: 600;
   color: var(--ink-700);
 }
+
+/* Сколько языков в документе. Три колонки – обычный бланк компании; одна
+   колонка – временное состояние, пока нет проверенного перевода. */
+.langsNote {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--ink-500);
+}
+
+.langsTitle {
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.langsWarn {
+  padding: var(--space-5);
+  background: var(--state-draft-soft);
+  border-left: 2px solid var(--state-draft);
+}

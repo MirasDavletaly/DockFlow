@@ -254,3 +254,246 @@
   color: #555;
   white-space: nowrap;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Бланк приказа: три колонки
+
+   Повторяет настоящие документы группы. Приказ выпускается сразу на казахском
+   и русском — так требует закон о языках, — а английская колонка нужна там,
+   где есть иностранные участники и работники-нерезиденты. Колонки стоят рядом
+   в таблице без линий: в Word это layout-таблица, здесь — grid.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.letterhead {
+  display: flex;
+  align-items: center;
+  gap: 8mm;
+  padding-bottom: 3mm;
+}
+
+.letterheadMark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32mm;
+  min-height: 12mm;
+}
+
+.letterheadLogo {
+  max-width: 32mm;
+  max-height: 16mm;
+  object-fit: contain;
+}
+
+.letterheadMonogram {
+  display: grid;
+  place-items: center;
+  width: 12mm;
+  height: 12mm;
+  background: #000;
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.letterheadNames {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.letterheadName {
+  font-size: 9.5pt;
+  font-weight: 700;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+/* Город слева, дата справа — одна строка под наименованием. */
+.placeDate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8mm;
+  margin-top: 4mm;
+  font-size: 10pt;
+  font-weight: 700;
+}
+
+.place {
+  min-width: 0;
+}
+
+.date {
+  flex: none;
+}
+
+/* «Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER № 51-26-ЛС» */
+.orderTitle {
+  margin-top: 6mm;
+  font-size: 11pt;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* «Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:» */
+.triLine {
+  margin-top: 5mm;
+  font-size: 10.5pt;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.triTable {
+  margin-top: 4mm;
+}
+
+.triRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5mm;
+  align-items: start;
+  padding: 2mm 0;
+}
+
+.triCell {
+  min-width: 0;
+  font-size: 9pt;
+  line-height: 1.35;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.cellPara + .cellPara {
+  margin-top: 2mm;
+}
+
+/* Подпись: должность столбиком на трёх языках слева, ФИО справа. */
+.triSignature {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10mm;
+  margin-top: 10mm;
+  font-size: 10pt;
+  font-weight: 700;
+}
+
+.triSignatureRole {
+  line-height: 1.35;
+}
+
+.triSignatureName {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Лист ознакомления. Линия здесь нужна: на ней расписывается работник. */
+.triAcquaint {
+  margin-top: 12mm;
+  font-size: 9pt;
+  line-height: 1.35;
+}
+
+.triAcquaintTitle {
+  margin-bottom: 6mm;
+}
+
+.triAcquaintLine {
+  height: 0;
+  border-bottom: 1px solid #000;
+  max-width: 90mm;
+}
+
+.triAcquaintHint {
+  margin-top: 1mm;
+  font-size: 7.5pt;
+}
+
+/* «Исполнен»: кто подготовил документ. Мелко, внизу листа. */
+.executor {
+  margin-top: 10mm;
+  font-size: 8pt;
+  line-height: 1.35;
+  color: #333;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Бланк доверенности: две колонки
+
+   Доверенность выпускается на русском и английском: казахской колонки в
+   присланных образцах нет.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.poaTitle,
+.biRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8mm;
+  align-items: start;
+}
+
+.poaTitle {
+  margin-top: 6mm;
+}
+
+.poaTitleCell {
+  text-align: center;
+}
+
+.poaTitleText {
+  font-size: 11pt;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.poaTitleMeta {
+  margin-top: 2mm;
+  font-size: 9.5pt;
+  font-style: italic;
+}
+
+.biTable {
+  margin-top: 5mm;
+}
+
+.biRow {
+  padding: 2mm 0;
+}
+
+.biCell {
+  min-width: 0;
+  font-size: 9.5pt;
+  line-height: 1.4;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Подпись под доверенностью: черта и подписант по центру листа. */
+.poaSignature {
+  margin-top: 14mm;
+  text-align: center;
+  font-size: 10pt;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.poaSignatureLine {
+  height: 0;
+  margin: 0 auto 2mm;
+  max-width: 80mm;
+  border-bottom: 1px solid #000;
+}
+
+.poaSignatureCompany {
+  font-weight: 700;
+}
+
+.poaSignatureName {
+  font-weight: 700;
+}

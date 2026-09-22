@@ -558,11 +558,52 @@ function PeopleTab() {
               <span className={styles.fieldHint}>{t.admin.personGenitiveHint}</span>
             </label>
             <label className={styles.field}>
+              <span className={styles.fieldLabel}>{t.admin.personNameKk}</span>
+              <input
+                className={styles.input}
+                value={draft.fullNameKk ?? ''}
+                onChange={(e) => setDraft({ ...draft, fullNameKk: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{t.admin.personNameKkDative}</span>
+              <input
+                className={styles.input}
+                value={draft.fullNameKkDative ?? ''}
+                onChange={(e) => setDraft({ ...draft, fullNameKkDative: e.target.value })}
+              />
+              <span className={styles.fieldHint}>{t.admin.personNameKkDativeHint}</span>
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{t.admin.personNameEn}</span>
+              <input
+                className={styles.input}
+                value={draft.fullNameEn ?? ''}
+                onChange={(e) => setDraft({ ...draft, fullNameEn: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
               <span className={styles.fieldLabel}>{t.admin.personPosition}</span>
               <input
                 className={styles.input}
                 value={draft.position}
                 onChange={(e) => setDraft({ ...draft, position: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{t.admin.personPositionKk}</span>
+              <input
+                className={styles.input}
+                value={draft.positionKk ?? ''}
+                onChange={(e) => setDraft({ ...draft, positionKk: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{t.admin.personPositionEn}</span>
+              <input
+                className={styles.input}
+                value={draft.positionEn ?? ''}
+                onChange={(e) => setDraft({ ...draft, positionEn: e.target.value })}
               />
             </label>
             <label className={styles.field}>
@@ -591,6 +632,8 @@ function PeopleTab() {
           <tr>
             <th>{t.admin.personFullName}</th>
             <th>{t.admin.personGenitive}</th>
+            <th>{t.admin.personNameKk}</th>
+            <th>{t.admin.personNameEn}</th>
             <th>{t.admin.personPosition}</th>
             <th>{t.admin.personUnit}</th>
             <th aria-label={t.common.remove} />
@@ -601,6 +644,8 @@ function PeopleTab() {
             <tr key={person.id}>
               <td>{person.fullName}</td>
               <td className={styles.muted}>{person.fullNameGenitive}</td>
+              <td className={styles.muted}>{person.fullNameKk ?? t.company.missing}</td>
+              <td className={styles.muted}>{person.fullNameEn ?? t.company.missing}</td>
               <td>{person.position}</td>
               <td className={styles.muted}>{person.unit}</td>
               <td className={styles.rowActions}>

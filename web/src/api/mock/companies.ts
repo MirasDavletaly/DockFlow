@@ -50,6 +50,11 @@ export const companies: Company[] = [
   {
     id: 'c-knt',
     name: 'Kazakhstan New Technologies LLP',
+    // Шапка взята из приказа «AL Nurdaulet KNT»: наименование на трёх
+    // языках стоит там тремя строками подряд.
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «KAZAKHSTAN NEW TECHNOLOGIES LLP»',
+    directorTitleKk: 'Бас директор',
+    directorTitleEn: 'General Director',
     // В присланных реквизитах первая буква «К» — кириллическая (U+041A)
     // внутри латинского слова, и в русском, и в английском написании.
     // Здесь записана латиница: иначе поиск по «Kazakhstan» компанию не
@@ -74,6 +79,8 @@ export const companies: Company[] = [
     // доверенности останется видимый пропуск, а не выдуманное слово.
     directorBasis: '',
     city: 'Астана',
+    cityKk: 'Астана',
+    cityEn: 'Astana',
     // Фирменный цвет и логотип не присланы.
     accent: '#1f5c4a',
     monogram: 'KN',
@@ -90,6 +97,11 @@ export const companies: Company[] = [
   {
     id: 'c-algoritmi',
     name: 'ТОО «Algoritmi KZ»',
+    // Из приказа «Order EA Dinara Kakimova». Там же город — Астана,
+    // а не Атырау, как записано ниже (расхождение в docs/questions.md).
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «Algoritmi Kz»',
+    directorTitleKk: 'Бас Директор',
+    directorTitleEn: 'General Director',
     legalName: 'Товарищество с ограниченной ответственностью «Algoritmi KZ (Алгоритми КЗ)»',
     legalNameEn: 'Limited Liability Partnership Algoritmi KZ',
     bin: '131040015313',
@@ -108,6 +120,10 @@ export const companies: Company[] = [
     directorNameGenitive: 'Қабыла Нұрмахамбета Маханбетханұлы',
     // Основание полномочий не прислано; «Устава» — обычное для ТОО. Q20.
     directorBasis: 'Устава',
+    // Город в шапке приказа не заполнен намеренно: здесь записан Атырау, а в
+    // присланном приказе «Order EA Dinara Kakimova» стоит Астана. Пока
+    // расхождение не решено (docs/questions.md, Q26), в бланк идёт одно
+    // значение отсюда, а не выдуманная тройка.
     city: 'Атырау',
     // Фирменный цвет и логотип не присланы.
     accent: '#8a4b1f',
@@ -166,6 +182,10 @@ export const companies: Company[] = [
   {
     id: 'c-greenspark-power',
     name: 'ТОО «GREEN SPARK POWER 01»',
+    // Из приказа «Приказ EA Aliya».
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK POWER 01»',
+    directorTitleKk: 'Бас директор',
+    directorTitleEn: 'General Director',
     legalName:
       'Товарищество с ограниченной ответственностью «GREEN SPARK POWER 01» (ГРИН СПАРК ПАУЕР 01)',
     legalNameEn: '«GREEN SPARK POWER 01» LLP',
@@ -190,6 +210,8 @@ export const companies: Company[] = [
     directorBasis: 'Устава',
     // Место составления документов: взят юридический адрес. Если документы
     // составляются в астанинском представительстве — поменяется. Q22.
+    // Здесь Жанибек, в присланном приказе «Приказ EA Aliya» — Аксай.
+    // Расхождение не решено (docs/questions.md, Q26).
     city: 'Жанибек',
     // Фирменный цвет и логотип не присланы.
     accent: '#1f6b4a',
@@ -207,6 +229,11 @@ export const companies: Company[] = [
   {
     id: 'c-greensparklimited',
     name: 'ТОО «GREENSPARKLIMITED»',
+    // Из приказов «AL Maksut», «Order EA Дидар Сагын», «unpaid leave Dias».
+    // В них наименование пишется с пробелами — «GREEN SPARK LIMITED».
+    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK LIMITED»',
+    directorTitleKk: 'Бас Директоры',
+    directorTitleEn: 'General Director',
     legalName:
       'Товарищество с ограниченной ответственностью «GREENSPARKLIMITED» (ГРИНСПАРКЛИМИТЕД)',
     legalNameEn: '«GREENSPARKLIMITED» LLP',
@@ -231,6 +258,8 @@ export const companies: Company[] = [
     // Основание полномочий не прислано. Q22.
     directorBasis: 'Устава',
     city: 'Аксай',
+    cityKk: 'Ақсай',
+    cityEn: 'Aksai',
     // Фирменный цвет и логотип не присланы.
     accent: '#3d7a2f',
     monogram: 'GL',

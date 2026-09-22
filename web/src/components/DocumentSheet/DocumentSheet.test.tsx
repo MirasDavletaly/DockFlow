@@ -40,6 +40,8 @@ const template: DocumentTemplate = {
   profile: 'standard',
   purpose: 'Тестовый приказ.',
   reviewed: false,
+  layout: 'simple',
+  langs: ['ru'],
   fields: [
     { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
   ],

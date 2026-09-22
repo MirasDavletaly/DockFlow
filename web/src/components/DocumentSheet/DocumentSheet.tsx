@@ -12,16 +12,19 @@
 import { findCounterparty } from '@/api/mock/directory';
 import { findEmployeeIn } from '@/store/db';
 import { t } from '@/i18n';
-import { formatDocumentDate, formatMoney } from '@/utils/format';
+import { formatDocumentDate, formatMoney, formatShortDate } from '@/utils/format';
 
 import styles from './DocumentSheet.module.css';
 
 import type {
+  BiRow,
   Company,
   DocBlock,
+  DocLang,
   DocumentTemplate,
   EmployeeBrief,
   FieldDef,
+  Para,
   Run,
 } from '@/api/types';
 
@@ -59,7 +62,7 @@ export function DocumentSheet({
 }: Props) {
   const fieldsById = new Map<string, FieldDef>(template.fields.map((f) => [f.id, f]));
 
-  function renderRuns(runs: Run[], keyPrefix: string) {
+  function renderRuns(runs: Run[], keyPrefix: string, lang: DocLang = 'ru') {
     return runs.map((run, index) => {
       const key = `${keyPrefix}-${index}`;
 
@@ -67,8 +70,12 @@ export function DocumentSheet({
         return <span key={key}>{run.text}</span>;
       }
 
-      const resolved = resolveField(run.field, values, company, fieldsById, people);
-      const isActive = activeFieldId !== null && run.field === activeFieldId;
+      const resolved =
+        resolveField(run.field, values, company, fieldsById, people, lang) ||
+        (run.fallback === undefined
+          ? ''
+          : resolveField(run.fallback, values, company, fieldsById, people, lang));
+      const isActive = activeFieldId !== null && baseFieldId(run.field) === activeFieldId;
 
       if (resolved === '') {
         // Пропуск рисуется шириной в CSS, а не повторёнными пробелами:
@@ -213,9 +220,201 @@ export function DocumentSheet({
           </div>
         );
 
+      // ── Бланк приказа ───────────────────────────────────────────────────
+
+      case 'letterhead': {
+        // Логотип слева, три строки наименования по центру – так стоит на
+        // настоящих бланках группы. Казахская строка первая: документ на
+        // государственном языке идёт первым.
+        const names = [
+          company.legalNameKk,
+          company.legalName,
+          company.legalNameEn,
+        ].filter(isFilled);
+
+        return (
+          <header key={key} className={styles.letterhead}>
+            <div className={styles.letterheadMark}>
+              {company.logo === undefined ? (
+                <span className={styles.letterheadMonogram} aria-hidden="true">
+                  {company.monogram}
+                </span>
+              ) : (
+                <img className={styles.letterheadLogo} src={company.logo} alt="" />
+              )}
+            </div>
+            <div className={styles.letterheadNames}>
+              {names.map((name) => (
+                <div key={name} className={styles.letterheadName}>
+                  {name}
+                </div>
+              ))}
+            </div>
+          </header>
+        );
+      }
+
+      case 'place-date': {
+        // «Ақсай қ./г. Аксай / Aksai city» слева, дата справа. Если казахского
+        // и английского написания города нет, печатается одно русское: три
+        // одинаковых слова через косую выглядели бы как ошибка.
+        const parts: string[] = [];
+        if (isFilled(company.cityKk)) parts.push(`${company.cityKk} қ.`);
+        parts.push(`г. ${company.city}`);
+        if (isFilled(company.cityEn)) parts.push(`${company.cityEn} city`);
+
+        return (
+          <div key={key} className={styles.placeDate}>
+            <span className={styles.place}>{parts.join(' / ')}</span>
+            <span className={`${styles.date} tabular`}>{formatShortDate(date)}</span>
+          </div>
+        );
+      }
+
+      case 'order-title': {
+        // Номер стоит в той же строке, что и слово «ПРИКАЗ», и подсвечивается,
+        // когда курсор в поле номера.
+        const numberActive = activeFieldId === '@number';
+        return (
+          <h1 key={key} className={styles.orderTitle}>
+            {block.words.kk} / {block.words.ru} / {block.words.en} №{' '}
+            <span
+              className={[
+                number === null ? styles.numberBlank : styles.numberValue,
+                numberActive ? styles.numberHighlight : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {number ?? t.sheet.numberPlaceholder}
+            </span>
+          </h1>
+        );
+      }
+
+      case 'tri-line':
+        return (
+          <p key={key} className={styles.triLine}>
+            {block.words.kk} / {block.words.ru} / {block.words.en}
+          </p>
+        );
+
+      case 'tri-table':
+        return (
+          <div key={key} className={styles.triTable}>
+            {block.rows.map((row, rowIndex) => (
+              <div key={`${key}-${rowIndex}`} className={styles.triRow}>
+                {TRI_LANGS.map((lang) => (
+                  <div key={lang} className={styles.triCell} lang={lang}>
+                    {renderCell(row[lang], `${key}-${rowIndex}-${lang}`, lang)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'tri-signature':
+        // Должность на трёх языках столбиком слева, ФИО справа: кириллицей и
+        // латиницей через косую, как на настоящих приказах.
+        return (
+          <div key={key} className={styles.triSignature}>
+            <div className={styles.triSignatureRole}>
+              {[company.directorTitleKk, company.directorTitle, company.directorTitleEn]
+                .filter(isFilled)
+                .map((role) => (
+                  <div key={role}>{role}</div>
+                ))}
+            </div>
+            <div className={styles.triSignatureName}>
+              {[company.directorName, company.directorNameEn].filter(isFilled).join(' / ')}
+            </div>
+          </div>
+        );
+
+      case 'tri-acquaint':
+        return (
+          <div key={key} className={styles.triAcquaint}>
+            <div className={styles.triAcquaintTitle}>
+              <div>Таныстым:</div>
+              <div>{t.sheet.acquaintTitle}</div>
+              <div>I have read and understood</div>
+            </div>
+            <div className={styles.triAcquaintLine} aria-hidden="true" />
+            <div className={styles.triAcquaintHint}>
+              (Аты-Жөні / Ф.И.О. / full name) Қолы / Подпись / Signature
+            </div>
+          </div>
+        );
+
+      case 'executor':
+        return (
+          <div key={key} className={styles.executor}>
+            {renderRuns(block.runs, key)}
+          </div>
+        );
+
+      // ── Бланк доверенности ──────────────────────────────────────────────
+
+      case 'poa-title':
+        return (
+          <div key={key} className={styles.poaTitle}>
+            <div className={styles.poaTitleCell} lang="ru">
+              <div className={styles.poaTitleText}>{block.words.ru}</div>
+              <div className={styles.poaTitleMeta}>
+                Выдана в г. {company.city}, {formatDocumentDate(date)}
+              </div>
+            </div>
+            <div className={styles.poaTitleCell} lang="en">
+              <div className={styles.poaTitleText}>{block.words.en}</div>
+              <div className={styles.poaTitleMeta}>
+                Issued in {company.cityEn ?? company.city} city, {formatShortDate(date)}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'bi-table':
+        return (
+          <div key={key} className={styles.biTable}>
+            {block.rows.map((row, rowIndex) => (
+              <div key={`${key}-${rowIndex}`} className={styles.biRow}>
+                {BI_LANGS.map((lang) => (
+                  <div key={lang} className={styles.biCell} lang={lang}>
+                    {renderCell(row[lang], `${key}-${rowIndex}-${lang}`, lang)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'poa-signature':
+        return (
+          <div key={key} className={styles.poaSignature}>
+            <div className={styles.poaSignatureLine} aria-hidden="true" />
+            <div className={styles.poaSignatureRole}>
+              {[company.directorTitle, company.directorTitleEn].filter(isFilled).join(' / ')}
+            </div>
+            <div className={styles.poaSignatureCompany}>{company.name}</div>
+            <div className={styles.poaSignatureName}>
+              {[company.directorName, company.directorNameEn].filter(isFilled).join(' / ')}
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
+  }
+
+  /** Ячейка таблицы: несколько абзацев одного языка. */
+  function renderCell(paras: Para[], keyPrefix: string, lang: DocLang) {
+    return paras.map((para, index) => (
+      <p key={`${keyPrefix}-${index}`} className={styles.cellPara}>
+        {renderRuns(para, `${keyPrefix}-${index}`, lang)}
+      </p>
+    ));
   }
 
   return (
@@ -230,6 +429,9 @@ export function DocumentSheet({
   );
 }
 
+const TRI_LANGS: DocLang[] = ['kk', 'ru', 'en'];
+const BI_LANGS: Array<keyof BiRow> = ['ru', 'en'];
+
 /** Реквизит заполнен: необязательные поля компании приходят и пустыми. */
 function isFilled(value: string | undefined): value is string {
   return value !== undefined && value.trim() !== '';
@@ -241,13 +443,56 @@ function isFilled(value: string | undefined): value is string {
  * Поля, начинающиеся с «@», берутся из реквизитов компании: их человек не
  * вводит, и подменить их через форму нельзя.
  */
+/**
+ * Поле в шаблоне может быть записано с формой слова: `employee:nom`.
+ *
+ * Это не новое поле, а то же самое в другом падеже. По умолчанию берётся та
+ * форма, в какой ФИО стоит после глагола приказа: «принять Ахметова»,
+ * «Ахметовке демалыс беру». `:nom` – именительный падеж, он нужен там, где
+ * работник стоит подлежащим: «Сағын Дидар Есболұлы ... қабылдансын».
+ *
+ * Значение и подсветка при этом общие, поэтому имя поля отделяется от формы.
+ */
+function baseFieldId(fieldId: string): string {
+  const colon = fieldId.indexOf(':');
+  return colon === -1 ? fieldId : fieldId.slice(0, colon);
+}
+
+function fieldForm(fieldId: string): 'nom' | 'obj' {
+  return fieldId.endsWith(':nom') ? 'nom' : 'obj';
+}
+
+/**
+ * ФИО работника на нужном языке и в нужной форме.
+ *
+ * Падежи и написание латиницей хранятся данными, а не вычисляются: склонять
+ * казахские и составные фамилии программно нельзя, ошибка попадёт прямо в
+ * текст приказа. Чего нет в карточке, то заменяется основной формой – она видна на
+ * листе, и человек сразу поймёт, что данных не хватает.
+ */
+function employeeName(person: EmployeeBrief, lang: DocLang, form: 'nom' | 'obj'): string {
+  // В английском падежей нет: обе формы дают одно и то же написание.
+  if (lang === 'en') return person.fullNameEn ?? person.fullName;
+
+  const nominative = lang === 'kk' ? (person.fullNameKk ?? person.fullName) : person.fullName;
+  if (form === 'nom') return nominative;
+
+  return lang === 'kk'
+    ? (person.fullNameKkDative ?? nominative)
+    : person.fullNameGenitive;
+}
+
 function resolveField(
-  fieldId: string,
+  rawFieldId: string,
   values: Record<string, string>,
   company: Company,
   fieldsById: Map<string, FieldDef>,
   people: Record<string, EmployeeBrief> | undefined,
+  lang: DocLang,
 ): string {
+  const fieldId = baseFieldId(rawFieldId);
+  const form = fieldForm(rawFieldId);
+
   if (fieldId.startsWith('@company.')) {
     const key = fieldId.slice('@company.'.length) as keyof Company;
     const value = company[key];
@@ -270,12 +515,14 @@ function resolveField(
       // Если ФИО вписано руками, а не выбрано из справочника, падежа у него
       // нет — оно идёт в документ как есть. Форма об этом предупреждает.
       const person = people?.[raw] ?? findEmployeeIn(company.id, raw);
-      return person?.fullNameGenitive ?? raw;
+      return person === undefined ? raw : employeeName(person, lang, form);
     }
     case 'counterparty':
       return findCounterparty(raw)?.name ?? '';
     case 'date':
-      return formatDocumentDate(raw);
+      // В колонках приказа дата пишется числами («с 23.06.2026 по 02.07.2026»),
+      // как в настоящих документах группы. На простом листе – словами.
+      return lang === 'ru' ? formatDocumentDate(raw) : formatShortDate(raw);
     case 'money':
       return formatMoney(raw);
     default:

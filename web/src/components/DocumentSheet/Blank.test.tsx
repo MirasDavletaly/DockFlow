@@ -435,3 +435,68 @@ describe('сверка с присланным приказом', () => {
     }
   });
 });
+
+describe('три поля на три языка', () => {
+  it('имя и число прописью заполняются отдельно для каждой колонки', () => {
+    const values = {
+      employee: 'Нуржанов Диас Жанболатович',
+      'employee.kk': 'Нуржанов Диас Жанболатұлы',
+      'employee.en': 'Dias Nurzhanov',
+      position: 'Инженер',
+      days: '24',
+      daysWords: 'двадцать четыре',
+      'daysWords.kk': 'жиырма төрт',
+      'daysWords.en': 'twenty-four',
+      from: '2026-10-01',
+      to: '2026-10-24',
+      workedFrom: '2025-10-01',
+      workedTo: '2026-09-30',
+      applicationDate: '2026-09-20',
+    };
+
+    render(
+      <DocumentSheet
+        template={template('hr-vacation-order')}
+        values={values}
+        company={company}
+        date="2026-09-22"
+      />,
+    );
+
+    const text = container.textContent ?? '';
+    for (const written of Object.values(values)) {
+      if (written.includes('-')) continue; // даты приходят в другом виде
+      expect(text, written).toContain(written);
+    }
+  });
+
+  it('незаполненный перевод заменяется русским, а не пустым местом', () => {
+    render(
+      <DocumentSheet
+        template={template('hr-vacation-order')}
+        values={{
+          employee: 'Нуржанов Диас Жанболатович',
+          position: 'Инженер',
+          days: '24',
+          daysWords: 'двадцать четыре',
+        }}
+        company={company}
+        date="2026-09-22"
+      />,
+    );
+
+    // Русское значение встречается во всех трёх колонках.
+    const matches = (container.textContent ?? '').match(/двадцать четыре/g) ?? [];
+    expect(matches).toHaveLength(3);
+  });
+
+  it('перевод помечен только у имени и числа прописью', () => {
+    // Остальное остаётся одним полем – так просил человек.
+    for (const tpl of blankTemplates) {
+      for (const field of tpl.fields) {
+        if (field.perLang !== true) continue;
+        expect(['employee', 'daysWords'], `${tpl.id}: ${field.id}`).toContain(field.id);
+      }
+    }
+  });
+});

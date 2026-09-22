@@ -92,3 +92,18 @@
   border-left: 2px solid currentColor;
   padding-left: var(--space-3);
 }
+
+/* Поле перевода: то же значение на другом языке документа. Подпись языка
+   стоит слева, чтобы три поля читались как одно целое, а не как три разных. */
+.translation {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.translationLabel {
+  font-size: var(--text-sm);
+  color: var(--ink-400);
+}

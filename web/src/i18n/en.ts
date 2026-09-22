@@ -184,6 +184,10 @@ export const en: Dictionary = {
     legalDraftTitle: 'Draft wording',
     legalDraftBody:
       'The wording has not been checked by a lawyer. Have the text approved before the document goes into use.',
+    langKk: 'Қазақша',
+    langRu: 'Русский',
+    langEn: 'English',
+    perLangHint: 'A value for each column of the document. An empty field falls back to Russian.',
     langsTitle: 'Languages of the document',
     langsFull: 'Kazakh, Russian and English – three columns, as on the company letterhead.',
     langsSimpleTitle: 'Russian only',

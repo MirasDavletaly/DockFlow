@@ -421,6 +421,14 @@ function resolveField(
   if (raw === undefined || raw === '') return '';
 
   const def = fieldsById.get(fieldId);
+
+  // Значение, написанное для этой колонки отдельно: имя и число прописью
+  // заполняются на каждом языке своим полем.
+  if (def?.perLang === true && lang !== 'ru') {
+    const written = values[`${fieldId}.${lang}`];
+    if (written !== undefined && written.trim() !== '') return written;
+  }
+
   switch (def?.kind) {
     case 'employee': {
       // У сохранённого документа фамилия берётся из его собственного снимка:

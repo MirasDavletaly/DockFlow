@@ -31,7 +31,7 @@ import { dateBounds, checkField, validateFields } from './validation';
 
 import styles from './DocumentFormPage.module.css';
 
-import type { Company, FieldDef } from '@/api/types';
+import type { Company, DocLang, EmployeeBrief, FieldDef } from '@/api/types';
 
 /** Через сколько после последнего нажатия клавиши черновик уходит в хранилище. */
 const AUTOSAVE_DELAY_MS = 600;
@@ -245,6 +245,13 @@ export default function DocumentFormPage() {
                       key={def.id}
                       def={def}
                       value={values[def.id] ?? ''}
+                      langs={doc.langs}
+                      translations={translationsOf(def, values)}
+                      placeholders={placeholdersOf(def, values, employees)}
+                      onTranslate={(lang, next) => {
+                        markDirty();
+                        setValues((prev) => ({ ...prev, [`${def.id}.${lang}`]: next }));
+                      }}
                       // Ошибка показывается сразу, как только её исправили или
                       // создали заново: ждать нажатия «Сохранить» второй раз
                       // незачем, человек уже знает, что не так.
@@ -359,6 +366,47 @@ export default function DocumentFormPage() {
       </div>
     </div>
   );
+}
+
+/** Уже написанные переводы значения: ключи «id.kk», «id.en». */
+function translationsOf(
+  def: FieldDef,
+  values: Record<string, string>,
+): Partial<Record<DocLang, string>> {
+  if (def.perLang !== true) return {};
+
+  const out: Partial<Record<DocLang, string>> = {};
+  for (const lang of ['kk', 'en'] as const) {
+    const written = values[`${def.id}.${lang}`];
+    if (written !== undefined) out[lang] = written;
+  }
+  return out;
+}
+
+/**
+ * Что попадёт в колонку, пока перевод не написан.
+ *
+ * У работника из справочника это ФИО с его карточки, у остального –
+ * русское значение. Подсказка показывает ровно то, что напечатается,
+ * а не выдуманный пример.
+ */
+function placeholdersOf(
+  def: FieldDef,
+  values: Record<string, string>,
+  employees: EmployeeBrief[],
+): Partial<Record<DocLang, string>> {
+  if (def.perLang !== true) return {};
+
+  const raw = values[def.id] ?? '';
+  if (def.kind === 'employee') {
+    const person = employees.find((e) => e.id === raw);
+    return {
+      kk: person?.fullNameKk ?? person?.fullName ?? raw,
+      en: person?.fullNameEn ?? person?.fullName ?? raw,
+    };
+  }
+
+  return { kk: raw, en: raw };
 }
 
 /**

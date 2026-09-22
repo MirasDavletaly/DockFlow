@@ -13,7 +13,7 @@ import { formatMoney } from '@/utils/format';
 
 import styles from './Field.module.css';
 
-import type { EmployeeBrief, FieldDef } from '@/api/types';
+import type { DocLang, EmployeeBrief, FieldDef } from '@/api/types';
 
 interface Props {
   def: FieldDef;
@@ -24,10 +24,28 @@ interface Props {
   employees?: EmployeeBrief[];
   /** Границы для дат, посчитанные по `dateLimits` и соседним полям. */
   bounds?: { min?: string; max?: string };
+  /**
+   * Языки документа. От них зависит, сколько полей показать у значения,
+   * которое в каждой колонке своё (`perLang`).
+   */
+  langs?: DocLang[];
+  /** Значения переводов: ключ «id.kk», «id.en». */
+  translations?: Partial<Record<DocLang, string>>;
+  /** Что подставится в колонку, если перевод не заполнен. */
+  placeholders?: Partial<Record<DocLang, string>>;
   onChange: (value: string) => void;
+  /** Правка перевода: язык и новое значение. */
+  onTranslate?: (lang: DocLang, value: string) => void;
   onFocus: () => void;
   onBlur: () => void;
 }
+
+/** Подпись языка над полем перевода. */
+const LANG_LABEL: Record<DocLang, () => string> = {
+  kk: () => t.form.langKk,
+  ru: () => t.form.langRu,
+  en: () => t.form.langEn,
+};
 
 export function Field({
   def,
@@ -35,7 +53,11 @@ export function Field({
   problem = null,
   employees = [],
   bounds = {},
+  langs = ['ru'],
+  translations = {},
+  placeholders = {},
   onChange,
+  onTranslate,
   onFocus,
   onBlur,
 }: Props) {
@@ -49,6 +71,16 @@ export function Field({
   // как есть, без родительного падежа. Человек должен это видеть.
   const manualName =
     def.kind === 'employee' && value !== '' && !employees.some((e) => e.id === value);
+
+  /**
+   * Значение пишется на каждом языке документа отдельно.
+   *
+   * Так заполняются имя и число прописью: перевести их на лету нельзя, а в
+   * колонке документа должно стоять своё. Если язык у документа один, лишних
+   * полей не появляется.
+   */
+  const perLang = def.perLang === true && langs.length > 1;
+  const extraLangs = perLang ? langs.filter((lang) => lang !== 'ru') : [];
 
   return (
     <div className={styles.field}>
@@ -78,6 +110,26 @@ export function Field({
         })}
         {def.unit === undefined ? null : <span className={styles.unit}>{def.unit}</span>}
       </div>
+
+      {extraLangs.map((lang) => (
+        <label key={lang} className={styles.translation}>
+          <span className={styles.translationLabel}>{LANG_LABEL[lang]()}</span>
+          <input
+            className={styles.input}
+            id={`field-${def.id}.${lang}`}
+            type="text"
+            value={translations[lang] ?? ''}
+            // Пока перевода нет, в колонку идёт то, что показано подсказкой:
+            // значение из справочника или русский текст.
+            placeholder={placeholders[lang] ?? ''}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            onChange={(e) => onTranslate?.(lang, e.target.value)}
+          />
+        </label>
+      ))}
+
+      {perLang ? <p className={styles.hint}>{t.form.perLangHint}</p> : null}
 
       {def.hint === undefined ? null : (
         <p className={styles.hint} id={hintId}>

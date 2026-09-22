@@ -74,6 +74,7 @@ export const blankTemplates: DocumentTemplate[] = [
         required: true,
         group: 'Работник',
         hint: 'Должность подставится из справочника. ФИО на казахском и латиницей берётся оттуда же',
+        perLang: true,
       },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
@@ -259,7 +260,14 @@ export const blankTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'positionKk',
@@ -285,6 +293,9 @@ export const blankTemplates: DocumentTemplate[] = [
       },
       {
         id: 'daysWords',
+        // Число прописью в каждой колонке своё: «двадцать четыре»,
+        // «жиырма төрт», «twenty-four». Перевести его на лету нельзя.
+        perLang: true,
         kind: 'text',
         label: 'Продолжительность прописью',
         required: true,
@@ -444,7 +455,9 @@ export const blankTemplates: DocumentTemplate[] = [
                 { field: 'employee' },
                 { text: ', for the duration of ' },
                 { field: 'days' },
-                { text: ' calendar days from ' },
+                { text: ' (' },
+                { field: 'daysWords' },
+                { text: ') calendar days from ' },
                 { field: 'from' },
                 { text: ' to ' },
                 { field: 'to' },
@@ -494,7 +507,14 @@ export const blankTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'positionKk',
@@ -528,6 +548,9 @@ export const blankTemplates: DocumentTemplate[] = [
       },
       {
         id: 'daysWords',
+        // Число прописью в каждой колонке своё: «двадцать четыре»,
+        // «жиырма төрт», «twenty-four». Перевести его на лету нельзя.
+        perLang: true,
         kind: 'text',
         label: 'Продолжительность прописью',
         required: true,
@@ -644,7 +667,9 @@ export const blankTemplates: DocumentTemplate[] = [
                 { field: 'from' },
                 { text: ', for a period of ' },
                 { field: 'days' },
-                { text: ' calendar day(s).' },
+                { text: ' (' },
+                { field: 'daysWords' },
+                { text: ') calendar day(s).' },
               ],
               [
                 { text: 'Basis: Personal request of ' },
@@ -687,6 +712,7 @@ export const blankTemplates: DocumentTemplate[] = [
         required: true,
         group: 'Назначение',
         hint: 'Если человека ещё нет в справочнике, впишите ФИО вручную',
+        perLang: true,
       },
       {
         id: 'position',
@@ -839,6 +865,7 @@ export const blankTemplates: DocumentTemplate[] = [
         required: true,
         group: 'Кому выдаётся',
         hint: 'Кому выдаётся доверенность',
+        perLang: true,
       },
       {
         id: 'birthDate',

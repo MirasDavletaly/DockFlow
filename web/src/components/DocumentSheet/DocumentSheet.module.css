@@ -30,6 +30,11 @@
   font-size: 10pt;
   line-height: 1.25;
   color: #000;
+
+  /* Что бы человек ни вписал в поле, за поля страницы это не выйдет: слово
+     без пробелов переносится по буквам. Без этого строка вида «fsefsfsf…»
+     уезжала за край листа и печаталась обрезанной. */
+  overflow-wrap: anywhere;
 }
 
 .content {
@@ -157,6 +162,7 @@
   line-height: 1.25;
   text-align: justify;
   hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 /* Ровно одна пустая строка между абзацами в ячейке: так отделены тема
@@ -196,8 +202,8 @@
 
 .signatureNames {
   display: grid;
+  min-width: 0;
   text-align: right;
-  white-space: nowrap;
 }
 
 /* ── Лист ознакомления ────────────────────────────────────────────────── */
@@ -236,6 +242,7 @@
 .value {
   /* Значение ничем не выделяется: на бумаге оно неотличимо от текста. */
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .strong {
@@ -246,6 +253,7 @@
    подсветка снимается (styles/print.css). */
 .valueActive {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   background: var(--accent-soft);
   box-shadow: 0 0 0 1px var(--accent-line);
 }
@@ -254,6 +262,7 @@
 .blank {
   display: inline-block;
   min-width: 26mm;
+  max-width: 100%;
   border-bottom: 1px solid #000;
   transform: translateY(-1mm);
 }
@@ -328,6 +337,7 @@
   line-height: 1.35;
   text-align: justify;
   hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .poaSignature {

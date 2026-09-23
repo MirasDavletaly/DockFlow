@@ -14,6 +14,7 @@
  */
 import { DOCUMENT_WORDS, documentBody, orderBody } from '@/api/mock/blank';
 import { blankTemplates } from '@/api/mock/templates-blank';
+import { activityOrders } from '@/api/mock/templates-orders';
 
 import type { CatalogEntry, DocumentTemplate } from '@/api/types';
 
@@ -1359,7 +1360,11 @@ const simpleTemplates: DocumentTemplate[] = [
  * Сначала те, что стоят на настоящем бланке группы: их человек открывает
  * чаще, и именно они показывают, как документ выглядит на бумаге.
  */
-export const templates: DocumentTemplate[] = [...blankTemplates, ...simpleTemplates];
+export const templates: DocumentTemplate[] = [
+  ...blankTemplates,
+  ...simpleTemplates,
+  ...activityOrders,
+];
 
 export function findTemplate(id: string): DocumentTemplate | undefined {
   return templates.find((tpl) => tpl.id === id);
@@ -1374,9 +1379,6 @@ export function findTemplate(id: string): DocumentTemplate | undefined {
  * наполняется на этапе 8.
  */
 const soon: Array<[string, string, string]> = [
-  ['Об утверждении штатного расписания', 'hr', 'hr-activity-orders'],
-  ['Об утверждении графика отпусков', 'hr', 'hr-activity-orders'],
-  ['О проведении аттестации работников', 'hr', 'hr-activity-orders'],
   ['Трудовой договор', 'hr', 'hr-documents'],
   ['Дополнительное соглашение к трудовому договору', 'hr', 'hr-documents'],
   ['Должностная инструкция', 'hr', 'hr-documents'],
@@ -1391,17 +1393,12 @@ const soon: Array<[string, string, string]> = [
   ['Претензия', 'legal', 'legal-claims'],
   ['Ответ на претензию', 'legal', 'legal-claims'],
   ['Исковое заявление', 'legal', 'legal-claims'],
-  ['Приказ об отзыве доверенности', 'legal', 'legal-powers'],
   ['Гарантийное письмо', 'legal', 'legal-other'],
   ['Официальное письмо контрагенту', 'legal', 'legal-other'],
 
   ['Решение единственного участника', 'corporate', 'corporate-decisions'],
   ['Протокол общего собрания участников', 'corporate', 'corporate-decisions'],
-  ['О создании комиссии', 'corporate', 'corporate-orders'],
-  ['О праве подписи документов', 'corporate', 'corporate-orders'],
 
-  ['Об учётной политике', 'finance', 'finance-orders'],
-  ['О проведении инвентаризации', 'finance', 'finance-orders'],
   ['Счёт на оплату', 'finance', 'finance-primary'],
   ['Акт выполненных работ', 'finance', 'finance-primary'],
   ['Авансовый отчёт', 'finance', 'finance-primary'],
@@ -1427,7 +1424,6 @@ const soon: Array<[string, string, string]> = [
   ['Заявка на хозяйственные нужды', 'administration', 'administration-facilities'],
 
   ['Устав проекта', 'projects', 'projects-initiation'],
-  ['Приказ об открытии проекта', 'projects', 'projects-initiation'],
   ['Техническое задание', 'projects', 'projects-planning'],
   ['Статус-отчёт по проекту', 'projects', 'projects-execution'],
   ['Акт приёмки результатов проекта', 'projects', 'projects-closing'],
@@ -1437,7 +1433,6 @@ const soon: Array<[string, string, string]> = [
   ['Заявка на предоставление доступа', 'it-security', 'security'],
   ['Политика информационной безопасности', 'it-security', 'security'],
 
-  ['Приказ о назначении ответственного за охрану труда', 'hse', 'hse-general'],
   ['Журнал вводного инструктажа', 'hse', 'hse-labour'],
   ['Наряд-допуск на работы повышенной опасности', 'hse', 'hse-labour'],
   ['Акт о несчастном случае', 'hse', 'hse-incidents'],

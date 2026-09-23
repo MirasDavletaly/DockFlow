@@ -11,6 +11,7 @@
  * атрибута мало.
  */
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { formatDocumentDate } from '@/utils/format';
 
 import type { FieldDef } from '@/api/types';
@@ -83,7 +84,7 @@ export function checkField(
     const other = (values[limits.afterField] ?? '').trim();
     if (other !== '' && value < other) {
       const label = fields.find((f) => f.id === limits.afterField)?.label ?? limits.afterField;
-      return `${t.form.dateAfter} «${label}» (${formatDocumentDate(other)})`;
+      return `${t.form.dateAfter} «${tc(label)}» (${formatDocumentDate(other)})`;
     }
   }
 

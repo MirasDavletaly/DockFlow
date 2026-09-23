@@ -25,6 +25,7 @@ import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { Field } from '@/components/fields/Field';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
 
@@ -239,7 +240,10 @@ export default function DocumentFormPage() {
 
   const section = findSection(doc.sectionId);
   const subsection = section?.subsections.find((s) => s.id === doc.subsectionId);
-  const path = [section?.title, subsection?.title].filter(Boolean).join(' › ');
+  const path = [section?.title, subsection?.title]
+    .filter((part): part is string => part !== undefined && part !== '')
+    .map(tc)
+    .join(' › ');
 
   const registration = registrationFields();
 
@@ -252,8 +256,8 @@ export default function DocumentFormPage() {
     <div className={styles.page}>
       <PageHeader
         eyebrow={`${path} · ${t.form.series} ${doc.series}`}
-        title={doc.title}
-        subtitle={doc.purpose}
+        title={tc(doc.title)}
+        subtitle={tc(doc.purpose)}
         actions={
           <Link className={styles.backLink} to="/create">
             {t.form.back}
@@ -279,7 +283,7 @@ export default function DocumentFormPage() {
 
             {groups.map((group) => (
               <fieldset key={group.title} className={styles.group}>
-                <legend className={styles.groupTitle}>{group.title}</legend>
+                <legend className={styles.groupTitle}>{tc(group.title)}</legend>
                 <div className={styles.groupFields}>
                   {group.fields.map((def) => (
                     <Field

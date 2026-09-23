@@ -13,6 +13,7 @@ import { sections } from '@/api/mock/sections';
 import { catalogEntries } from '@/api/mock/templates';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 
 import styles from './CatalogPage.module.css';
@@ -44,7 +45,12 @@ export default function CatalogPage() {
       if (!allowedIds.has(entry.sectionId)) return false;
       if (activeSection !== null && entry.sectionId !== activeSection) return false;
       if (needle === '') return true;
-      return entry.title.toLowerCase().includes(needle);
+      // Ищем и по-русски, и на языке интерфейса: название могли запомнить
+      // по бумаге, а видят его сейчас переведённым.
+      return (
+        entry.title.toLowerCase().includes(needle) ||
+        tc(entry.title).toLowerCase().includes(needle)
+      );
     });
   }, [activeSection, allowed, query]);
 
@@ -97,7 +103,7 @@ export default function CatalogPage() {
             }
             onClick={() => selectSection(section.id)}
           >
-            {section.short}
+            {tc(section.short)}
           </button>
         ))}
       </div>
@@ -138,7 +144,7 @@ export default function CatalogPage() {
                     entry.state === 'ready' ? (
                       <li key={entry.id}>
                         <Link className={styles.item} to={`/create/${entry.id}`}>
-                          <span className={styles.itemTitle}>{entry.title}</span>
+                          <span className={styles.itemTitle}>{tc(entry.title)}</span>
                           <span className={styles.itemGo} aria-hidden="true">
                             →
                           </span>
@@ -147,7 +153,7 @@ export default function CatalogPage() {
                     ) : (
                       <li key={entry.id}>
                         <div className={`${styles.item} ${styles.itemSoon}`} aria-disabled="true">
-                          <span className={styles.itemTitle}>{entry.title}</span>
+                          <span className={styles.itemTitle}>{tc(entry.title)}</span>
                           <span className={styles.soonMark}>{t.catalog.soon}</span>
                         </div>
                       </li>
@@ -182,8 +188,8 @@ function groupEntries(entries: CatalogEntry[]): Group[] {
       const subsection = section?.subsections.find((s) => s.id === entry.subsectionId);
       group = {
         key,
-        sectionTitle: section?.title ?? entry.sectionId,
-        subsectionTitle: subsection?.title ?? '',
+        sectionTitle: tc(section?.title ?? entry.sectionId),
+        subsectionTitle: subsection === undefined ? '' : tc(subsection.title),
         entries: [],
       };
       groups.set(key, group);
@@ -196,7 +202,7 @@ function groupEntries(entries: CatalogEntry[]): Group[] {
   for (const group of groups.values()) {
     group.entries.sort((a, b) => {
       if (a.state !== b.state) return a.state === 'ready' ? -1 : 1;
-      return a.title.localeCompare(b.title, 'ru');
+      return tc(a.title).localeCompare(tc(b.title), 'ru');
     });
   }
 

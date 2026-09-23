@@ -9,6 +9,7 @@ import { useId } from 'react';
 
 import { counterparties } from '@/api/mock/directory';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { formatMoney } from '@/utils/format';
 
 import styles from './Field.module.css';
@@ -85,7 +86,7 @@ export function Field({
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor={id}>
-        {def.label}
+        {tc(def.label)}
         {def.required ? (
           <span className={styles.required} title={t.form.required}>
             {' '}
@@ -109,7 +110,7 @@ export function Field({
           onFocus,
           onBlur,
         })}
-        {def.unit === undefined ? null : <span className={styles.unit}>{def.unit}</span>}
+        {def.unit === undefined ? null : <span className={styles.unit}>{tc(def.unit)}</span>}
       </div>
 
       {extraLangs.map((lang) => (
@@ -134,7 +135,7 @@ export function Field({
 
       {def.hint === undefined ? null : (
         <p className={styles.hint} id={hintId}>
-          {def.hint}
+          {tc(def.hint)}
         </p>
       )}
 
@@ -312,8 +313,10 @@ function renderControl({
         >
           <option value="">{t.form.selectOption}</option>
           {(def.options ?? []).map((option) => (
+            // Значение остаётся русским: оно идёт в документ и по нему
+            // выбирается статья закона. Переводится только подпись.
             <option key={option} value={option}>
-              {option}
+              {tc(option)}
             </option>
           ))}
         </select>

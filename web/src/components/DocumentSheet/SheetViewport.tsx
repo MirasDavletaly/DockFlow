@@ -54,6 +54,7 @@ export function SheetViewport({ children }: { children: ReactNode }) {
       >
         <div
           className={styles.inner}
+          data-sheet-viewport=""
           ref={innerRef}
           style={{ transform: `scale(${scale})` }}
         >

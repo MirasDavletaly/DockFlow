@@ -17,11 +17,25 @@
  *
  * Тот же компонент печатается: класс .print-root оставляет на бумаге только
  * лист (см. styles/print.css).
+ *
+ * Документ длиннее листа раскладывается на несколько листов A4 (`paginate`):
+ * каждый блок бланка и каждая строка таблицы – отдельный кусок, и кусок,
+ * который не помещается, уходит на следующий лист целиком.
  */
+import { useLayoutEffect, useRef, useState } from 'react';
+
 import { findCounterparty } from '@/api/mock/directory';
 import { findEmployeeIn } from '@/store/db';
 import { t } from '@/i18n';
 import { formatDocumentDate, formatLongDate, formatMoney, formatShortDate } from '@/utils/format';
+
+import {
+  PAGE_CONTENT_MM,
+  PX_PER_MM,
+  cutsBetweenLines,
+  layoutPages,
+  sameLayout,
+} from './paginate';
 
 import styles from './DocumentSheet.module.css';
 
@@ -36,6 +50,8 @@ import type {
   Para,
   Run,
 } from '@/api/types';
+import type { Piece, Slice } from './paginate';
+import type { ReactNode } from 'react';
 
 /** Доверенность выходит на русском и английском: казахской колонки в ней нет. */
 const BI_LANGS: Array<keyof BiRow> = ['ru', 'en'];
@@ -81,6 +97,8 @@ export function DocumentSheet({
   people,
 }: Props) {
   const fieldsById = new Map<string, FieldDef>(template.fields.map((f) => [f.id, f]));
+  const pagesRef = useRef<HTMLDivElement>(null);
+  const [layout, setLayout] = useState<Slice[][] | null>(null);
 
   function renderRuns(runs: Run[], keyPrefix: string, lang: DocLang = 'ru') {
     return runs.map((run, index) => {
@@ -214,6 +232,8 @@ export function DocumentSheet({
         );
 
       case 'tri-table':
+        // Строки таблицы раскладываются по листам поштучно (`fragmentsOf`),
+        // сюда приходит таблица из одной строки.
         return (
           <div key={key} className={styles.triTable}>
             {block.rows.map((row, rowIndex) => (
@@ -349,14 +369,170 @@ export function DocumentSheet({
     }
   }
 
+  /**
+   * Куски, которые раскладываются по листам.
+   *
+   * Таблица режется по строкам: тело приказа – это таблица, и целиком она на
+   * следующий лист не переезжает. Первая строка таблицы держит отступ перед
+   * таблицей, следующие – отступ между строками, как и было в одном блоке.
+   */
+  function fragmentsOf(block: DocBlock, index: number): Fragment[] {
+    if (block.kind === 'tri-table' || block.kind === 'bi-table') {
+      return block.rows.map((_, rowIndex) => {
+        const single: DocBlock =
+          block.kind === 'tri-table'
+            ? { kind: 'tri-table', rows: block.rows.slice(rowIndex, rowIndex + 1) }
+            : { kind: 'bi-table', rows: block.rows.slice(rowIndex, rowIndex + 1) };
+        const node = renderBlock(single, index);
+        return {
+          key: `b-${index}-${rowIndex}`,
+          node:
+            rowIndex === 0 ? node : <div className={styles.tableContinued}>{node}</div>,
+          // Строку тела можно разорвать между строками текста, как в Word.
+          splittable: true,
+        };
+      });
+    }
+    return [{ key: `b-${index}`, node: renderBlock(block, index), splittable: false }];
+  }
+
+  const fragments = template.body.flatMap(fragmentsOf);
+
+  // Раскладка считается по настоящей высоте кусков после отрисовки. Высота
+  // куска не зависит от того, на каком он листе: ширина у всех листов одна.
+  useLayoutEffect(() => {
+    const root = pagesRef.current;
+    if (root === null) return undefined;
+
+    const measure = () => {
+      const next = layoutPages(measurePieces(root, fragments.length), PAGE_CONTENT_MM * PX_PER_MM);
+      setLayout((prev) => (sameLayout(prev, next) ? prev : next));
+    };
+
+    measure();
+
+    // Логотип и шрифты догружаются позже первой отрисовки и меняют высоту.
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(measure);
+    root.querySelectorAll('[data-piece]').forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  });
+
+  const pages: Slice[][] =
+    layout !== null && sameIndices(layout, fragments.length)
+      ? layout
+      : [fragments.map((_, index) => ({ index, from: 0, to: 0 }))];
+
+  // Сколько частей у каждого куска: одна – кусок показан целиком.
+  const splitCount = new Map<number, number>();
+  for (const slice of pages.flat()) {
+    splitCount.set(slice.index, (splitCount.get(slice.index) ?? 0) + 1);
+  }
+
   // Водяного знака на листе нет: документ должен выглядеть ровно так, как
   // он выйдет на бумагу. Что запись ещё черновик, видно рядом с листом –
   // штампом состояния и пометкой на странице документа.
   return (
-    <article className={styles.sheet} lang="ru">
-      <div className={styles.content}>{template.body.map(renderBlock)}</div>
-    </article>
+    <div className={styles.pages} ref={pagesRef}>
+      {pages.map((slices, pageIndex) => (
+        <article key={pageIndex} className={styles.sheet} lang="ru" data-page={pageIndex + 1}>
+          <div className={styles.content}>
+            {slices.map((slice) => {
+              const fragment = fragments[slice.index];
+              if (fragment === undefined) return null;
+
+              const body = (
+                <div
+                  className={styles.fragment}
+                  data-piece={slice.index}
+                  data-splittable={fragment.splittable ? '' : undefined}
+                  style={slice.from > 0 ? { marginTop: -slice.from } : undefined}
+                >
+                  {fragment.node}
+                </div>
+              );
+
+              // Кусок целиком – как есть. Часть разорванной строки – окно
+              // нужной высоты, в котором строка сдвинута на уже показанное.
+              return (splitCount.get(slice.index) ?? 0) < 2 ? (
+                <div key={`${fragment.key}-${slice.from}`}>{body}</div>
+              ) : (
+                <div
+                  key={`${fragment.key}-${slice.from}`}
+                  className={styles.slice}
+                  style={{ height: slice.to - slice.from }}
+                  // Продолжение повторяет текст куска – читалке экрана
+                  // хватает первой части.
+                  aria-hidden={slice.from > 0 ? true : undefined}
+                >
+                  {body}
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      ))}
+    </div>
   );
+}
+
+interface Fragment {
+  key: string;
+  node: ReactNode;
+  /** Можно ли разорвать кусок между строками текста. */
+  splittable: boolean;
+}
+
+/** Раскладка относится к этим же кускам: число кусков совпадает. */
+function sameIndices(layout: Slice[][], count: number): boolean {
+  const seen = new Set(layout.flatMap((page) => page.map((slice) => slice.index)));
+  return seen.size === count;
+}
+
+/**
+ * Высота каждого куска и места, где его можно разорвать.
+ *
+ * Меряется содержимое куска, а не окно, в котором он показан: у разорванной
+ * строки окно ниже содержимого. Лист на экране уменьшен (`SheetViewport`),
+ * поэтому координаты строк текста пересчитываются в настоящий размер.
+ */
+function measurePieces(root: HTMLElement, count: number): Piece[] {
+  const pieces: Piece[] = Array.from({ length: count }, () => ({ height: 0 }));
+  const measured = new Set<number>();
+
+  root.querySelectorAll<HTMLElement>('[data-piece]').forEach((node) => {
+    const index = Number(node.dataset.piece);
+    if (measured.has(index) || index >= count) return;
+    measured.add(index);
+
+    const height = node.offsetHeight;
+    const piece: Piece = { height };
+
+    if (node.dataset.splittable !== undefined && height > 0) {
+      const box = node.getBoundingClientRect();
+      const scale = box.height / height || 1;
+      const lines: Array<{ top: number; bottom: number }> = [];
+
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      const range = document.createRange();
+      for (let text = walker.nextNode(); text !== null; text = walker.nextNode()) {
+        if ((text.textContent ?? '').trim() === '') continue;
+        range.selectNodeContents(text);
+        for (const rect of Array.from(range.getClientRects())) {
+          if (rect.height === 0) continue;
+          lines.push({
+            top: (rect.top - box.top) / scale,
+            bottom: (rect.bottom - box.top) / scale,
+          });
+        }
+      }
+      piece.cuts = cutsBetweenLines(lines);
+    }
+
+    pieces[index] = piece;
+  });
+
+  return pieces;
 }
 
 /**

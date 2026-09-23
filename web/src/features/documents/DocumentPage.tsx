@@ -11,6 +11,7 @@
  * задним числом (CLAUDE.md, п. 3.4). У черновика снимка нет — он ещё не
  * выпущен и показывает то, что есть у компании сейчас.
  */
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { canDeleteDocument, canEditDocument, canRestoreDocument } from '@/access/policy';
@@ -24,6 +25,7 @@ import { useSession } from '@/store/session';
 import { formatDateTime } from '@/utils/format';
 
 import { DocumentAccess } from './DocumentAccess';
+import { exportPdf, pdfFileName } from './exportPdf';
 
 import styles from './DocumentPage.module.css';
 
@@ -32,6 +34,9 @@ export default function DocumentPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { findDocument, company, user, deleteDocument, restoreDocument } = useSession();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfFailed, setPdfFailed] = useState(false);
 
   const record = documentId === undefined ? undefined : findDocument(documentId);
   const template = record === undefined ? undefined : findTemplate(record.templateId);
@@ -52,6 +57,22 @@ export default function DocumentPage() {
   // Снимок реквизитов на момент сохранения. У черновика его нет.
   const sheetCompany = record.companySnapshot ?? company;
   const requisitesFrozen = record.companySnapshot !== undefined;
+
+  async function downloadPdf() {
+    const root = sheetRef.current;
+    if (root === null || record === undefined) return;
+
+    setPdfBusy(true);
+    setPdfFailed(false);
+    try {
+      const title = tc(record.title);
+      await exportPdf(root, pdfFileName(title, record.number), title);
+    } catch {
+      setPdfFailed(true);
+    } finally {
+      setPdfBusy(false);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -94,14 +115,29 @@ export default function DocumentPage() {
             </button>
           ) : null}
 
-          <button type="button" className={styles.print} onClick={() => window.print()}>
+          <button type="button" className={styles.edit} onClick={() => window.print()}>
             {t.document.print}
+          </button>
+
+          <button
+            type="button"
+            className={styles.print}
+            disabled={pdfBusy}
+            onClick={() => void downloadPdf()}
+          >
+            {pdfBusy ? t.document.pdfBusy : t.document.downloadPdf}
           </button>
         </div>
       </div>
 
       <div className={styles.body}>
         <aside className={`${styles.side} no-print`}>
+          {pdfFailed ? (
+            <div className={styles.draftNote} role="alert">
+              <p className={styles.savedBody}>{t.document.pdfFailed}</p>
+            </div>
+          ) : null}
+
           {justSaved ? (
             <div className={styles.saved} role="status">
               <div className={styles.savedTitle}>{t.document.savedTitle}</div>
@@ -192,7 +228,7 @@ export default function DocumentPage() {
 
         <div className={styles.sheetArea}>
           {/* print-root: при печати на бумагу попадает только это поддерево. */}
-          <div className="print-root">
+          <div className="print-root" ref={sheetRef}>
             <SheetViewport>
               <DocumentSheet
                 template={template}

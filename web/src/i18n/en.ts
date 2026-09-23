@@ -200,10 +200,14 @@ export const en: Dictionary = {
 
   document: {
     back: 'To my documents',
-    print: 'Print or save as PDF',
-    printHint: 'The print dialog opens. Choose a printer or «Save as PDF» there.',
+    print: 'Print',
+    downloadPdf: 'Download PDF',
+    pdfBusy: 'Building the PDF…',
+    pdfFailed: 'The PDF was not built. Try again or print the document.',
+    printHint:
+      '«Download PDF» saves the file at once, without the print dialog. «Print» opens the print dialog.',
     serverPdfNote:
-      'Building the .docx file on the server comes with the converter – then the document downloads as a ready file.',
+      'The browser PDF is a picture of the sheet: its text cannot be selected. A file with real text and a checksum will be built by the server.',
     edit: 'Edit',
     delete: 'Delete',
     deleteConfirm:
@@ -219,7 +223,7 @@ export const en: Dictionary = {
     accessEmpty: 'There are no employees in the company to grant access to.',
     deletedBody: 'It is gone from the registries and visible only in the admin panel bin.',
     savedTitle: 'Document saved',
-    savedBody: 'You can print it or save it as PDF.',
+    savedBody: 'You can download it as PDF or print it.',
     draftTitle: 'This is a draft',
     draftBody: 'The draft is visible only to you. It is not printed and not issued.',
     noNumber: 'no number assigned',

@@ -24,13 +24,17 @@ import {
 import {
   assignableRoles,
   can,
+  canDeleteArchiveFile,
   canGrantDocument,
   canManageUser,
   canReceiveGrant,
   canSeeAuditEntry,
   canSeeUser,
+  canUploadArchive,
   canUseCompany,
+  canViewArchiveFile,
   managedCompanyIds,
+  visibleArchive,
   visibleDocuments,
 } from '@/access/policy';
 import {
@@ -45,9 +49,12 @@ import {
   updateDb,
 } from '@/store/db';
 import { DocumentNumberTakenError, findNumberHolder } from '@/store/documentNumber';
+import { getFile, putFile } from '@/store/files';
 import { hashPassword, verifyPassword } from '@/store/password';
+import { MAX_PDF_BYTES, isPdf, readBytes, sha256Hex } from '@/utils/pdf';
 
 import type {
+  ArchiveFile,
   AuditEntry,
   Company,
   DocumentRecord,
@@ -103,6 +110,28 @@ export interface UserAccessPatch {
   viewSectionIds?: string[];
   blocked?: boolean;
 }
+
+/** Старый документ, который кладут в архив файлом PDF. */
+export interface ArchiveUploadInput {
+  file: File;
+  title: string;
+  number: string;
+  documentDate: string;
+  sectionId: string;
+  description: string;
+}
+
+export type ArchiveUploadResult =
+  | 'ok'
+  | 'denied'
+  | 'not-pdf'
+  | 'too-big'
+  | 'duplicate'
+  | 'storage-failed';
+
+export type ArchiveOpenResult =
+  | { ok: true; blob: Blob; file: ArchiveFile }
+  | { ok: false; reason: 'denied' | 'missing' | 'corrupted' };
 
 export interface SaveDocumentInput {
   /** Есть — правим существующую запись, нет — заводим новую. */
@@ -172,6 +201,12 @@ interface SessionValue {
   deleteDocument: (id: string) => void;
   /** Возвращает удалённый документ в реестр. */
   restoreDocument: (id: string) => void;
+  /** Файлы архива текущей компании, которые человеку видны. */
+  archive: ArchiveFile[];
+  uploadArchiveFile: (input: ArchiveUploadInput) => Promise<ArchiveUploadResult>;
+  /** Достаёт файл и сверяет его SHA-256 с тем, что записали при загрузке. */
+  openArchiveFile: (id: string) => Promise<ArchiveOpenResult>;
+  deleteArchiveFile: (id: string) => void;
   /** Выдаёт или снимает (`null`) доступ человека к документу. */
   setDocumentGrant: (docId: string, userId: string, level: 'view' | 'edit' | null) => void;
   findDocument: (id: string) => DocumentRecord | undefined;
@@ -404,6 +439,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [db.documents, subject],
   );
 
+  const archive = useMemo(() => {
+    if (companyId === null) return [];
+    return visibleArchive(
+      subject,
+      db.archive.filter((f) => f.companyId === companyId),
+    ).sort((a, b) => b.documentDate.localeCompare(a.documentDate));
+  }, [db.archive, companyId, subject]);
+
   const employees = useMemo(
     () => (companyId === null ? [] : employeesOf(companyId)),
     // db.employees в зависимостях нарочно: справочник правится в админ-панели,
@@ -561,6 +604,111 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     },
     [user],
+  );
+
+  const uploadArchiveFile = useCallback<SessionValue['uploadArchiveFile']>(
+    async (input) => {
+      // Компания – только из сессии, не из формы (CLAUDE.md, п. 3.1).
+      if (companyId === null || user === null) return 'denied';
+      if (!canUploadArchive(subject, companyId, input.sectionId)) return 'denied';
+      if (input.file.size > MAX_PDF_BYTES) return 'too-big';
+
+      const buffer = await readBytes(input.file);
+      if (!isPdf(new Uint8Array(buffer))) return 'not-pdf';
+
+      const sha256 = await sha256Hex(buffer);
+      // Один и тот же файл дважды в архиве компании – это дубль, а не новый
+      // документ. Повторное нажатие «Загрузить» тоже не создаёт второй записи.
+      const duplicate = loadDb().archive.some(
+        (f) => f.companyId === companyId && f.deletedAt === undefined && f.sha256 === sha256,
+      );
+      if (duplicate) return 'duplicate';
+
+      const id = newId('f');
+      try {
+        await putFile(id, new Blob([buffer], { type: 'application/pdf' }));
+      } catch {
+        return 'storage-failed';
+      }
+
+      const record: ArchiveFile = {
+        id,
+        companyId,
+        title: input.title.trim(),
+        number: input.number.trim() === '' ? null : input.number.trim(),
+        documentDate: input.documentDate,
+        sectionId: input.sectionId,
+        description: input.description.trim(),
+        fileName: input.file.name,
+        size: buffer.byteLength,
+        sha256,
+        uploadedBy: user.id,
+        uploadedByName: user.displayName,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      updateDb((cur) =>
+        appendAudit(
+          { ...cur, archive: [record, ...cur.archive] },
+          {
+            userId: user.id,
+            userName: user.displayName,
+            companyId,
+            event: 'archive.upload',
+            target: record.title,
+          },
+        ),
+      );
+      return 'ok';
+    },
+    [companyId, subject, user],
+  );
+
+  const openArchiveFile = useCallback<SessionValue['openArchiveFile']>(
+    async (id) => {
+      const file = loadDb().archive.find((f) => f.id === id);
+      if (file === undefined || !canViewArchiveFile(subject, file)) {
+        return { ok: false, reason: 'denied' };
+      }
+
+      const blob = await getFile(id).catch(() => undefined);
+      if (blob === undefined) return { ok: false, reason: 'missing' };
+
+      // Файл, который изменили в хранилище мимо системы, не выдаётся.
+      const actual = await sha256Hex(await readBytes(blob));
+      if (actual !== file.sha256) return { ok: false, reason: 'corrupted' };
+
+      return { ok: true, blob, file };
+    },
+    [subject],
+  );
+
+  const deleteArchiveFile = useCallback<SessionValue['deleteArchiveFile']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.archive.find((f) => f.id === id);
+        if (target === undefined || !canDeleteArchiveFile(subject, target)) return cur;
+
+        return appendAudit(
+          {
+            ...cur,
+            archive: cur.archive.map((f) =>
+              f.id === id
+                ? { ...f, deletedAt: new Date().toISOString(), deletedBy: user?.displayName ?? '' }
+                : f,
+            ),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'archive.delete',
+            target: target.title,
+          },
+        );
+      });
+    },
+    [subject, user],
   );
 
   const setDocumentGrant = useCallback<SessionValue['setDocumentGrant']>(
@@ -985,6 +1133,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       deleteDocument,
       restoreDocument,
       setDocumentGrant,
+      archive,
+      uploadArchiveFile,
+      openArchiveFile,
+      deleteArchiveFile,
       findDocument: (id) => {
         const found = loadDb().documents.find((d) => d.id === id);
         if (found === undefined) return undefined;
@@ -1019,6 +1171,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       unlockAdmin,
       lockAdmin,
       setDocumentGrant,
+      archive,
+      uploadArchiveFile,
+      openArchiveFile,
+      deleteArchiveFile,
       db.users.length,
       db.companies,
       subject,

@@ -20,6 +20,7 @@ import { employees as seedEmployees } from '@/api/mock/directory';
 
 import type {
   AllowedAddress,
+  ArchiveFile,
   AuditEntry,
   Company,
   DocumentRecord,
@@ -47,6 +48,8 @@ export interface Database {
   employees: EmployeeBrief[];
   users: StoredUser[];
   documents: DocumentRecord[];
+  /** Загруженные в архив файлы: здесь только описание, сам файл – в IndexedDB. */
+  archive: ArchiveFile[];
   audit: AuditEntry[];
   settings: PlatformSettings;
 }
@@ -74,6 +77,7 @@ function seed(): Database {
     employees,
     users: [],
     documents: [],
+    archive: [],
     audit: [],
     settings: { adminIpAllowList: [] },
   };
@@ -136,6 +140,7 @@ function migrate(raw: Partial<Database>): Database {
     employees: raw.employees ?? base.employees,
     users: raw.users ?? [],
     documents,
+    archive: raw.archive ?? [],
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: migrateAllowList(raw.settings?.adminIpAllowList) },
   };

@@ -249,3 +249,54 @@ describe('пароль админ-панели', () => {
     expect(sessionStorage.getItem('docflow.session')).toBeNull();
   });
 });
+
+describe('загрузка в архив', () => {
+  const pdf = () => new File(['%PDF-1.7\n1 0 obj\n'], 'old.pdf', { type: 'application/pdf' });
+  const input = (file: File, sectionId = 'hr') => ({
+    file,
+    title: 'Старый приказ',
+    number: '',
+    documentDate: '2019-03-01',
+    sectionId,
+    description: '',
+  });
+
+  it('не принимает файл, который только назван PDF', async () => {
+    updateDb((db) => ({
+      ...db,
+      users: db.users.map((u) => (u.id === 'worker-a' ? { ...u, sectionIds: ['hr'] } : u)),
+    }));
+    signInAs('worker-a', A);
+
+    let result = '';
+    await act(async () => {
+      result = await session.uploadArchiveFile(
+        input(new File(['MZ это exe'], 'virus.pdf', { type: 'application/pdf' })),
+      );
+    });
+    expect(result).toBe('not-pdf');
+    expect(loadDb().archive).toEqual([]);
+  });
+
+  it('не принимает в раздел, где человек не работает', async () => {
+    signInAs('worker-a', A);
+
+    let result = '';
+    await act(async () => {
+      result = await session.uploadArchiveFile(input(pdf(), 'legal'));
+    });
+    expect(result).toBe('denied');
+  });
+
+  it('если хранилище файлов недоступно, запись в архиве не появляется', async () => {
+    // В jsdom нет IndexedDB – это и есть случай «браузер не дал сохранить».
+    signInAs('director-a', A);
+
+    let result = '';
+    await act(async () => {
+      result = await session.uploadArchiveFile(input(pdf()));
+    });
+    expect(result).toBe('storage-failed');
+    expect(loadDb().archive).toEqual([]);
+  });
+});

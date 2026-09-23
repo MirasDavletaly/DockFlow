@@ -512,6 +512,37 @@ export interface DocumentRecord {
   grants?: DocumentGrant[];
 }
 
+/**
+ * Старый документ, загруженный в архив файлом PDF («Тест день 2»).
+ *
+ * Это не документ системы: у него нет шаблона и снимка значений, только
+ * файл и то, что о нём сказал загрузивший. Поэтому он хранится отдельно от
+ * `DocumentRecord` и не открывается в форме.
+ */
+export interface ArchiveFile {
+  id: string;
+  companyId: string;
+  title: string;
+  /** Номер, под которым документ был выпущен, если он есть. */
+  number: string | null;
+  /** Дата документа – не дата загрузки. */
+  documentDate: string;
+  /** Раздел каталога: по нему архивный файл видят те, кому открыт раздел. */
+  sectionId: string;
+  description: string;
+  fileName: string;
+  /** Размер в байтах. */
+  size: number;
+  /** SHA-256 содержимого: при открытии файл сверяется с ним (CLAUDE.md, п. 3.7). */
+  sha256: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  uploadedAt: string;
+  /** Физического удаления нет: запись помечается (CLAUDE.md, п. 3.4). */
+  deletedAt?: string;
+  deletedBy?: string;
+}
+
 /** Доступ к одному документу, выданный конкретному человеку. */
 export interface DocumentGrant {
   userId: string;

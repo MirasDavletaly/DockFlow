@@ -104,6 +104,11 @@ export function AppLayout() {
             </NavLink>
           </li>
           <li>
+            <NavLink to="/archive" className={navClass}>
+              {t.nav.archive}
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/company" className={navClass}>
               {t.nav.requisites}
             </NavLink>

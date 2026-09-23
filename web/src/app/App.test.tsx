@@ -43,7 +43,10 @@ async function render() {
     root.render(<App />);
   });
 
-  for (let attempt = 0; attempt < 50 && container.textContent === ''; attempt += 1) {
+  // Срок по часам, а не по числу попыток: при полном прогоне файлы
+  // тестов идут параллельно, и ленивый экран грузится дольше полсекунды.
+  const deadline = Date.now() + 3_000;
+  while (container.textContent === '' && Date.now() < deadline) {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     });

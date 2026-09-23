@@ -19,6 +19,7 @@ const CatalogPage = lazy(() => import('@/features/catalog/CatalogPage'));
 const DocumentFormPage = lazy(() => import('@/features/document-form/DocumentFormPage'));
 const DocumentPage = lazy(() => import('@/features/documents/DocumentPage'));
 const DocumentListPage = lazy(() => import('@/features/documents/DocumentListPage'));
+const ArchivePage = lazy(() => import('@/features/archive/ArchivePage'));
 const CompanyPage = lazy(() => import('@/features/company/CompanyPage'));
 const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'));
 const AdminPage = lazy(() => import('@/features/admin/AdminPage'));
@@ -55,6 +56,7 @@ export function AppRoutes() {
           <Route path="/create/:templateId" element={<DocumentFormPage />} />
           <Route path="/documents" element={<DocumentListPage />} />
           <Route path="/documents/:documentId" element={<DocumentPage />} />
+          <Route path="/archive" element={<ArchivePage />} />
           <Route path="/company" element={<CompanyPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />

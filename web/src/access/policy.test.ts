@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assignableRoles,
   can,
+  canDeleteArchiveFile,
   canDeleteDocument,
   canEditDocument,
   canGrantDocument,
@@ -22,15 +23,18 @@ import {
   canRestoreDocument,
   canSeeAuditEntry,
   canSeeUser,
+  canUploadArchive,
   canUseCompany,
   canUseSection,
+  canViewArchiveFile,
   canViewDocument,
   managedCompanyIds,
   sectionOfDocument,
+  visibleArchive,
   visibleDocuments,
 } from './policy';
 
-import type { DocumentRecord, RoleId, User } from '@/api/types';
+import type { ArchiveFile, DocumentRecord, RoleId, User } from '@/api/types';
 
 const COMPANY_A = 'c-a';
 const COMPANY_B = 'c-b';
@@ -319,5 +323,58 @@ describe('директор управляет своей компанией («�
     expect(can(directorSubject, 'company.create')).toBe(false);
     expect(can(directorSubject, 'settings.manage')).toBe(false);
     expect(can({ user: employee, companyId: COMPANY_A }, 'admin.panel')).toBe(false);
+  });
+});
+
+describe('архив загруженных файлов («Тест день 2»)', () => {
+  const file = (overrides: Partial<ArchiveFile> = {}): ArchiveFile => ({
+    id: 'f-1',
+    companyId: COMPANY_A,
+    title: 'Приказ 2019 года',
+    number: '7-К',
+    documentDate: '2019-03-01',
+    sectionId: 'hr',
+    description: '',
+    fileName: 'prikaz.pdf',
+    size: 1000,
+    sha256: 'x',
+    uploadedBy: other.id,
+    uploadedByName: 'Другой',
+    uploadedAt: '2026-09-23T00:00:00.000Z',
+    ...overrides,
+  });
+
+  it('файл чужой компании не виден никому, кроме администратора', () => {
+    const foreign = file({ companyId: COMPANY_B });
+    expect(canViewArchiveFile({ user: director, companyId: COMPANY_A }, foreign)).toBe(false);
+    expect(canViewArchiveFile({ user: employee, companyId: COMPANY_A }, foreign)).toBe(false);
+    expect(canViewArchiveFile({ user: admin, companyId: COMPANY_A }, foreign)).toBe(true);
+  });
+
+  it('работник видит свои файлы и файлы открытых ему разделов', () => {
+    const reader = user('u-reader', 'employee', { viewSectionIds: ['hr'] });
+    expect(canViewArchiveFile({ user: employee, companyId: COMPANY_A }, file())).toBe(false);
+    expect(
+      canViewArchiveFile({ user: employee, companyId: COMPANY_A }, file({ uploadedBy: employee.id })),
+    ).toBe(true);
+    expect(canViewArchiveFile({ user: reader, companyId: COMPANY_A }, file())).toBe(true);
+    expect(
+      canViewArchiveFile({ user: reader, companyId: COMPANY_A }, file({ sectionId: 'legal' })),
+    ).toBe(false);
+  });
+
+  it('загружают в свой раздел своей компании', () => {
+    expect(canUploadArchive({ user: employee, companyId: COMPANY_A }, COMPANY_A, 'hr')).toBe(true);
+    expect(canUploadArchive({ user: employee, companyId: COMPANY_A }, COMPANY_A, 'legal')).toBe(
+      false,
+    );
+    expect(canUploadArchive({ user: employee, companyId: COMPANY_A }, COMPANY_B, 'hr')).toBe(false);
+  });
+
+  it('удалённый файл пропадает из списка', () => {
+    const gone = file({ deletedAt: '2026-09-23T00:00:00.000Z' });
+    expect(visibleArchive({ user: director, companyId: COMPANY_A }, [file(), gone])).toHaveLength(1);
+    expect(canDeleteArchiveFile({ user: director, companyId: COMPANY_A }, gone)).toBe(false);
+    expect(canDeleteArchiveFile({ user: employee, companyId: COMPANY_A }, file())).toBe(false);
   });
 });

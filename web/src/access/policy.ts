@@ -15,6 +15,7 @@ import { sections } from '@/api/mock/sections';
 
 import type {
   Action,
+  ArchiveFile,
   AuditEntry,
   DocumentGrant,
   DocumentRecord,
@@ -248,4 +249,46 @@ export function canSeeAuditEntry(subject: Subject, entry: AuditEntry): boolean {
   if (!can(subject, 'audit.view') || subject.user === null) return false;
   if (isPlatformWide(subject.user)) return true;
   return entry.companyId !== '' && subject.user.companyIds.includes(entry.companyId);
+}
+
+/* ── Архив загруженных файлов ──────────────────────────────────────────── */
+
+/**
+ * Видит ли человек загруженный в архив файл.
+ *
+ * Правило то же, что у документа: только своя компания; директор и
+ * администратор – все файлы компании; работник – загруженные им самим и
+ * файлы разделов, просмотр которых ему открыт. Удалённый файл – только тот,
+ * кто может возвращать удалённое.
+ */
+export function canViewArchiveFile(subject: Subject, file: ArchiveFile): boolean {
+  const { user } = subject;
+  if (user === null || user.blocked === true) return false;
+  if (!canUseCompany(user, file.companyId)) return false;
+  if (file.deletedAt !== undefined && !can(subject, 'documents.restore')) return false;
+
+  if (can(subject, 'documents.viewAll')) return true;
+  if (file.uploadedBy === user.id) return true;
+  return (user.viewSectionIds ?? []).includes(file.sectionId);
+}
+
+/**
+ * Может ли человек загрузить файл в раздел архива своей компании.
+ *
+ * Загружает тот, кто работает в этом разделе: кадровик кладёт старые
+ * кадровые приказы, но не договоры юристов.
+ */
+export function canUploadArchive(subject: Subject, companyId: string, sectionId: string): boolean {
+  return canUseCompany(subject.user, companyId) && canUseSection(subject.user, sectionId);
+}
+
+/** Удалить файл из архива – пометкой, как и документ. */
+export function canDeleteArchiveFile(subject: Subject, file: ArchiveFile): boolean {
+  if (file.deletedAt !== undefined) return false;
+  return canViewArchiveFile(subject, file) && can(subject, 'documents.delete');
+}
+
+/** Отбор файлов архива – одно правило для списка и для поштучной проверки. */
+export function visibleArchive(subject: Subject, files: ArchiveFile[]): ArchiveFile[] {
+  return files.filter((file) => file.deletedAt === undefined && canViewArchiveFile(subject, file));
 }

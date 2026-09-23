@@ -500,6 +500,25 @@ export interface DocumentRecord {
   /** Документ скрыт из реестров. Физического удаления нет (CLAUDE.md, п. 3.4). */
   deletedAt?: string;
   deletedBy?: string;
+  /**
+   * Раздел каталога. По нему работник, которому открыт просмотр раздела,
+   * видит документ. У записей прежней версии восстанавливается из шаблона.
+   */
+  sectionId?: string;
+  /**
+   * Кому выдан доступ к этому документу поверх роли: просмотр или правка.
+   * Выдают директор и администратор («Тест день 2»).
+   */
+  grants?: DocumentGrant[];
+}
+
+/** Доступ к одному документу, выданный конкретному человеку. */
+export interface DocumentGrant {
+  userId: string;
+  /** view – только смотреть; edit – смотреть и исправлять. */
+  level: 'view' | 'edit';
+  grantedBy: string;
+  grantedAt: string;
 }
 
 /** Роль. Роль – это набор прав, а не константа в коде (CLAUDE.md, п. 3.2). */
@@ -515,6 +534,8 @@ export type Action =
   | 'documents.editAny'
   | 'documents.delete'
   | 'documents.restore'
+  | 'documents.grant'
+  | 'settings.manage'
   | 'audit.view';
 
 export interface Role {
@@ -544,6 +565,12 @@ export interface User {
    * «все разделы»; у работника – ни одного, по умолчанию запрещено.
    */
   sectionIds: string[];
+  /**
+   * Разделы, сохранённые документы которых человек видит целиком, а не только
+   * свои. Выдают директор и администратор («Тест день 2»). У директора и
+   * администратора не нужен: они и так видят все документы компании.
+   */
+  viewSectionIds?: string[];
   /** Карточка работника в справочнике, если человек состоит в штате. */
   employeeId?: string;
   position?: string;
@@ -578,5 +605,12 @@ export interface PlatformSettings {
    * нельзя – список хранится как настройка, а исполняет её сервер
    * (TODO(phase-01): проверка IP в middleware).
    */
-  adminIpAllowList: string[];
+  adminIpAllowList: AllowedAddress[];
+}
+
+/** Адрес, с которого разрешён вход в админ-панель, и чей он. */
+export interface AllowedAddress {
+  ip: string;
+  /** Кому или чему адрес принадлежит: «Офис Астана», «Ноутбук директора». */
+  name: string;
 }

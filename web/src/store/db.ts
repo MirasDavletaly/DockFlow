@@ -19,6 +19,7 @@ import { companies as seedCompanies } from '@/api/mock/companies';
 import { employees as seedEmployees } from '@/api/mock/directory';
 
 import type {
+  AllowedAddress,
   AuditEntry,
   Company,
   DocumentRecord,
@@ -136,8 +137,26 @@ function migrate(raw: Partial<Database>): Database {
     users: raw.users ?? [],
     documents,
     audit: raw.audit ?? [],
-    settings: { adminIpAllowList: raw.settings?.adminIpAllowList ?? [] },
+    settings: { adminIpAllowList: migrateAllowList(raw.settings?.adminIpAllowList) },
   };
+}
+
+/**
+ * Разрешённые адреса раньше были списком строк, теперь – адрес и название
+ * («Тест день 2»). Старая строка становится адресом без названия.
+ */
+export function migrateAllowList(raw: unknown): AllowedAddress[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.flatMap<AllowedAddress>((item: unknown) => {
+    if (typeof item === 'string') return item.trim() === '' ? [] : [{ ip: item.trim(), name: '' }];
+    if (typeof item === 'object' && item !== null && 'ip' in item) {
+      const { ip, name } = item as { ip: unknown; name?: unknown };
+      if (typeof ip !== 'string' || ip.trim() === '') return [];
+      return [{ ip: ip.trim(), name: typeof name === 'string' ? name : '' }];
+    }
+    return [];
+  });
 }
 
 /**

@@ -15,6 +15,7 @@ import { findRole } from '@/api/mock/roles';
 import { sections } from '@/api/mock/sections';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
 
@@ -58,7 +59,7 @@ export default function ProfilePage() {
         ? t.profile.sectionsNone
         : sections
             .filter((s) => user.sectionIds.includes(s.id))
-            .map((s) => s.title)
+            .map((s) => tc(s.title))
             .join(', ')
       : t.profile.sectionsAll;
 
@@ -189,7 +190,7 @@ export default function ProfilePage() {
 
             <dl className={styles.facts}>
               <Fact label={t.profile.login} value={user.login} note={t.profile.loginNote} />
-              <Fact label={t.profile.role} value={role?.title ?? user.role} />
+              <Fact label={t.profile.role} value={tc(role?.title ?? user.role)} />
               <Fact label={t.profile.companies} value={myCompanies} />
               <Fact label={t.profile.sectionsTitle} value={mySections} />
             </dl>

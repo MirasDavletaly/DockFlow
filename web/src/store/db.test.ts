@@ -7,7 +7,16 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { employeesOf, findEmployeeIn, isFirstRun, loadDb, reloadDb, resetDb, updateDb } from './db';
+import {
+  employeesOf,
+  findEmployeeIn,
+  isFirstRun,
+  loadDb,
+  migrateAllowList,
+  reloadDb,
+  resetDb,
+  updateDb,
+} from './db';
 
 beforeEach(() => {
   localStorage.clear();
@@ -127,5 +136,21 @@ describe('журнал действий', () => {
     const raw = localStorage.getItem('docflow.local.db');
     expect(raw).not.toBeNull();
     expect(raw).toContain('document.create');
+  });
+});
+
+describe('список адресов админ-панели («Тест день 2»)', () => {
+  it('старый список строк становится адресами без названия', () => {
+    expect(migrateAllowList(['203.0.113.7', ' ', '10.0.0.0/8'])).toEqual([
+      { ip: '203.0.113.7', name: '' },
+      { ip: '10.0.0.0/8', name: '' },
+    ]);
+  });
+
+  it('новый список с названиями читается как есть, мусор отбрасывается', () => {
+    expect(
+      migrateAllowList([{ ip: '203.0.113.7', name: 'Офис' }, { name: 'без адреса' }, 42, null]),
+    ).toEqual([{ ip: '203.0.113.7', name: 'Офис' }]);
+    expect(migrateAllowList(undefined)).toEqual([]);
   });
 });

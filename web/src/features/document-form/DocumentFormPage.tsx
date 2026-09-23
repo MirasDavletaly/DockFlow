@@ -94,6 +94,7 @@ export default function DocumentFormPage() {
     const record = saveDocument({
       ...(draftId.current === null ? {} : { id: draftId.current }),
       templateId: template.id,
+      sectionId: template.sectionId,
       title: template.title,
       number: current.number,
       description: current.description,
@@ -213,6 +214,7 @@ export default function DocumentFormPage() {
       record = saveDocument({
         ...(draftId.current === null ? {} : { id: draftId.current }),
         templateId: doc.id,
+        sectionId: doc.sectionId,
         title: doc.title,
         number,
         description,

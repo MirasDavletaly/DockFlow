@@ -12,13 +12,21 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  assignableRoles,
   can,
   canDeleteDocument,
   canEditDocument,
+  canGrantDocument,
+  canManageUser,
+  canReceiveGrant,
   canRestoreDocument,
+  canSeeAuditEntry,
+  canSeeUser,
   canUseCompany,
   canUseSection,
   canViewDocument,
+  managedCompanyIds,
+  sectionOfDocument,
   visibleDocuments,
 } from './policy';
 
@@ -196,5 +204,120 @@ describe('правка и удаление', () => {
     expect(canRestoreDocument({ user: admin, companyId: COMPANY_A }, foreignRemoved)).toBe(true);
     // Живой документ возвращать неоткуда.
     expect(canRestoreDocument({ user: admin, companyId: COMPANY_A }, doc())).toBe(false);
+  });
+});
+
+describe('выданный доступ («Тест день 2»)', () => {
+  const grant = (userId: string, level: 'view' | 'edit') => ({
+    userId,
+    level,
+    grantedBy: director.id,
+    grantedAt: '2026-09-23T00:00:00.000Z',
+  });
+
+  it('работник видит чужой документ, доступ к которому ему выдали', () => {
+    const subject = { user: employee, companyId: COMPANY_A };
+    const foreign = doc({ authorId: other.id });
+
+    expect(canViewDocument(subject, foreign)).toBe(false);
+    expect(canViewDocument(subject, { ...foreign, grants: [grant(employee.id, 'view')] })).toBe(true);
+  });
+
+  it('доступ на просмотр не даёт править, доступ на правку – даёт', () => {
+    const subject = { user: employee, companyId: COMPANY_A };
+    const foreign = doc({ authorId: other.id, status: 'saved' });
+
+    expect(canEditDocument(subject, { ...foreign, grants: [grant(employee.id, 'view')] })).toBe(false);
+    expect(canEditDocument(subject, { ...foreign, grants: [grant(employee.id, 'edit')] })).toBe(true);
+  });
+
+  it('выданный доступ не открывает документ чужой компании', () => {
+    const outsider = user('u-outsider', 'employee', { companyIds: [COMPANY_B] });
+    const granted = doc({ authorId: other.id, grants: [grant(outsider.id, 'edit')] });
+
+    expect(canViewDocument({ user: outsider, companyId: COMPANY_B }, granted)).toBe(false);
+    expect(canReceiveGrant({ user: director, companyId: COMPANY_A }, granted, outsider)).toBe(false);
+  });
+
+  it('открытый раздел показывает сохранённые документы раздела, но не чужие черновики', () => {
+    const reader = user('u-reader', 'employee', { viewSectionIds: ['hr'] });
+    const subject = { user: reader, companyId: COMPANY_A };
+
+    expect(canViewDocument(subject, doc({ authorId: other.id, status: 'saved' }))).toBe(true);
+    expect(canViewDocument(subject, doc({ authorId: other.id, status: 'draft' }))).toBe(false);
+    // Раздел по шаблону «legal-…» ему не открыт.
+    expect(
+      canViewDocument(subject, doc({ authorId: other.id, templateId: 'legal-power-single' })),
+    ).toBe(false);
+    // Просмотр раздела не даёт права править.
+    expect(canEditDocument(subject, doc({ authorId: other.id, status: 'saved' }))).toBe(false);
+  });
+
+  it('выдают доступ директор и администратор, работник – нет', () => {
+    const own = doc({ authorId: employee.id });
+
+    expect(canGrantDocument({ user: employee, companyId: COMPANY_A }, own)).toBe(false);
+    expect(canGrantDocument({ user: director, companyId: COMPANY_A }, own)).toBe(true);
+    expect(canGrantDocument({ user: admin, companyId: COMPANY_A }, own)).toBe(true);
+  });
+
+  it('раздел документа восстанавливается из шаблона, самый длинный подходящий', () => {
+    expect(sectionOfDocument(doc({ templateId: 'hr-hire-order' }))).toBe('hr');
+    expect(sectionOfDocument(doc({ templateId: 'procurement-sales-request' }))).toBe(
+      'procurement-sales',
+    );
+    expect(sectionOfDocument(doc({ templateId: 'hr-x', sectionId: 'legal' }))).toBe('legal');
+  });
+});
+
+describe('директор управляет своей компанией («Тест день 2»)', () => {
+  const directorSubject = { user: director, companyId: COMPANY_A };
+  const outsider = user('u-outsider', 'employee', { companyIds: [COMPANY_B] });
+  const otherDirector = user('u-director-2', 'director');
+
+  it('правит сотрудников своей компании и никого больше', () => {
+    expect(canManageUser(directorSubject, employee)).toBe(true);
+    expect(canManageUser(directorSubject, outsider)).toBe(false);
+    expect(canManageUser(directorSubject, otherDirector)).toBe(false);
+    expect(canManageUser(directorSubject, admin)).toBe(false);
+    expect(canManageUser(directorSubject, director)).toBe(false);
+  });
+
+  it('заводит только сотрудников и только в свои компании', () => {
+    expect(assignableRoles(directorSubject)).toEqual(['employee']);
+    expect(managedCompanyIds(directorSubject)).toEqual([COMPANY_A]);
+    expect(managedCompanyIds({ user: admin, companyId: null })).toBeNull();
+    expect(assignableRoles({ user: employee, companyId: COMPANY_A })).toEqual([]);
+  });
+
+  it('не видит администраторов и людей чужих компаний', () => {
+    expect(canSeeUser(directorSubject, otherDirector)).toBe(true);
+    expect(canSeeUser(directorSubject, admin)).toBe(false);
+    expect(canSeeUser(directorSubject, outsider)).toBe(false);
+  });
+
+  it('видит журнал только своих компаний', () => {
+    const entry = (companyId: string) => ({
+      id: 'a',
+      at: '2026-09-23T00:00:00.000Z',
+      userId: 'u',
+      userName: 'u',
+      companyId,
+      event: 'document.create',
+      target: 'x',
+    });
+
+    expect(canSeeAuditEntry(directorSubject, entry(COMPANY_A))).toBe(true);
+    expect(canSeeAuditEntry(directorSubject, entry(COMPANY_B))).toBe(false);
+    expect(canSeeAuditEntry(directorSubject, entry(''))).toBe(false);
+    expect(canSeeAuditEntry({ user: admin, companyId: null }, entry(''))).toBe(true);
+    expect(canSeeAuditEntry({ user: employee, companyId: COMPANY_A }, entry(COMPANY_A))).toBe(false);
+  });
+
+  it('админ-панель открыта директору, но без компаний группы и настроек', () => {
+    expect(can(directorSubject, 'admin.panel')).toBe(true);
+    expect(can(directorSubject, 'company.create')).toBe(false);
+    expect(can(directorSubject, 'settings.manage')).toBe(false);
+    expect(can({ user: employee, companyId: COMPANY_A }, 'admin.panel')).toBe(false);
   });
 });

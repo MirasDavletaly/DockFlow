@@ -48,12 +48,39 @@
 
 /* ── Вкладки ──────────────────────────────────────────────────────────── */
 
+/* Вкладки слева, поиск по текущей вкладке справа – на одной линейке. */
+.tabsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding: 0 var(--space-9);
+  border-bottom: 1px solid var(--line);
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  padding: 0 var(--space-9);
-  border-bottom: 1px solid var(--line);
+}
+
+.search {
+  width: 260px;
+  height: 34px;
+  margin-bottom: var(--space-3);
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-size: var(--text-sm);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .tab {
@@ -97,6 +124,18 @@
   line-height: var(--leading-normal);
   color: var(--ink-500);
   max-width: 70ch;
+}
+
+/* Группа на вкладке «Пользователи»: одна роль – один список. */
+.group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.groupTitle {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .warn {
@@ -235,6 +274,15 @@
   font-size: var(--text-sm);
 }
 
+/* Строка списка адресов: название, адрес, «Удалить». */
+.ipRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 220px) auto;
+  gap: var(--space-4);
+  align-items: center;
+  max-width: 640px;
+}
+
 .roleNote {
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
@@ -356,7 +404,7 @@
 
 @media (max-width: 900px) {
   .body,
-  .tabs {
+  .tabsRow {
     padding-left: var(--space-6);
     padding-right: var(--space-6);
   }

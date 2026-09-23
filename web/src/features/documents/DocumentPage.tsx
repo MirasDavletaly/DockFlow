@@ -23,6 +23,8 @@ import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { formatDateTime } from '@/utils/format';
 
+import { DocumentAccess } from './DocumentAccess';
+
 import styles from './DocumentPage.module.css';
 
 export default function DocumentPage() {
@@ -181,6 +183,8 @@ export default function DocumentPage() {
               <p className={styles.descriptionBody}>{t.document.snapshotBody}</p>
             </div>
           ) : null}
+
+          <DocumentAccess record={record} />
 
           <p className={styles.hint}>{t.document.printHint}</p>
           <p className={styles.note}>{t.document.serverPdfNote}</p>

@@ -21,6 +21,14 @@ const orders = templates.filter((tpl) => tpl.layout === 'order');
 const poa = templates.filter((tpl) => tpl.layout === 'poa');
 
 describe('все документы', () => {
+  // Раздел старых записей восстанавливается по началу идентификатора шаблона
+  // (`sectionOfDocument`), и от этого зависит, кто видит документ.
+  it('идентификатор шаблона начинается с его раздела', () => {
+    for (const tpl of templates) {
+      expect(tpl.id.startsWith(`${tpl.sectionId}-`), tpl.id).toBe(true);
+    }
+  });
+
   it('стоят на одном из двух бланков: приказ или доверенность', () => {
     expect(orders.length + poa.length).toBe(templates.length);
     expect(orders.length).toBeGreaterThan(0);

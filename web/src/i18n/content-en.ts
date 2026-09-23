@@ -62,4 +62,15 @@ export const contentEn: Record<string, string> = {
   'Пожарная и промышленная безопасность': 'Fire and industrial safety',
   'Экология': 'Environment',
   'Несчастные случаи и происшествия': 'Accidents and incidents',
+
+  // ── Роли ────────────────────────────────────────────────────────────────
+  'Администратор': 'Administrator',
+  'Директор': 'Director',
+  'Работник': 'Employee',
+  'Заводит компании и людей, видит и правит документы всех компаний, ведёт журнал действий.':
+    'Creates companies and people, sees and corrects documents of every company, keeps the activity log.',
+  'Всё, что может работник, плюс управление своей компанией: сотрудники и их доступ, персонал, реквизиты и все её документы.':
+    'Everything an employee can do, plus running their company: employees and their access, personnel, company details and all its documents.',
+  'Создаёт документы в разрешённых ему разделах. Видит свои документы, а чужие – только в открытых ему разделах или по выданному доступу.':
+    'Creates documents in the sections granted to them. Sees their own documents, and other people documents only in sections opened to them or by granted access.',
 };

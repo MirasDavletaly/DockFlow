@@ -28,6 +28,8 @@ export const roles: Role[] = [
       'documents.editAny',
       'documents.delete',
       'documents.restore',
+      'documents.grant',
+      'settings.manage',
       'audit.view',
     ],
   },
@@ -36,14 +38,19 @@ export const roles: Role[] = [
     title: 'Директор',
     scope: 'company',
     description:
-      'Всё, что может работник, плюс управление своей компанией: люди, реквизиты и все её документы.',
+      'Всё, что может работник, плюс управление своей компанией: сотрудники и их доступ, персонал, реквизиты и все её документы.',
+    // Админ-панель у директора своя: только его компании, без списка компаний
+    // группы и без настроек платформы («Тест день 2»). Что видно в панели,
+    // решает политика по правам ниже, а не проверка роли на экране.
     can: [
+      'admin.panel',
       'company.edit',
       'people.manage',
       'documents.viewAll',
       'documents.editAny',
       'documents.delete',
       'documents.restore',
+      'documents.grant',
       'audit.view',
     ],
   },
@@ -51,7 +58,8 @@ export const roles: Role[] = [
     id: 'employee',
     title: 'Работник',
     scope: 'company',
-    description: 'Создаёт документы в разрешённых ему разделах и видит только свои.',
+    description:
+      'Создаёт документы в разрешённых ему разделах. Видит свои документы, а чужие – только в открытых ему разделах или по выданному доступу.',
     can: [],
   },
 ];

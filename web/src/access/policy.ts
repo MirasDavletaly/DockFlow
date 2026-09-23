@@ -10,9 +10,17 @@
  * обходится через инструменты разработчика. Настоящую проверку делает
  * сервер (CLAUDE.md, п. 3.3: «сайт ничего не решает»).
  */
-import { roleCan } from '@/api/mock/roles';
+import { roleCan, roles } from '@/api/mock/roles';
+import { sections } from '@/api/mock/sections';
 
-import type { Action, DocumentRecord, User } from '@/api/types';
+import type {
+  Action,
+  AuditEntry,
+  DocumentGrant,
+  DocumentRecord,
+  RoleId,
+  User,
+} from '@/api/types';
 
 /** Кто спрашивает: человек и компания, в которой он сейчас работает. */
 export interface Subject {
@@ -58,38 +66,71 @@ export function canUseSection(user: User | null, sectionId: string): boolean {
 }
 
 /**
+ * Раздел, к которому относится документ.
+ *
+ * У записей прежней версии раздела нет. Он восстанавливается из шаблона:
+ * идентификатор шаблона начинается с идентификатора раздела («hr-hire-order»),
+ * и это соглашение проверяет тест каталога.
+ */
+export function sectionOfDocument(doc: DocumentRecord): string | undefined {
+  if (doc.sectionId !== undefined) return doc.sectionId;
+  // Самый длинный подходящий: «procurement-sales-…» не должен уйти в «procurement».
+  return sections
+    .filter((section) => doc.templateId.startsWith(`${section.id}-`))
+    .sort((a, b) => b.id.length - a.id.length)[0]?.id;
+}
+
+/** Доступ, выданный человеку на этот документ, если он есть. */
+export function grantOf(doc: DocumentRecord, userId: string): DocumentGrant | undefined {
+  return doc.grants?.find((grant) => grant.userId === userId);
+}
+
+/**
  * Видит ли человек документ.
  *
- * Работник видит только свои. Директор — все документы своей компании.
- * Администратор — все. Удалённый документ видит только тот, кто может его
- * вернуть, и только в корзине админ-панели: из реестров он пропадает у всех
- * (`visibleDocuments`), иначе «удалил» и «пропал» перестают совпадать.
+ * Прежде всего документ должен быть в компании, к которой у человека есть
+ * доступ: ни раздел, ни выданный доступ не открывают чужую компанию.
+ *
+ * Дальше: администратор видит все, директор – все документы своих компаний.
+ * Работник видит свои; сохранённые документы разделов, просмотр которых ему
+ * открыт; и документы, доступ к которым ему выдали. Чужие черновики не видит
+ * никто, кроме автора, директора и администратора: черновик ещё не выпущен.
+ *
+ * Удалённый документ видит только тот, кто может его вернуть, и только в
+ * корзине админ-панели: из реестров он пропадает у всех (`visibleDocuments`).
  */
 export function canViewDocument(subject: Subject, doc: DocumentRecord): boolean {
   const { user } = subject;
   if (user === null || user.blocked === true) return false;
+  if (!canUseCompany(user, doc.companyId)) return false;
 
   if (doc.deletedAt !== undefined && !can(subject, 'documents.restore')) return false;
 
-  if (can(subject, 'documents.viewAll')) {
-    return isPlatformWide(user) || user.companyIds.includes(doc.companyId);
-  }
+  if (can(subject, 'documents.viewAll')) return true;
+  if (doc.authorId === user.id) return true;
+  if (grantOf(doc, user.id) !== undefined) return true;
 
-  return doc.authorId === user.id;
+  const section = sectionOfDocument(doc);
+  return (
+    doc.status === 'saved' &&
+    section !== undefined &&
+    (user.viewSectionIds ?? []).includes(section)
+  );
 }
 
 /**
  * Может ли человек править документ.
  *
- * Черновик правит тот, кто его завёл. Сохранённый документ правит только
- * директор или администратор — и это исправление ошибки, а не обычная
- * работа: на сервере оно будет создавать новую версию и запись в аудите.
+ * Черновик правит тот, кто его завёл. Сохранённый документ правят директор,
+ * администратор и тот, кому они выдали доступ на правку («Тест день 2»).
+ * На сервере такая правка будет создавать новую версию и запись в аудите.
  */
 export function canEditDocument(subject: Subject, doc: DocumentRecord): boolean {
   if (!canViewDocument(subject, doc)) return false;
   if (doc.deletedAt !== undefined) return false;
 
   if (can(subject, 'documents.editAny')) return true;
+  if (subject.user !== null && grantOf(doc, subject.user.id)?.level === 'edit') return true;
   return doc.authorId === subject.user?.id && doc.status === 'draft';
 }
 
@@ -104,6 +145,26 @@ export function canDeleteDocument(subject: Subject, doc: DocumentRecord): boolea
 export function canRestoreDocument(subject: Subject, doc: DocumentRecord): boolean {
   if (doc.deletedAt === undefined) return false;
   return canViewDocument(subject, doc) && can(subject, 'documents.restore');
+}
+
+/** Может ли человек выдавать другим доступ к этому документу. */
+export function canGrantDocument(subject: Subject, doc: DocumentRecord): boolean {
+  if (doc.deletedAt !== undefined) return false;
+  return canViewDocument(subject, doc) && can(subject, 'documents.grant');
+}
+
+/**
+ * Кому можно выдать доступ к документу.
+ *
+ * Только людям той же компании: выдать доступ к документу компании А
+ * человеку из компании Б значит устроить утечку своими руками
+ * (CLAUDE.md, п. 3.1). Тем, кто и так видит все документы компании, выдавать
+ * нечего, а себе самому – незачем.
+ */
+export function canReceiveGrant(subject: Subject, doc: DocumentRecord, target: User): boolean {
+  if (target.blocked === true || target.id === subject.user?.id) return false;
+  if (!canUseCompany(target, doc.companyId)) return false;
+  return !roleCan(target.role, 'documents.viewAll');
 }
 
 /**
@@ -124,4 +185,67 @@ export function visibleDocuments(
   return documents.filter(
     (doc) => (withDeleted || doc.deletedAt === undefined) && canViewDocument(subject, doc),
   );
+}
+
+/* ── Люди и учётные записи ─────────────────────────────────────────────── */
+
+/**
+ * Компании, в которых человек управляет сотрудниками.
+ *
+ * `null` значит «во всех» – у администратора платформы. Директор управляет
+ * только своими компаниями («Тест день 2»). Пустой список – ни в одной.
+ */
+export function managedCompanyIds(subject: Subject): string[] | null {
+  if (!can(subject, 'people.manage') || subject.user === null) return [];
+  return isPlatformWide(subject.user) ? null : subject.user.companyIds;
+}
+
+/**
+ * Может ли человек править учётную запись: доступ, блокировку, пароль.
+ *
+ * Администратор – любую. Директор – сотрудников своих компаний, но не
+ * администраторов и не других директоров: иначе директор одной компании мог
+ * бы заблокировать директора, который работает ещё и в другой. Себя не
+ * блокирует и не удаляет никто: своё правится в профиле.
+ */
+export function canManageUser(subject: Subject, target: User): boolean {
+  if (target.id === subject.user?.id) return false;
+
+  const scope = managedCompanyIds(subject);
+  if (scope === null) return true;
+  if (scope.length === 0 || target.role !== 'employee') return false;
+  return target.companyIds.some((id) => scope.includes(id));
+}
+
+/** Какие роли человек может выдавать. Директор заводит только сотрудников. */
+export function assignableRoles(subject: Subject): RoleId[] {
+  const scope = managedCompanyIds(subject);
+  if (scope === null) return roles.map((role) => role.id);
+  return scope.length === 0 ? [] : ['employee'];
+}
+
+/**
+ * Видна ли учётная запись в списке админ-панели.
+ *
+ * Директору видны люди его компаний, включая других директоров, – чтобы
+ * знать, кто ещё работает в компании, – но править он может не всех
+ * (`canManageUser`). Администраторов платформы директор не видит.
+ */
+export function canSeeUser(subject: Subject, target: User): boolean {
+  const scope = managedCompanyIds(subject);
+  if (scope === null) return true;
+  if (target.role === 'platform-admin') return false;
+  return target.companyIds.some((id) => scope.includes(id));
+}
+
+/**
+ * Видна ли запись журнала.
+ *
+ * Администратор видит весь журнал. Директор – записи своих компаний.
+ * Записи без компании (вход, действия администратора) директору не видны.
+ */
+export function canSeeAuditEntry(subject: Subject, entry: AuditEntry): boolean {
+  if (!can(subject, 'audit.view') || subject.user === null) return false;
+  if (isPlatformWide(subject.user)) return true;
+  return entry.companyId !== '' && subject.user.companyIds.includes(entry.companyId);
 }

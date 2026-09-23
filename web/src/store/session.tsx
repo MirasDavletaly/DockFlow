@@ -21,7 +21,18 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import { canUseCompany, visibleDocuments } from '@/access/policy';
+import {
+  assignableRoles,
+  can,
+  canGrantDocument,
+  canManageUser,
+  canReceiveGrant,
+  canSeeAuditEntry,
+  canSeeUser,
+  canUseCompany,
+  managedCompanyIds,
+  visibleDocuments,
+} from '@/access/policy';
 import {
   appendAudit,
   employeesOf,
@@ -76,15 +87,29 @@ export interface NewUserInput {
   role: RoleId;
   companyIds: string[];
   sectionIds: string[];
+  viewSectionIds: string[];
   position?: string;
   email?: string;
   phone?: string;
+}
+
+/** Что директор и администратор меняют в чужой учётной записи. */
+export interface UserAccessPatch {
+  displayName?: string;
+  position?: string;
+  role?: RoleId;
+  companyIds?: string[];
+  sectionIds?: string[];
+  viewSectionIds?: string[];
+  blocked?: boolean;
 }
 
 export interface SaveDocumentInput {
   /** Есть — правим существующую запись, нет — заводим новую. */
   id?: string;
   templateId: string;
+  /** Раздел каталога: по нему открывается просмотр документов раздела. */
+  sectionId: string;
   title: string;
   number: string;
   description: string;
@@ -110,10 +135,19 @@ interface SessionValue {
   employees: EmployeeBrief[];
   /** Справочники всех компаний: нужны только админ-панели. */
   allEmployees: EmployeeBrief[];
+  /** Учётные записи, которые человеку видны в админ-панели (`canSeeUser`). */
   users: User[];
+  /** Записи журнала, которые человеку видны (`canSeeAuditEntry`). */
   audit: AuditEntry[];
   settings: PlatformSettings;
   firstRun: boolean;
+  /**
+   * Пароль для админ-панели уже подтверждён в этом входе. Спрашивается один
+   * раз и забывается при выходе («Тест день 2»).
+   */
+  adminUnlocked: boolean;
+  unlockAdmin: () => void;
+  lockAdmin: () => void;
 
   createFirstAdmin: (input: {
     login: string;
@@ -138,13 +172,15 @@ interface SessionValue {
   deleteDocument: (id: string) => void;
   /** Возвращает удалённый документ в реестр. */
   restoreDocument: (id: string) => void;
+  /** Выдаёт или снимает (`null`) доступ человека к документу. */
+  setDocumentGrant: (docId: string, userId: string, level: 'view' | 'edit' | null) => void;
   findDocument: (id: string) => DocumentRecord | undefined;
 
   updateProfile: (patch: ProfilePatch) => void;
   changePassword: (current: string, next: string) => Promise<boolean>;
 
   createUser: (input: NewUserInput) => Promise<{ ok: boolean; reason?: 'login-taken' }>;
-  updateUser: (id: string, patch: Partial<User>) => void;
+  updateUser: (id: string, patch: UserAccessPatch) => void;
   setUserPassword: (id: string, password: string) => Promise<void>;
   removeUser: (id: string) => void;
 
@@ -164,6 +200,7 @@ const SESSION_KEY = 'docflow.session';
 interface Persisted {
   userId: string | null;
   companyId: string | null;
+  adminUnlocked?: boolean;
 }
 
 function readSession(): Persisted {
@@ -190,6 +227,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const initial = readSession();
   const [userId, setUserId] = useState<string | null>(initial.userId);
   const [companyId, setCompanyId] = useState<string | null>(initial.companyId);
+  // Живёт в `sessionStorage` вместе с входом: переключение языка перерисовывает
+  // дерево и раньше выбрасывало из панели, а выход стирает отметку целиком.
+  const [adminUnlocked, setAdminUnlocked] = useState(initial.adminUnlocked === true);
 
   const stored = useMemo<StoredUser | null>(
     () => (userId === null ? null : (db.users.find((u) => u.id === userId) ?? null)),
@@ -290,6 +330,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
 
     setUserId(candidate.id);
+    setAdminUnlocked(false);
 
     // Человеку с одной компанией выбирать не из чего — входим сразу в неё.
     const only =
@@ -298,13 +339,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         : (candidate.companyIds[0] ?? null);
 
     setCompanyId(only);
-    persist({ userId: candidate.id, companyId: only });
+    persist({ userId: candidate.id, companyId: only, adminUnlocked: false });
     return 'ok';
   }, [persist]);
 
   const signOut = useCallback(() => {
     setUserId(null);
     setCompanyId(null);
+    setAdminUnlocked(false);
     try {
       sessionStorage.removeItem(SESSION_KEY);
     } catch {
@@ -319,6 +361,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     [stored],
   );
+
+  const unlockAdmin = useCallback(() => {
+    setAdminUnlocked(true);
+    persist({ adminUnlocked: true });
+  }, [persist]);
+
+  const lockAdmin = useCallback(() => {
+    setAdminUnlocked(false);
+    persist({ adminUnlocked: false });
+  }, [persist]);
 
   const selectCompany = useCallback(
     (id: string) => {
@@ -359,7 +411,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [companyId, db.employees],
   );
 
-  const users = useMemo(() => db.users.map(publicUser), [db.users]);
+  const users = useMemo(
+    () => db.users.map(publicUser).filter((target) => canSeeUser(subject, target)),
+    [db.users, subject],
+  );
+
+  const audit = useMemo(
+    () => db.audit.filter((entry) => canSeeAuditEntry(subject, entry)),
+    [db.audit, subject],
+  );
 
   const saveDocument = useCallback<SessionValue['saveDocument']>(
     (input) => {
@@ -379,6 +439,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const record: DocumentRecord = {
         id: existing?.id ?? newId('d'),
         templateId: input.templateId,
+        sectionId: input.sectionId,
         companyId: companyId ?? '',
         title: input.title,
         description: input.description.trim(),
@@ -401,6 +462,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           : {}),
         authorId: existing?.authorId ?? user?.id ?? '',
         authorName: existing?.authorName ?? user?.displayName ?? '',
+        // Выданный доступ переживает правку документа.
+        ...(existing?.grants === undefined ? {} : { grants: existing.grants }),
       };
 
       updateDb((cur) => {
@@ -500,6 +563,50 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const setDocumentGrant = useCallback<SessionValue['setDocumentGrant']>(
+    (docId, targetId, level) => {
+      updateDb((cur) => {
+        const doc = cur.documents.find((d) => d.id === docId);
+        const target = cur.users.find((u) => u.id === targetId);
+        if (doc === undefined || target === undefined) return cur;
+
+        // Вторая проверка – здесь, а не только на экране (CLAUDE.md, п. 3.2):
+        // кнопку можно вызвать и мимо интерфейса.
+        if (!canGrantDocument(subject, doc)) return cur;
+        if (level !== null && !canReceiveGrant(subject, doc, publicUser(target))) return cur;
+
+        const rest = (doc.grants ?? []).filter((g) => g.userId !== targetId);
+        const grants =
+          level === null
+            ? rest
+            : [
+                ...rest,
+                {
+                  userId: targetId,
+                  level,
+                  grantedBy: user?.displayName ?? '',
+                  grantedAt: new Date().toISOString(),
+                },
+              ];
+
+        return appendAudit(
+          {
+            ...cur,
+            documents: cur.documents.map((d) => (d.id === docId ? { ...d, grants } : d)),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: doc.companyId,
+            event: level === null ? 'document.revoke' : `document.grant.${level}`,
+            target: `${doc.title} – ${target.displayName}`,
+          },
+        );
+      });
+    },
+    [subject, user],
+  );
+
   const updateProfile = useCallback<SessionValue['updateProfile']>(
     (patch) => {
       if (userId === null) return;
@@ -554,8 +661,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [stored],
   );
 
+  /**
+   * Компании из списка, которыми человек управляет. Директор не может выдать
+   * сотруднику доступ к компании, в которой сам не работает.
+   */
+  const withinScope = useCallback(
+    (ids: string[]): string[] => {
+      const scope = managedCompanyIds(subject);
+      return scope === null ? ids : ids.filter((id) => scope.includes(id));
+    },
+    [subject],
+  );
+
   const createUser = useCallback<SessionValue['createUser']>(
     async (input) => {
+      // Проверка и здесь, а не только на экране (CLAUDE.md, п. 3.2): директор
+      // заводит только сотрудников и только в свои компании.
+      if (!assignableRoles(subject).includes(input.role)) return { ok: false };
+      const companyIds = input.role === 'platform-admin' ? [] : withinScope(input.companyIds);
+      if (input.role !== 'platform-admin' && companyIds.length === 0) return { ok: false };
+
       const login = input.login.trim();
       if (loadDb().users.some((u) => u.login.toLowerCase() === login.toLowerCase())) {
         return { ok: false, reason: 'login-taken' };
@@ -575,8 +700,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 login,
                 displayName: input.displayName.trim(),
                 role: input.role,
-                companyIds: input.companyIds,
+                companyIds,
                 sectionIds: input.sectionIds,
+                viewSectionIds: input.viewSectionIds,
                 createdAt: new Date().toISOString(),
                 password,
                 failedAttempts: 0,
@@ -589,7 +715,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           {
             userId: user?.id ?? '',
             userName: user?.displayName ?? '',
-            companyId: input.companyIds[0] ?? '',
+            companyId: companyIds[0] ?? '',
             event: 'user.create',
             target: login,
           },
@@ -598,43 +724,82 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       return { ok: true };
     },
-    [user],
+    [subject, user, withinScope],
   );
 
   const updateUser = useCallback<SessionValue['updateUser']>(
     (id, patch) => {
+      updateDb((cur) => {
+        const target = cur.users.find((u) => u.id === id);
+        if (target === undefined || !canManageUser(subject, publicUser(target))) return cur;
+        if (patch.role !== undefined && !assignableRoles(subject).includes(patch.role)) return cur;
+
+        const next: StoredUser = { ...target };
+        if (patch.displayName !== undefined) next.displayName = patch.displayName.trim();
+        if (patch.position !== undefined) next.position = patch.position.trim();
+        if (patch.role !== undefined) next.role = patch.role;
+        if (patch.sectionIds !== undefined) next.sectionIds = patch.sectionIds;
+        if (patch.viewSectionIds !== undefined) next.viewSectionIds = patch.viewSectionIds;
+        if (patch.blocked !== undefined) next.blocked = patch.blocked;
+        if (patch.companyIds !== undefined) {
+          // Компании вне своей зоны директор не видит и снять не может: они
+          // остаются как были, меняется только то, чем он управляет.
+          const scope = managedCompanyIds(subject);
+          next.companyIds =
+            scope === null
+              ? patch.companyIds
+              : [
+                  ...target.companyIds.filter((c) => !scope.includes(c)),
+                  ...patch.companyIds.filter((c) => scope.includes(c)),
+                ];
+        }
+        if (next.role === 'platform-admin') next.companyIds = [];
+
+        return appendAudit(
+          { ...cur, users: cur.users.map((u) => (u.id === id ? next : u)) },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: withinScope(next.companyIds)[0] ?? '',
+            event: patch.blocked === undefined ? 'user.update' : patch.blocked ? 'user.block' : 'user.unblock',
+            target: target.login,
+          },
+        );
+      });
+    },
+    [subject, user, withinScope],
+  );
+
+  const setUserPassword = useCallback<SessionValue['setUserPassword']>(
+    async (id, password) => {
+      const target = loadDb().users.find((u) => u.id === id);
+      if (target === undefined || !canManageUser(subject, publicUser(target))) return;
+
+      const hash = await hashPassword(password);
       updateDb((cur) =>
         appendAudit(
           {
             ...cur,
-            users: cur.users.map((u) => (u.id === id ? { ...u, ...patch } : u)),
+            users: cur.users.map((u) => (u.id === id ? { ...unlock(u), password: hash } : u)),
           },
           {
             userId: user?.id ?? '',
             userName: user?.displayName ?? '',
-            companyId: '',
-            event: 'user.update',
-            target: cur.users.find((u) => u.id === id)?.login ?? id,
+            companyId: withinScope(target.companyIds)[0] ?? '',
+            event: 'user.password-reset',
+            target: target.login,
           },
         ),
       );
     },
-    [user],
+    [subject, user, withinScope],
   );
-
-  const setUserPassword = useCallback<SessionValue['setUserPassword']>(async (id, password) => {
-    const hash = await hashPassword(password);
-    updateDb((cur) => ({
-      ...cur,
-      users: cur.users.map((u) => (u.id === id ? { ...unlock(u), password: hash } : u)),
-    }));
-  }, []);
 
   const removeUser = useCallback<SessionValue['removeUser']>(
     (id) => {
       updateDb((cur) => {
         const target = cur.users.find((u) => u.id === id);
-        if (target === undefined) return cur;
+        if (target === undefined || !canManageUser(subject, publicUser(target))) return cur;
 
         // Последнего администратора удалить нельзя: иначе в систему не войдёт
         // никто и её останется только стереть целиком.
@@ -648,23 +813,31 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           {
             userId: user?.id ?? '',
             userName: user?.displayName ?? '',
-            companyId: '',
+            companyId: withinScope(target.companyIds)[0] ?? '',
             event: 'user.delete',
             target: target.login,
           },
         );
       });
     },
-    [user],
+    [subject, user, withinScope],
   );
 
   const saveCompany = useCallback<SessionValue['saveCompany']>(
     (company) => {
-      updateDb((cur) =>
-        appendAudit(
+      updateDb((cur) => {
+        const exists = cur.companies.some((c) => c.id === company.id);
+        // Новую компанию заводит только администратор, реквизиты своей
+        // компании правит и директор.
+        if (!exists && !can(subject, 'company.create')) return cur;
+        if (exists && !(can(subject, 'company.edit') && canUseCompany(user, company.id))) {
+          return cur;
+        }
+
+        return appendAudit(
           {
             ...cur,
-            companies: cur.companies.some((c) => c.id === company.id)
+            companies: exists
               ? cur.companies.map((c) => (c.id === company.id ? company : c))
               : [...cur.companies, company],
           },
@@ -675,17 +848,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             event: 'company.save',
             target: company.name,
           },
-        ),
-      );
+        );
+      });
     },
-    [user],
+    [subject, user],
   );
 
   const removeCompany = useCallback<SessionValue['removeCompany']>(
     (id) => {
       updateDb((cur) => {
         const target = cur.companies.find((c) => c.id === id);
-        if (target === undefined) return cur;
+        if (target === undefined || !can(subject, 'company.create')) return cur;
 
         return appendAudit(
           {
@@ -707,25 +880,84 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         );
       });
     },
-    [user],
+    [subject, user],
   );
 
-  const saveEmployee = useCallback<SessionValue['saveEmployee']>((employee) => {
-    updateDb((cur) => ({
-      ...cur,
-      employees: cur.employees.some((e) => e.id === employee.id)
-        ? cur.employees.map((e) => (e.id === employee.id ? employee : e))
-        : [...cur.employees, employee],
-    }));
-  }, []);
+  /** Персонал правит тот, кто управляет людьми этой компании. */
+  const managesCompany = useCallback(
+    (id: string) => withinScope([id]).length === 1 && can(subject, 'people.manage'),
+    [subject, withinScope],
+  );
 
-  const removeEmployee = useCallback<SessionValue['removeEmployee']>((id) => {
-    updateDb((cur) => ({ ...cur, employees: cur.employees.filter((e) => e.id !== id) }));
-  }, []);
+  const saveEmployee = useCallback<SessionValue['saveEmployee']>(
+    (employee) => {
+      if (!managesCompany(employee.companyId)) return;
 
-  const saveSettings = useCallback<SessionValue['saveSettings']>((settings) => {
-    updateDb((cur: Database) => ({ ...cur, settings }));
-  }, []);
+      updateDb((cur) => {
+        const existing = cur.employees.find((e) => e.id === employee.id);
+        // Карточку другой компании нельзя переписать, подменив companyId.
+        if (existing !== undefined && existing.companyId !== employee.companyId) return cur;
+
+        return appendAudit(
+          {
+            ...cur,
+            employees:
+              existing === undefined
+                ? [...cur.employees, employee]
+                : cur.employees.map((e) => (e.id === employee.id ? employee : e)),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: employee.companyId,
+            event: existing === undefined ? 'personnel.create' : 'personnel.update',
+            target: employee.fullName,
+          },
+        );
+      });
+    },
+    [managesCompany, user],
+  );
+
+  const removeEmployee = useCallback<SessionValue['removeEmployee']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.employees.find((e) => e.id === id);
+        if (target === undefined || !managesCompany(target.companyId)) return cur;
+
+        return appendAudit(
+          { ...cur, employees: cur.employees.filter((e) => e.id !== id) },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'personnel.delete',
+            target: target.fullName,
+          },
+        );
+      });
+    },
+    [managesCompany, user],
+  );
+
+  const saveSettings = useCallback<SessionValue['saveSettings']>(
+    (settings) => {
+      if (!can(subject, 'settings.manage')) return;
+      updateDb((cur: Database) =>
+        appendAudit(
+          { ...cur, settings },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: '',
+            event: 'settings.save',
+            target: settings.adminIpAllowList.map((a) => a.ip).join(', '),
+          },
+        ),
+      );
+    },
+    [subject, user],
+  );
 
   const value = useMemo<SessionValue>(
     () => ({
@@ -737,9 +969,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       employees,
       allEmployees: db.employees,
       users,
-      audit: db.audit,
+      audit,
       settings: db.settings,
       firstRun: db.users.length === 0,
+      adminUnlocked,
+      unlockAdmin,
+      lockAdmin,
       createFirstAdmin,
       signIn,
       signOut,
@@ -749,6 +984,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       numberTaken,
       deleteDocument,
       restoreDocument,
+      setDocumentGrant,
       findDocument: (id) => {
         const found = loadDb().documents.find((d) => d.id === id);
         if (found === undefined) return undefined;
@@ -777,8 +1013,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       employees,
       db.employees,
       users,
-      db.audit,
+      audit,
       db.settings,
+      adminUnlocked,
+      unlockAdmin,
+      lockAdmin,
+      setDocumentGrant,
       db.users.length,
       db.companies,
       subject,

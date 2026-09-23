@@ -27,6 +27,7 @@ const company: Company = {
   bin: '170340025267',
   address: 'ЗКО, город Аксай, промышленная зона, здание 225H',
   directorName: 'Кабешова Самал Амангелдиевна',
+  directorNameShort: 'Кабешова С.А.',
   directorNameEn: 'Samal Kabeshova',
   directorTitle: 'Генеральный директор',
   directorTitleKk: 'Бас Директоры',
@@ -145,7 +146,7 @@ describe('шапка бланка', () => {
         date="2026-09-22"
       />,
     );
-    expect(container.textContent).toContain('Ақсай қ./г. Аксай / Aksai city');
+    expect(container.textContent).toContain('Ақсай қ./г. Аксай / Aksai');
 
     const { cityKk: _kk, cityEn: _en, ...plain } = company;
     render(
@@ -157,7 +158,7 @@ describe('шапка бланка', () => {
       />,
     );
     expect(container.textContent).toContain('г. Аксай');
-    expect(container.textContent).not.toContain('Aksai city');
+    expect(container.textContent).not.toContain('Aksai');
   });
 });
 
@@ -326,9 +327,11 @@ describe('сверка с присланным приказом', () => {
     legalNameEn: 'KAZAKHSTAN NEW TECHNOLOGIES LLP',
     city: 'Астана',
     cityKk: 'Астана',
-    cityEn: 'Astana',
-    directorName: 'Ихсанова С.Т.',
+    cityEn: 'Astana city',
+    directorName: 'Ихсанова София Талаповна',
+    directorNameShort: 'Ихсанова С.Т.',
     directorNameEn: 'Sofiya Ikhsanova',
+    employerCaption: true,
     directorTitle: 'Генеральный директор',
     directorTitleKk: 'Бас директор',
     directorTitleEn: 'General director',
@@ -520,10 +523,12 @@ describe('одноязычные приказы', () => {
 
     const text = container.textContent ?? '';
     expect(text).toContain('ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK LIMITED»');
-    expect(text).toContain('Ақсай қ./г. Аксай / Aksai city');
+    expect(text).toContain('Ақсай қ./г. Аксай / Aksai');
     expect(text).toContain('Б Ұ Й Р Ы Қ / ПРИКАЗ / ORDER');
     expect(text).toContain('Б Ұ Й Ы Р А М Ы Н / П Р И К А З Ы В А Ю / IT IS HEREBY ORDERED:');
-    expect(text).toContain('Жұмыс беруші / Работодатель / Employer:');
+    // У GREENSPARKLIMITED строки «Жұмыс беруші» в бланке нет – так в их
+    // документах («Исправление.docx»).
+    expect(text).not.toContain('Жұмыс беруші');
     expect(text).toContain('Бас Директоры');
     expect(text).toContain('General Director');
     expect(text).toContain('Таныстым:');

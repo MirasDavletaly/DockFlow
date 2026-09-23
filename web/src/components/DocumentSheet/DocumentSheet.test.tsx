@@ -23,6 +23,7 @@ const company: Company = {
   bin: '000000000000',
   address: 'город Астана, улица Примерная, 1',
   directorName: 'Хамит Нурдаулет Алмазович',
+  directorNameShort: 'Хамит Н.А.',
   directorTitle: 'Генеральный директор',
   directorTitleGenitive: 'Генерального директора',
   directorNameGenitive: 'Хамита Нурдаулета Алмазовича',
@@ -160,7 +161,7 @@ describe('снимок справочника', () => {
 });
 
 describe('подпись', () => {
-  it('стоят должность, черта для росписи и фамилия', () => {
+  it('стоят должность и фамилия с инициалами, черты между ними нет', () => {
     render(
       <DocumentSheet
         template={template}
@@ -171,13 +172,14 @@ describe('подпись', () => {
     );
 
     expect(container.textContent).toContain('Генеральный директор');
-    expect(container.textContent).toContain('Хамит Нурдаулет Алмазович');
+    // Под подписью стоит фамилия с инициалами, а не полное имя.
+    expect(container.textContent).toContain('Хамит Н.А.');
+    expect(container.textContent).not.toContain('Хамит Нурдаулет Алмазович');
 
-    // Черта под подпись стоит на той же строке, что и русская должность –
-    // так в образце. Проверяем, что она вообще есть: это место для настоящей
-    // подписи руководителя.
+    // Черты между должностью и фамилией нет: место для росписи остаётся
+    // пустым («Исправление.docx»).
     const signature = container.querySelector('[class*="signature"]');
     expect(signature).not.toBeNull();
-    expect(container.innerHTML).toContain('signatureLine');
+    expect(container.innerHTML).not.toContain('signatureLine');
   });
 });

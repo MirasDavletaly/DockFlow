@@ -47,3 +47,52 @@ export function partOfDay(now: Date = new Date()): 'morning' | 'day' | 'evening'
   if (h < 18) return 'day';
   return 'evening';
 }
+
+/**
+ * Казахские месяцы в той форме, в какой они стоят в дате решения:
+ * «2026 жылғы 24 тамызындағы шешіміне сәйкес».
+ *
+ * ПРОВЕРИТЬ КАЗАХОЯЗЫЧНОМУ ЮРИСТУ. Достоверно известны две формы – «тамызындағы»
+ * из приказа «Order EA Dinara Kakimova» и «қыркүйегіндегі» из правки человека.
+ * Остальные десять записаны по тому же правилу и могут быть неверны. Это
+ * закрытый список из двенадцати слов: поправить его – одна строка на месяц.
+ */
+const MONTHS_KK_IN_DATE = [
+  'қаңтарындағы',
+  'ақпанындағы',
+  'наурызындағы',
+  'сәуіріндегі',
+  'мамырындағы',
+  'маусымындағы',
+  'шілдесіндегі',
+  'тамызындағы',
+  'қыркүйегіндегі',
+  'қазанындағы',
+  'қарашасындағы',
+  'желтоқсанындағы',
+] as const;
+
+const MONTHS_EN = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+] as const;
+
+/**
+ * Дата словами на языке колонки.
+ *
+ * Нужна там, где в документах группы дата написана прописью, а не числами:
+ * «2026 жылғы 24 тамызындағы» / «24 августа 2026» / «August 24, 2026».
+ * Слова вокруг («жылғы шешіміне», «года», «dated») ставит сам шаблон.
+ */
+export function formatLongDate(iso: string, lang: 'kk' | 'ru' | 'en'): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const index = date.getMonth();
+
+  if (lang === 'kk') return `${year} жылғы ${day} ${MONTHS_KK_IN_DATE[index] ?? ''}`;
+  if (lang === 'en') return `${MONTHS_EN[index] ?? ''} ${day}, ${year}`;
+  return `${day} ${MONTHS_GENITIVE[index] ?? ''} ${year}`;
+}

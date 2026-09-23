@@ -42,6 +42,7 @@ export const companies: Company[] = [
     postalCode: '060011',
     address: 'Республика Казахстан, город Атырау, улица Бактыгерей Кулманов, строение 113В',
     directorName: 'Хамит Нурдаулет Алмазович',
+    directorNameShort: 'Хамит Н.А.',
     // Латиница взята из карточки ТОО «EFFEGI EURASIA»: там тот же человек
     // записан как «Nurdaulet Khamit». Написание ФИО в двух компаниях
     // расходится – docs/questions.md, Q23.
@@ -93,6 +94,8 @@ export const companies: Company[] = [
     address: 'город Астана, проспект Мәңгілік Ел, 55/16, офис 333-334',
     addressEn: 'Astana city, Mangilik El Ave., 55/16, office 333-334',
     directorName: 'Гезини Алессандро',
+    directorNameShort: 'Ихсанова С.Т.',
+    employerCaption: true,
     directorNameEn: 'Ghesini Alessandro',
     directorTitle: 'Генеральный директор',
     directorTitleGenitive: 'Генерального директора',
@@ -106,7 +109,7 @@ export const companies: Company[] = [
     directorBasis: '',
     city: 'Астана',
     cityKk: 'Астана',
-    cityEn: 'Astana',
+    cityEn: 'Astana city',
     // Фирменный цвет и логотип не присланы.
     accent: '#1f5c4a',
     monogram: 'KN',
@@ -139,6 +142,8 @@ export const companies: Company[] = [
       'Republic of Kazakhstan, Atyrau region, Atyrau city, Baktigerei Kulmanov street, 113B',
     phone: '+7 705 735 40 79',
     directorName: 'Қабыл Нұрмахамбет Маханбетханұлы',
+    directorNameShort: 'Қабыл Н.М.',
+    employerCaption: false,
     directorNameEn: 'Kabyl Nurmakhambet',
     directorTitle: 'Генеральный директор',
     directorTitleGenitive: 'Генерального директора',
@@ -155,7 +160,7 @@ export const companies: Company[] = [
     // Город взят из карточки, а не из присланного приказа: там стоит
     // Астана. Какой верен – docs/questions.md, Q26.
     cityKk: 'Атырау',
-    cityEn: 'Atyrau',
+    cityEn: 'Atyrau city',
     // Фирменный цвет и логотип не присланы.
     accent: '#8a4b1f',
     monogram: 'AK',
@@ -193,6 +198,7 @@ export const companies: Company[] = [
     // Прислано только «Султангалиева А.Т.»: полного ФИО нет, а в приказе
     // и доверенности инициалы вместо имени не годятся — Q21.
     directorName: 'Султангалиева А.Т.',
+    directorNameShort: 'Султангалиева А.Т.',
     directorTitle: 'Директор',
     directorTitleKk: 'Директор',
     directorTitleEn: 'Director',
@@ -241,6 +247,7 @@ export const companies: Company[] = [
     phone: '+7 (7172) 73-49-72',
     email: 'info@green-spark.net',
     directorName: 'Танатаров Амир Маратович',
+    directorNameShort: 'Танатаров А.М.',
     // Латиница из приказа «Приказ EA Aliya»: «Танатаров А. М. / Amir Tanatarov».
     directorNameEn: 'Amir Tanatarov',
     directorTitle: 'Генеральный директор',
@@ -295,6 +302,8 @@ export const companies: Company[] = [
       'West Kazakhstan Region, Burlin district, Aksai city, Industrial Zone, building 225H',
     phone: '+7 (71133) 41-228, вн. 144',
     directorName: 'Самал Кабешова',
+    directorNameShort: 'Кабешова С.А.',
+    employerCaption: false,
     directorNameEn: 'Samal Kabeshova',
     directorTitle: 'Генеральный директор',
     directorTitleGenitive: 'Генерального директора',
@@ -341,6 +350,7 @@ export const companies: Company[] = [
     phone: '+7 707 444 15 75',
     email: 'info@effegi.kz',
     directorName: 'Нурдаулет Хамит',
+    directorNameShort: 'Хамит Н.',
     directorNameEn: 'Nurdaulet Khamit',
     directorTitle: 'Генеральный директор',
     directorTitleKk: 'Бас директор',

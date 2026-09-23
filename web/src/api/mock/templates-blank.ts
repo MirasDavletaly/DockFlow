@@ -751,6 +751,10 @@ export const blankTemplates: DocumentTemplate[] = [
         required: true,
         group: 'Основание',
         dateLimits: { notAfter: 'today' },
+        // «2026 жылғы 22 қыркүйегіндегі», «22 сентября 2026 года»,
+        // «September 22, 2026» – в приказе о назначении дата написана
+        // прописью, а не числами.
+        dateStyle: 'long',
       },
     ],
     body: [
@@ -767,7 +771,7 @@ export const blankTemplates: DocumentTemplate[] = [
                 { field: '@company.legalNameKk', fallback: '@company.legalName' },
                 { text: ' қатысушыларының ' },
                 { field: 'decisionDate' },
-                { text: ' жылғы шешіміне сәйкес.' },
+                { text: ' шешіміне сәйкес.' },
               ],
             ],
             ru: [

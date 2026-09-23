@@ -39,15 +39,24 @@
 
 /* ── Шапка: логотип и наименование на трёх языках ─────────────────────── */
 
+/* Логотип стоит в колонтитуле – в самом верху листа, слева, – а наименование
+   на трёх языках идёт рядом с ним. Так собран бланк ТОО «Algoritmi KZ». */
 .letterhead {
-  display: grid;
-  gap: 2mm;
+  display: flex;
+  align-items: center;
+  gap: 6mm;
 }
 
 .letterheadMark {
+  flex: none;
   display: flex;
   align-items: center;
-  min-height: 12mm;
+  justify-content: center;
+  width: 40mm;
+  min-height: 14mm;
+  /* Логотипы приходят с прозрачным фоном: на белом листе это не видно, но
+     под ними не должно оказаться ничего постороннего. */
+  background: #fff;
 }
 
 .letterheadLogo {
@@ -70,6 +79,8 @@
 }
 
 .letterheadNames {
+  flex: 1;
+  min-width: 0;
   text-align: center;
 }
 
@@ -168,50 +179,49 @@
   margin-bottom: 15pt;
 }
 
+/* Должность слева, подпись справа, между ними чистое место: черты здесь нет
+   (файл «Исправление.docx»). Обе колонки – строка в строку, поэтому фамилия
+   стоит ровно против той должности, что названа по-русски. */
+.signatureRows {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20mm;
+  line-height: 1.3;
+}
+
 .signatureRoles {
   display: grid;
 }
 
-.signatureRow {
-  display: flex;
-  align-items: baseline;
-  gap: 4mm;
-  line-height: 1.3;
-}
-
-.signatureRole {
-  flex: none;
-}
-
-/* Черта, на которой расписывается руководитель. В образце она есть: это
-   место для настоящей подписи, а не незаполненный реквизит. */
-.signatureLine {
-  flex: 1;
-  min-width: 30mm;
-  border-bottom: 1px solid #000;
-  transform: translateY(-1mm);
-}
-
-.signatureName {
-  flex: none;
+.signatureNames {
+  display: grid;
+  text-align: right;
   white-space: nowrap;
 }
 
 /* ── Лист ознакомления ────────────────────────────────────────────────── */
 
+/* Лист ознакомления стоит справа, под подписью руководителя, а не слева
+   внизу (файл «Исправление.docx»). Ширина ограничена, чтобы он не расползался
+   на всю страницу. */
 .acquaint {
   /* Три пустые строки перед листом ознакомления. */
   margin-top: 39pt;
+  margin-left: auto;
+  width: 95mm;
   font-size: 9pt;
   font-style: italic;
   line-height: 1.35;
 }
 
+/* Черта набрана знаками подчёркивания, а не линией в оформлении: так в
+   документах группы, и так она переживает копирование текста из листа. */
 .acquaintLine {
-  height: 0;
-  max-width: 95mm;
-  margin: 3mm 0 1mm;
-  border-bottom: 1px solid #000;
+  margin-top: 3mm;
+  letter-spacing: -0.5pt;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 /* «Исполнен»: кто подготовил документ. Мелко, внизу листа. */
@@ -329,8 +339,8 @@
 }
 
 .poaSignatureLine {
-  height: 0;
-  margin: 0 auto 2mm;
-  max-width: 80mm;
-  border-bottom: 1px solid #000;
+  margin-bottom: 2mm;
+  letter-spacing: -0.5pt;
+  overflow: hidden;
+  white-space: nowrap;
 }

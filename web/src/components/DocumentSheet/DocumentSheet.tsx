@@ -21,7 +21,7 @@
 import { findCounterparty } from '@/api/mock/directory';
 import { findEmployeeIn } from '@/store/db';
 import { t } from '@/i18n';
-import { formatDocumentDate, formatMoney, formatShortDate } from '@/utils/format';
+import { formatDocumentDate, formatLongDate, formatMoney, formatShortDate } from '@/utils/format';
 
 import styles from './DocumentSheet.module.css';
 
@@ -39,6 +39,17 @@ import type {
 
 /** Доверенность выходит на русском и английском: казахской колонки в ней нет. */
 const BI_LANGS: Array<keyof BiRow> = ['ru', 'en'];
+
+/**
+ * Черта для росписи.
+ *
+ * Это знаки подчёркивания, а не линия в оформлении: в документах группы
+ * набрано именно так, и при копировании текста из листа черта не пропадает.
+ */
+const UNDERSCORE = '_'.repeat(48);
+
+/** Держит пустую строку подписи на своей высоте. */
+const NBSP = '\u00a0';
 
 interface Props {
   template: DocumentTemplate;
@@ -220,44 +231,55 @@ export function DocumentSheet({
         );
 
       case 'tri-signature': {
-        // Должность столбиком на трёх языках; черта и ФИО – на средней строке,
-        // то есть на русской. Так в образце: подпись стоит против той строки,
-        // на которой должность названа по-русски.
+        // Должность столбиком на трёх языках слева, подпись справа. Черты
+        // между ними нет: место для росписи остаётся пустым.
+        //
+        // Справа стоит фамилия с инициалами – «Ихсанова С.Т.», а не полное
+        // имя: так подписаны документы группы.
         const roles = [
           company.directorTitleKk,
           company.directorTitle,
           company.directorTitleEn,
         ].filter(isFilled);
-        const name = [company.directorName, company.directorNameEn].filter(isFilled).join(' / ');
+        const name = [
+          company.directorNameShort ?? company.directorName,
+          company.directorNameEn,
+        ]
+          .filter(isFilled)
+          .join(' / ');
         const middle = Math.floor(roles.length / 2);
 
         return (
           <div key={key} className={styles.signature}>
-            <div className={styles.signatureCaption}>{t.sheet.employer}</div>
-            <div className={styles.signatureRoles}>
-              {roles.map((role, roleIndex) => (
-                <div key={role} className={styles.signatureRow}>
-                  <span className={styles.signatureRole}>{role}</span>
-                  {roleIndex === middle ? (
-                    <>
-                      <span className={styles.signatureLine} aria-hidden="true" />
-                      <span className={styles.signatureName}>{name}</span>
-                    </>
-                  ) : null}
-                </div>
-              ))}
+            {company.employerCaption === true ? (
+              <div className={styles.signatureCaption}>{t.sheet.employer}</div>
+            ) : null}
+            <div className={styles.signatureRows}>
+              <div className={styles.signatureRoles}>
+                {roles.map((role) => (
+                  <div key={role}>{role}</div>
+                ))}
+              </div>
+              <div className={styles.signatureNames}>
+                {roles.map((role, roleIndex) => (
+                  <div key={role}>{roleIndex === middle ? name : NBSP}</div>
+                ))}
+              </div>
             </div>
           </div>
         );
       }
 
       case 'tri-acquaint':
+        // Лист ознакомления стоит справа, под подписью руководителя, а черта
+        // набрана знаками подчёркивания – так в документах группы, и так она
+        // переживает копирование текста из листа.
         return (
           <div key={key} className={styles.acquaint}>
             <div>{t.sheet.acquaintKk}</div>
             <div>{t.sheet.acquaintTitle}</div>
             <div>{t.sheet.acquaintEn}</div>
-            <div className={styles.acquaintLine} aria-hidden="true" />
+            <div className={styles.acquaintLine}>{UNDERSCORE}</div>
             <div>{t.sheet.signatureCaption}</div>
           </div>
         );
@@ -307,12 +329,16 @@ export function DocumentSheet({
       case 'poa-signature':
         return (
           <div key={key} className={styles.poaSignature}>
-            <div className={styles.poaSignatureLine} aria-hidden="true" />
+            <div className={styles.poaSignatureLine}>{UNDERSCORE}</div>
             <div>
               {[company.directorTitle, company.directorTitleEn].filter(isFilled).join(' / ')}
             </div>
             <div>{company.name}</div>
-            <div>{[company.directorName, company.directorNameEn].filter(isFilled).join(' / ')}</div>
+            <div>
+              {[company.directorNameShort ?? company.directorName, company.directorNameEn]
+                .filter(isFilled)
+                .join(' / ')}
+            </div>
           </div>
         );
 
@@ -335,15 +361,17 @@ export function DocumentSheet({
  * Город в шапке: «Астана қ./г. Астана / Astana city».
  *
  * Разделители стоят как в образце: после казахского названия «қ.» и сразу
- * косая без пробела. Если казахского или английского написания нет, часть
- * просто не печатается – три одинаковых слова через косую выглядели бы
- * как ошибка.
+ * косая без пробела. Английское написание печатается ровно так, как оно
+ * записано в карточке: слово «city» стоит не во всех бланках группы, и
+ * дописывать его кодом нельзя. Если казахского или английского написания
+ * нет, часть просто не печатается – три одинаковых слова через косую
+ * выглядели бы как ошибка.
  */
 function placeLine(company: Company): string {
   const parts: string[] = [];
   if (isFilled(company.cityKk)) parts.push(`${company.cityKk} қ./`);
   parts.push(`г. ${company.city}`);
-  if (isFilled(company.cityEn)) parts.push(` / ${company.cityEn} city`);
+  if (isFilled(company.cityEn)) parts.push(` / ${company.cityEn}`);
   return parts.join('');
 }
 
@@ -440,8 +468,9 @@ function resolveField(
       return findCounterparty(raw)?.name ?? '';
     case 'date':
       // В документе дата пишется числами – «с 04.09.2026 по 27.09.2026», как
-      // в настоящих приказах группы.
-      return formatShortDate(raw);
+      // в настоящих приказах группы. Там, где шаблон просит прописью, она
+      // пишется словами на языке своей колонки.
+      return def.dateStyle === 'long' ? formatLongDate(raw, lang) : formatShortDate(raw);
     case 'money':
       return formatMoney(raw);
     default:

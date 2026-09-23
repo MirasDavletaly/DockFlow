@@ -157,7 +157,7 @@
 ### Тема приказа
 
 - **Қазақша.** «Директорды тағайындау туралы»
-- **Қазақша.** {@company.legalNameKk} қатысушыларының {decisionDate} жылғы шешіміне сәйкес.
+- **Қазақша.** {@company.legalNameKk} қатысушыларының {decisionDate} шешіміне сәйкес.
 - **Русский.** «О назначении Директора»
 - **Русский.** На основании решения участников {@company.name} от {decisionDate} года.
 - **English.** “On the appointment of the Director”

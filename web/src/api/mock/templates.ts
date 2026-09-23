@@ -572,11 +572,11 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Прекращение трудовых отношений с работником и окончательный расчёт.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
       {
         id: 'employee',
@@ -638,38 +638,118 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'О расторжении трудового договора', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Еңбек шартын бұзу туралы»', bold: true }]],
+        ru: [[{ text: '«О расторжении трудового договора»', bold: true }]],
+        en: [[{ text: '“On termination of the employment contract”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. «' },
+            { field: 'unit' },
+            { text: '» бөлімінің ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { text: '(' },
+            { field: 'reason' },
+            { text: ') еңбек шарты бұзылсын. Соңғы жұмыс күні – ' },
+            { field: 'dismissDate' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Бухгалтерия пайдаланылмаған еңбек демалысының ' },
+            { field: 'compensationDays' },
+            { text: ' күнтізбелік күні үшін өтемақыны қоса, түпкілікті есеп айырылсын.' },
+          ],
+          [
+            {
+              text:
+                '3. Кадр бөлімі жұмыстан шығарылған күні қызметкерге еңбек кітапшасын ' +
+                'және жалақы туралы анықтаманы берсін.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { field: 'contractDate' },
+            { text: ' жылғы № ' },
+            { field: 'contractNumber' },
+            { text: ' еңбек шарты.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Расторгнуть трудовой договор с ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: ' подразделения «' },
-                      { field: 'unit' },
-                      { text: '», ' },
-                      { field: 'reason' },
-                      { text: '. Последний рабочий день – ' },
-                      { field: 'dismissDate' },
-                      { text: '.' },
-                    ],
-                    [
-                      { text: 'Бухгалтерии произвести окончательный расчёт, включая компенсацию за ' },
-                      { field: 'compensationDays' },
-                      { text: ' календарных дней неиспользованного трудового отпуска.' },
-                    ],
-                    [
-                      {
-                        text:
-                          'Отделу кадров выдать работнику трудовую книжку и справку о заработной плате ' +
-                          'в день увольнения.',
-                      },
-                    ],
-          [{ text: 'Основание: ', bold: true }, { text: 'трудовой договор от ' },
-                    { field: 'contractDate' },
-                    { text: ' № ' },
-                    { field: 'contractNumber' }]
+            { text: '1. Расторгнуть трудовой договор с ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ' подразделения «' },
+            { field: 'unit' },
+            { text: '», ' },
+            { field: 'reason' },
+            { text: '. Последний рабочий день – ' },
+            { field: 'dismissDate' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Бухгалтерии произвести окончательный расчёт, включая компенсацию за ' },
+            { field: 'compensationDays' },
+            { text: ' календарных дней неиспользованного трудового отпуска.' },
+          ],
+          [
+            {
+              text:
+                '3. Отделу кадров выдать работнику трудовую книжку и справку о заработной ' +
+                'плате в день увольнения.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'трудовой договор от ' },
+            { field: 'contractDate' },
+            { text: ' № ' },
+            { field: 'contractNumber' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To terminate the employment contract with ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ' of the “' },
+            { field: 'unit' },
+            { text: '” unit, ' },
+            { field: 'reason' },
+            { text: '. The last working day is ' },
+            { field: 'dismissDate' },
+            { text: '.' },
+          ],
+          [
+            {
+              text: '2. To Accountant Department – to make the final settlement, including ',
+            },
+            { field: 'compensationDays' },
+            { text: ' calendar days of compensation for the unused labour leave.' },
+          ],
+          [
+            {
+              text:
+                '3. To HR Department – to hand the employee the employment record book and ' +
+                'the salary certificate on the day of dismissal.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'employment contract dated ' },
+            { field: 'contractDate' },
+            { text: ' No. ' },
+            { field: 'contractNumber' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -844,11 +924,11 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Премия, благодарность или иное поощрение работника за результат.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
       {
         id: 'employee',
@@ -894,27 +974,103 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'О поощрении работника', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Қызметкерді көтермелеу туралы»', bold: true }]],
+        ru: [[{ text: '«О поощрении работника»', bold: true }]],
+        en: [[{ text: '“On the incentive award to the employee”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' көтермеленсін. Көтермелеу түрі: ' },
+            { field: 'kind' },
+            { text: '. Себебі: ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Бухгалтерия ' },
+            { field: 'amount' },
+            { text: ' теңге сыйақыны ең жақын жалақы төлемімен бірге төлесін.' },
+          ],
+          [
+            {
+              text:
+                '3. Кадр бөлімі көтермелеу туралы мәліметті қызметкердің жеке карточкасына ' +
+                'енгізсін.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { text: 'бөлім басшысының ' },
+            { field: 'memoDate' },
+            { text: ' жылғы ұсынысы.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Поощрить ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: '. Вид поощрения: ' },
-                      { field: 'kind' },
-                      { text: '. За ' },
-                      { field: 'reason' },
-                      { text: '.' },
-                    ],
-                    [
-                      { text: 'Бухгалтерии выплатить премию в размере ' },
-                      { field: 'amount' },
-                      { text: ' тенге в ближайшую выплату заработной платы.' },
-                    ],
-                    [{ text: 'Отделу кадров внести сведения о поощрении в личную карточку работника.' }],
-          [{ text: 'Основание: ', bold: true }, { text: 'представление руководителя подразделения от ' }, { field: 'memoDate' }]
+            { text: '1. Поощрить ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: '. Вид поощрения: ' },
+            { field: 'kind' },
+            { text: '. За ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Бухгалтерии выплатить премию в размере ' },
+            { field: 'amount' },
+            { text: ' тенге в ближайшую выплату заработной платы.' },
+          ],
+          [
+            {
+              text:
+                '3. Отделу кадров внести сведения о поощрении в личную карточку работника.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'представление руководителя подразделения от ' },
+            { field: 'memoDate' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To award ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: '. Type of award: ' },
+            { field: 'kind' },
+            { text: '. For ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. To Accountant Department – to pay the bonus of ' },
+            { field: 'amount' },
+            { text: ' tenge together with the nearest salary payment.' },
+          ],
+          [
+            {
+              text:
+                '3. To HR Department – to enter the award record in the personal card of ' +
+                'the employee.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'proposal of the head of the department dated ' },
+            { field: 'memoDate' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -930,11 +1086,11 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Замечание или выговор работнику. Объяснительная обязательна до приказа.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
       {
         id: 'employee',
@@ -988,33 +1144,101 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'О применении дисциплинарного взыскания', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Тәртіптік жаза қолдану туралы»', bold: true }]],
+        ru: [[{ text: '«О применении дисциплинарного взыскания»', bold: true }]],
+        en: [[{ text: '“On imposing a disciplinary sanction”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: 'violationDate' },
+            { text: ' жіберген тәртіп бұзушылығы үшін «' },
+            { field: 'penalty' },
+            { text: '» түріндегі тәртіптік жаза қолданылсын: ' },
+            { field: 'violation' },
+            { text: '.' },
+          ],
+          [
+            {
+              text:
+                '2. Кадр бөлімі қызметкерді осы бұйрықпен қол қойғыза отырып таныстырсын ' +
+                'және бұйрықты жеке іс материалдарына тіркесін.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { text: 'қызметкердің ' },
+            { field: 'explanationDate' },
+            { text: ' жылғы түсініктемесі, № ' },
+            { field: 'actNumber' },
+            { text: ' акт.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Применить к ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: ', дисциплинарное взыскание в виде «' },
-                      { field: 'penalty' },
-                      { text: '» за нарушение, допущенное ' },
-                      { field: 'violationDate' },
-                      { text: ': ' },
-                      { field: 'violation' },
-                      { text: '.' },
-                    ],
-                    [
-                      {
-                        text:
-                          'Отделу кадров ознакомить работника с настоящим приказом под подпись ' +
-                          'и приобщить приказ к материалам личного дела.',
-                      },
-                    ],
-          [{ text: 'Основание: ', bold: true }, { text: 'объяснительная работника от ' },
-                    { field: 'explanationDate' },
-                    { text: ', акт № ' },
-                    { field: 'actNumber' }]
+            { text: '1. Применить к ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', дисциплинарное взыскание в виде «' },
+            { field: 'penalty' },
+            { text: '» за нарушение, допущенное ' },
+            { field: 'violationDate' },
+            { text: ': ' },
+            { field: 'violation' },
+            { text: '.' },
+          ],
+          [
+            {
+              text:
+                '2. Отделу кадров ознакомить работника с настоящим приказом под подпись ' +
+                'и приобщить приказ к материалам личного дела.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'объяснительная работника от ' },
+            { field: 'explanationDate' },
+            { text: ', акт № ' },
+            { field: 'actNumber' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To impose on ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', a disciplinary sanction in the form of “' },
+            { field: 'penalty' },
+            { text: '” for the violation committed on ' },
+            { field: 'violationDate' },
+            { text: ': ' },
+            { field: 'violation' },
+            { text: '.' },
+          ],
+          [
+            {
+              text:
+                '2. To HR Department – to acquaint the employee with this order against ' +
+                'signature and to attach the order to the personal file.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'explanatory note of the employee dated ' },
+            { field: 'explanationDate' },
+            { text: ', act No. ' },
+            { field: 'actNumber' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -1029,11 +1253,11 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Подтверждает место работы и должность. Выдаётся по заявлению работника.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
       {
         id: 'employee',
@@ -1065,19 +1289,64 @@ const simpleTemplates: DocumentTemplate[] = [
     body: documentBody({
       words: DOCUMENT_WORDS.certificate,
       body: {
+        kk: [
+          [
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: '@company.legalNameKk', fallback: '@company.legalName' },
+            { text: ' ұйымында «' },
+            { field: 'unit' },
+            { text: '» бөлімінде «' },
+            { field: 'position' },
+            { text: '» лауазымында ' },
+            { field: 'startDate' },
+            { text: ' бастап осы уақытқа дейін жұмыс істейтіні туралы осы анықтама берілді.' },
+          ],
+          [
+            { text: 'Анықтама ' },
+            { field: 'destination' },
+            { text: ' үшін берілді.' },
+          ],
+        ],
         ru: [
-          [{ text: 'Выдана ' },
-                    { field: 'employee' },
-                    { text: ' в том, что он(а) работает в организации ' },
-                    { field: '@company.legalName' },
-                    { text: ' в должности «' },
-                    { field: 'position' },
-                    { text: '» в подразделении «' },
-                    { field: 'unit' },
-                    { text: '» с ' },
-                    { field: 'startDate' },
-                    { text: ' по настоящее время.' }],
-          [{ text: 'Справка выдана для предъявления: ' }, { field: 'destination' }, { text: '.' }]
+          [
+            { text: 'Настоящая справка выдана в том, что ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' работает в организации ' },
+            { field: '@company.legalName' },
+            { text: ' в должности «' },
+            { field: 'position' },
+            { text: '» в подразделении «' },
+            { field: 'unit' },
+            { text: '» с ' },
+            { field: 'startDate' },
+            { text: ' по настоящее время.' },
+          ],
+          [
+            { text: 'Справка выдана для предъявления: ' },
+            { field: 'destination' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: 'This certificate is issued to confirm that ' },
+            { field: 'employee', bold: true },
+            { text: ' works at ' },
+            { field: '@company.legalNameEn', fallback: '@company.legalName' },
+            { text: ' in the position of “' },
+            { field: 'position' },
+            { text: '” in the “' },
+            { field: 'unit' },
+            { text: '” unit from ' },
+            { field: 'startDate' },
+            { text: ' to the present time.' },
+          ],
+          [
+            { text: 'The certificate is issued for submission to: ' },
+            { field: 'destination' },
+            { text: '.' },
+          ],
         ],
       },
     }),

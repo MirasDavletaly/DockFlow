@@ -119,16 +119,20 @@ describe('колонки', () => {
    * этапами, и каждый раз должно быть видно, что осталось. Пустой список –
    * значит все документы вышли в три колонки.
    */
-  const AWAITING_TRANSLATION = [
-    'hr-bonus-order',
-    'hr-discipline-order',
-    'hr-dismissal-order',
-    'hr-work-certificate',
-  ];
+  const AWAITING_TRANSLATION: string[] = [];
 
   it('одноязычными остались только те, что ждут перевода', () => {
     const one = templates.filter((tpl) => tpl.langs.length === 1).map((tpl) => tpl.id);
     expect(one.sort()).toEqual([...AWAITING_TRANSLATION].sort());
+  });
+
+  it('доверенность выходит на двух языках, остальные – на трёх', () => {
+    for (const tpl of templates) {
+      if (AWAITING_TRANSLATION.includes(tpl.id)) continue;
+      expect(tpl.langs, tpl.title).toEqual(
+        tpl.layout === 'poa' ? ['ru', 'en'] : ['kk', 'ru', 'en'],
+      );
+    }
   });
 
   it('остальные приказы выходят в три колонки', () => {

@@ -272,22 +272,35 @@ function renderControl({
       );
     }
 
-    case 'counterparty':
+    case 'counterparty': {
+      // Как и работник: контрагента берут из справочника, но организацию,
+      // которой в нём нет, можно вписать руками («Тест день 2»). Из
+      // справочника значение хранится идентификатором, вписанное – текстом.
+      const selected = counterparties.find((c) => c.id === value);
+
       return (
-        <select
-          {...common}
-          className={`${className} ${styles.select}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">{t.form.selectCounterparty}</option>
-          {counterparties.map((counterparty) => (
-            <option key={counterparty.id} value={counterparty.id}>
-              {counterparty.name}
-            </option>
-          ))}
-        </select>
+        <>
+          <input
+            {...common}
+            className={className}
+            type="text"
+            list={listId}
+            value={selected === undefined ? value : selected.name}
+            placeholder={t.form.selectCounterparty}
+            onChange={(e) => {
+              const typed = e.target.value;
+              const match = counterparties.find((c) => c.name === typed);
+              onChange(match === undefined ? typed : match.id);
+            }}
+          />
+          <datalist id={listId}>
+            {counterparties.map((counterparty) => (
+              <option key={counterparty.id} value={counterparty.name} />
+            ))}
+          </datalist>
+        </>
       );
+    }
 
     case 'select':
       return (

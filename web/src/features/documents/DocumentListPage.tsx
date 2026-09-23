@@ -16,9 +16,12 @@ import { can, canDeleteDocument } from '@/access/policy';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
+
+import { searchDocuments } from './search';
 
 import styles from './DocumentListPage.module.css';
 
@@ -53,11 +56,20 @@ export default function DocumentListPage() {
 
   const sortBy = parseColumn(params.get('sort'));
   const direction: Direction = params.get('dir') === 'asc' ? 'asc' : 'desc';
+  // Запрос живёт в адресе, как и сортировка: найденный список можно
+  // переслать ссылкой, и «назад» из документа возвращает к нему же.
+  const query = params.get('q') ?? '';
 
   const sorted = useMemo(
-    () => sortDocuments(documents, sortBy, direction),
-    [documents, sortBy, direction],
+    () => sortDocuments(searchDocuments(documents, query), sortBy, direction),
+    [documents, query, sortBy, direction],
   );
+
+  function setQuery(next: string) {
+    if (next === '') params.delete('q');
+    else params.set('q', next);
+    setParams(params, { replace: true });
+  }
 
   function toggleSort(column: Column) {
     const next: Direction = sortBy === column && direction === 'asc' ? 'desc' : 'asc';
@@ -71,6 +83,19 @@ export default function DocumentListPage() {
       <PageHeader
         title={seesAll ? t.registry.titleAll : t.registry.title}
         subtitle={seesAll ? t.registry.subtitleAll : t.registry.subtitleOwn}
+        actions={
+          documents.length === 0 ? null : (
+            <input
+              className={styles.search}
+              type="search"
+              value={query}
+              placeholder={t.registry.search}
+              title={t.registry.searchHint}
+              aria-label={t.registry.search}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          )
+        }
       />
 
       <div className={styles.body}>
@@ -84,8 +109,12 @@ export default function DocumentListPage() {
         ) : (
           <>
             <div className={styles.count}>
-              <span className="tabular">{documents.length}</span> {t.registry.count}
+              <span className="tabular">{sorted.length}</span> {t.registry.count}
             </div>
+
+            {sorted.length === 0 ? (
+              <p className={styles.emptyBody}>{t.registry.nothingFound}</p>
+            ) : null}
 
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -152,7 +181,7 @@ export default function DocumentListPage() {
 
                       <td className={styles.colTitle}>
                         <Link className={styles.link} to={`/documents/${doc.id}`}>
-                          {doc.title}
+                          {tc(doc.title)}
                         </Link>
                       </td>
 

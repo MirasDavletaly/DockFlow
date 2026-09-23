@@ -673,7 +673,7 @@ function PeopleTab() {
 /* ── Документы ─────────────────────────────────────────────────────────── */
 
 function DocumentsTab() {
-  const { allVisibleDocuments, companies, deleteDocument } = useSession();
+  const { allVisibleDocuments, companies, deleteDocument, restoreDocument } = useSession();
 
   return (
     <section className={styles.section}>
@@ -731,7 +731,15 @@ function DocumentsTab() {
                         {t.common.remove}
                       </button>
                     </>
-                  ) : null}
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.link}
+                      onClick={() => restoreDocument(doc.id)}
+                    >
+                      {t.document.restore}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

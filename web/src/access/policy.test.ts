@@ -15,6 +15,7 @@ import {
   can,
   canDeleteDocument,
   canEditDocument,
+  canRestoreDocument,
   canUseCompany,
   canUseSection,
   canViewDocument,
@@ -121,11 +122,28 @@ describe('видимость документов', () => {
     expect(canViewDocument(subject, otherCompany)).toBe(true);
   });
 
-  it('удалённый документ пропадает у того, кто не может удалять', () => {
+  it('удалённый документ пропадает у того, кто не может его вернуть', () => {
     const removed = doc({ id: 'd-removed', authorId: employee.id, deletedAt: '2026-02-01T00:00:00.000Z' });
 
     expect(canViewDocument({ user: employee, companyId: COMPANY_A }, removed)).toBe(false);
     expect(canViewDocument({ user: director, companyId: COMPANY_A }, removed)).toBe(true);
+  });
+
+  it('удалённый документ пропадает из реестра у всех, включая директора («Тест день 2»)', () => {
+    const removed = doc({ id: 'd-removed', deletedAt: '2026-02-01T00:00:00.000Z' });
+    const all = [mine, removed];
+
+    for (const who of [employee, director, admin]) {
+      const ids = visibleDocuments({ user: who, companyId: COMPANY_A }, all).map((d) => d.id);
+      expect(ids).not.toContain('d-removed');
+    }
+
+    // Корзина админ-панели его видит.
+    expect(
+      visibleDocuments({ user: admin, companyId: COMPANY_A }, all, { withDeleted: true }).map(
+        (d) => d.id,
+      ),
+    ).toContain('d-removed');
   });
 
   it('отбор списка повторяет поштучную проверку', () => {
@@ -166,5 +184,17 @@ describe('правка и удаление', () => {
   it('удалить дважды нельзя', () => {
     const removed = doc({ deletedAt: '2026-02-01T00:00:00.000Z' });
     expect(canDeleteDocument({ user: director, companyId: COMPANY_A }, removed)).toBe(false);
+  });
+
+  it('вернуть удалённый документ могут директор своей компании и администратор', () => {
+    const removed = doc({ authorId: employee.id, deletedAt: '2026-02-01T00:00:00.000Z' });
+    const foreignRemoved = doc({ companyId: COMPANY_B, deletedAt: '2026-02-01T00:00:00.000Z' });
+
+    expect(canRestoreDocument({ user: employee, companyId: COMPANY_A }, removed)).toBe(false);
+    expect(canRestoreDocument({ user: director, companyId: COMPANY_A }, removed)).toBe(true);
+    expect(canRestoreDocument({ user: director, companyId: COMPANY_A }, foreignRemoved)).toBe(false);
+    expect(canRestoreDocument({ user: admin, companyId: COMPANY_A }, foreignRemoved)).toBe(true);
+    // Живой документ возвращать неоткуда.
+    expect(canRestoreDocument({ user: admin, companyId: COMPANY_A }, doc())).toBe(false);
   });
 });

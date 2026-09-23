@@ -467,7 +467,8 @@ function resolveField(
       return person === undefined ? raw : employeeName(person, lang, form);
     }
     case 'counterparty':
-      return findCounterparty(raw)?.name ?? '';
+      // Вписанная руками организация идёт в документ как есть.
+      return findCounterparty(raw)?.name ?? raw;
     case 'date':
       // В документе дата пишется числами – «с 04.09.2026 по 27.09.2026», как
       // в настоящих приказах группы. Там, где шаблон просит прописью, она

@@ -34,9 +34,9 @@ export default function DashboardPage() {
     evening: t.dashboard.subtitleEvening,
   }[partOfDay()];
 
-  // Удалённые документы на рабочем столе не показываются никому: их место –
-  // корзина в админ-панели.
-  const alive = documents.filter((d) => d.deletedAt === undefined);
+  // Удалённых документов в списке сессии уже нет: их место – корзина
+  // админ-панели (`visibleDocuments`).
+  const alive = documents;
   const seesAll = can({ user, companyId: company?.id ?? null }, 'documents.viewAll');
 
   const counters = [

@@ -169,6 +169,7 @@ export const en: Dictionary = {
     dateNotAfter: 'The date cannot be in the future',
     registrationGroup: 'Registration',
     numberLabel: 'Document number',
+    numberTaken: 'Another document of the company already has this number. Enter a different one.',
     numberHint:
       'If a number has already been assigned in the register. May be left empty – the document keeps a blank.',
     subjectLabel: 'Whom it is about',
@@ -206,6 +207,9 @@ export const en: Dictionary = {
     delete: 'Delete',
     deleteConfirm:
       'Delete the document? It disappears from the registry but stays in the activity log.',
+    restore: 'Return to the registry',
+    deletedTitle: 'Document deleted',
+    deletedBody: 'It is gone from the registries and visible only in the admin panel bin.',
     savedTitle: 'Document saved',
     savedBody: 'You can print it or save it as PDF.',
     draftTitle: 'This is a draft',
@@ -232,6 +236,10 @@ export const en: Dictionary = {
     subtitleOwn: 'Your documents in this company. Columns with an underlined heading can be sorted.',
     subtitleAll: 'All documents of the company. Columns with an underlined heading can be sorted.',
     count: 'records',
+    search: 'Number, document, author, date…',
+    searchHint:
+      'Searches the number, title, subject, note, state, author and date. Several words narrow the search.',
+    nothingFound: 'Nothing found. Check the spelling or shorten the query.',
     sortAsc: 'ascending',
     sortDesc: 'descending',
     noNumber: 'n/n',

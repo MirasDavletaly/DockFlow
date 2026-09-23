@@ -13,14 +13,15 @@
  */
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { canDeleteDocument, canEditDocument } from '@/access/policy';
+import { canDeleteDocument, canEditDocument, canRestoreDocument } from '@/access/policy';
 import { findTemplate } from '@/api/mock/templates';
 import { DocumentSheet } from '@/components/DocumentSheet/DocumentSheet';
 import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
-import { formatShortDate } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 
 import styles from './DocumentPage.module.css';
 
@@ -28,7 +29,7 @@ export default function DocumentPage() {
   const { documentId } = useParams<{ documentId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { findDocument, company, user, deleteDocument } = useSession();
+  const { findDocument, company, user, deleteDocument, restoreDocument } = useSession();
 
   const record = documentId === undefined ? undefined : findDocument(documentId);
   const template = record === undefined ? undefined : findTemplate(record.templateId);
@@ -64,6 +65,19 @@ export default function DocumentPage() {
             </Link>
           ) : null}
 
+          {canRestoreDocument(subject, record) ? (
+            <button
+              type="button"
+              className={styles.edit}
+              onClick={() => {
+                restoreDocument(record.id);
+                navigate(`/documents/${record.id}`, { replace: true });
+              }}
+            >
+              {t.document.restore}
+            </button>
+          ) : null}
+
           {canDeleteDocument(subject, record) ? (
             <button
               type="button"
@@ -93,6 +107,19 @@ export default function DocumentPage() {
             </div>
           ) : null}
 
+          {record.deletedAt === undefined ? null : (
+            <div className={styles.draftNote} role="note">
+              <div className={styles.savedTitle}>{t.document.deletedTitle}</div>
+              <p className={styles.savedBody}>
+                {formatDateTime(record.deletedAt)}
+                {record.deletedBy === undefined || record.deletedBy === ''
+                  ? null
+                  : `, ${record.deletedBy}`}
+                . {t.document.deletedBody}
+              </p>
+            </div>
+          )}
+
           {isDraft ? (
             <div className={styles.draftNote} role="note">
               <div className={styles.savedTitle}>{t.document.draftTitle}</div>
@@ -100,7 +127,7 @@ export default function DocumentPage() {
             </div>
           ) : null}
 
-          <h1 className={styles.title}>{record.title}</h1>
+          <h1 className={styles.title}>{tc(record.title)}</h1>
 
           <dl className={styles.meta}>
             <div className={styles.metaRow}>
@@ -121,16 +148,16 @@ export default function DocumentPage() {
                 <dd>{record.subject}</dd>
               </div>
             )}
+            {/* Дата и время создания и последнего изменения видны всегда:
+                по ним сверяют, тот ли это экземпляр («Тест день 2»). */}
             <div className={styles.metaRow}>
               <dt>{t.document.meta.created}</dt>
-              <dd className="tabular">{formatShortDate(record.createdAt)}</dd>
+              <dd className="tabular">{formatDateTime(record.createdAt)}</dd>
             </div>
-            {record.updatedAt === record.createdAt ? null : (
-              <div className={styles.metaRow}>
-                <dt>{t.document.meta.updated}</dt>
-                <dd className="tabular">{formatShortDate(record.updatedAt)}</dd>
-              </div>
-            )}
+            <div className={styles.metaRow}>
+              <dt>{t.document.meta.updated}</dt>
+              <dd className="tabular">{formatDateTime(record.updatedAt)}</dd>
+            </div>
             <div className={styles.metaRow}>
               <dt>{t.document.meta.author}</dt>
               <dd>{record.authorName}</dd>

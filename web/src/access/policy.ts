@@ -61,14 +61,15 @@ export function canUseSection(user: User | null, sectionId: string): boolean {
  * Видит ли человек документ.
  *
  * Работник видит только свои. Директор — все документы своей компании.
- * Администратор — все. Удалённые документы видит только тот, кто может
- * их удалять: иначе «удалил» и «пропал» перестают совпадать.
+ * Администратор — все. Удалённый документ видит только тот, кто может его
+ * вернуть, и только в корзине админ-панели: из реестров он пропадает у всех
+ * (`visibleDocuments`), иначе «удалил» и «пропал» перестают совпадать.
  */
 export function canViewDocument(subject: Subject, doc: DocumentRecord): boolean {
   const { user } = subject;
   if (user === null || user.blocked === true) return false;
 
-  if (doc.deletedAt !== undefined && !can(subject, 'documents.delete')) return false;
+  if (doc.deletedAt !== undefined && !can(subject, 'documents.restore')) return false;
 
   if (can(subject, 'documents.viewAll')) {
     return isPlatformWide(user) || user.companyIds.includes(doc.companyId);
@@ -99,16 +100,28 @@ export function canDeleteDocument(subject: Subject, doc: DocumentRecord): boolea
   return can(subject, 'documents.delete');
 }
 
+/** Может ли человек вернуть удалённый документ в реестр. */
+export function canRestoreDocument(subject: Subject, doc: DocumentRecord): boolean {
+  if (doc.deletedAt === undefined) return false;
+  return canViewDocument(subject, doc) && can(subject, 'documents.restore');
+}
+
 /**
  * Отбирает документы, которые человеку видны.
  *
  * Фильтр стоит здесь, а не в экранах: на сервере он же уйдёт в SQL-запрос,
  * а не в цикл после выборки (CLAUDE.md, п. 3.2). Пока данные лежат в
  * браузере, важно хотя бы то, что правило одно и записано один раз.
+ *
+ * Удалённые документы в выборку не попадают. Их просит только корзина
+ * админ-панели – флагом `withDeleted`.
  */
 export function visibleDocuments(
   subject: Subject,
   documents: DocumentRecord[],
+  { withDeleted = false }: { withDeleted?: boolean } = {},
 ): DocumentRecord[] {
-  return documents.filter((doc) => canViewDocument(subject, doc));
+  return documents.filter(
+    (doc) => (withDeleted || doc.deletedAt === undefined) && canViewDocument(subject, doc),
+  );
 }

@@ -6,6 +6,21 @@
   padding: var(--space-8) var(--space-9) var(--space-11);
 }
 
+.search {
+  width: 320px;
+  height: 36px;
+  padding: 0 var(--space-5);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .count {
   margin-bottom: var(--space-5);
   font-family: var(--font-mono);

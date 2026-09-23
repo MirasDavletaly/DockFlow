@@ -514,6 +514,7 @@ export type Action =
   | 'documents.viewAll'
   | 'documents.editAny'
   | 'documents.delete'
+  | 'documents.restore'
   | 'audit.view';
 
 export interface Role {

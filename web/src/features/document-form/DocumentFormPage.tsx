@@ -25,6 +25,7 @@ import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { Field } from '@/components/fields/Field';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
 
 import { dateBounds, checkField, validateFields } from './validation';
@@ -40,7 +41,7 @@ export default function DocumentFormPage() {
   const { templateId } = useParams<{ templateId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { company, employees, saveDocument, findDocument } = useSession();
+  const { company, employees, saveDocument, findDocument, numberTaken } = useSession();
 
   const template = templateId === undefined ? undefined : findTemplate(templateId);
 
@@ -70,8 +71,14 @@ export default function DocumentFormPage() {
   const snapshot = useRef({ values, number, description, subject, title: template?.title ?? '' });
   snapshot.current = { values, number, description, subject, title: template?.title ?? '' };
 
+  // Правка сохранённого документа черновиком не пишется: выпущенный документ
+  // меняется только по кнопке «Сохранить», иначе автосохранение молча
+  // превратило бы его обратно в черновик и сняло снимок реквизитов.
+  const editsSaved = existing?.status === 'saved';
+
   const flushDraft = useCallback(() => {
     if (!dirty.current || savedManually.current || template === undefined) return;
+    if (editsSaved) return;
 
     const current = snapshot.current;
     const empty =
@@ -97,7 +104,7 @@ export default function DocumentFormPage() {
 
     draftId.current = record.id;
     dirty.current = false;
-  }, [saveDocument, template]);
+  }, [saveDocument, template, editsSaved]);
 
   // Отложенная запись: через полсекунды после последнего нажатия клавиши.
   useEffect(() => {
@@ -134,6 +141,11 @@ export default function DocumentFormPage() {
   const doc = template;
   const today = new Date().toISOString().slice(0, 10);
   const problems = validateFields(doc.fields, values);
+  // Номер проверяется сразу, пока его вводят: узнавать о занятом номере
+  // после нажатия «Сохранить» – лишний круг.
+  const numberProblem = numberTaken(number, draftId.current ?? undefined)
+    ? t.form.numberTaken
+    : null;
   const filledCount = doc.fields.filter((f) => (values[f.id] ?? '') !== '').length;
 
   function setValue(field: FieldDef, next: string) {
@@ -178,25 +190,45 @@ export default function DocumentFormPage() {
     savedManually.current = false;
   }
 
+  function focusField(fieldId: string) {
+    const target = document.getElementById(`field-${fieldId}`);
+    target?.focus();
+    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
   function handleSave() {
     if (problems.length > 0) {
       setShowErrors(true);
-      const first = document.getElementById(`field-${problems[0]?.fieldId ?? ''}`);
-      first?.focus();
-      first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      focusField(problems[0]?.fieldId ?? '');
+      return;
+    }
+    if (numberProblem !== null) {
+      setShowErrors(true);
+      focusField(registration.number.id);
       return;
     }
 
-    const record = saveDocument({
-      ...(draftId.current === null ? {} : { id: draftId.current }),
-      templateId: doc.id,
-      title: doc.title,
-      number,
-      description,
-      subject,
-      values,
-      status: 'saved',
-    });
+    let record;
+    try {
+      record = saveDocument({
+        ...(draftId.current === null ? {} : { id: draftId.current }),
+        templateId: doc.id,
+        title: doc.title,
+        number,
+        description,
+        subject,
+        values,
+        status: 'saved',
+      });
+    } catch (error) {
+      // Номер заняли в другой вкладке между проверкой и сохранением.
+      if (error instanceof DocumentNumberTakenError) {
+        setShowErrors(true);
+        focusField(registration.number.id);
+        return;
+      }
+      throw error;
+    }
 
     savedManually.current = true;
     dirty.current = false;
@@ -236,7 +268,7 @@ export default function DocumentFormPage() {
               </div>
             )}
 
-            {showErrors && problems.length > 0 ? (
+            {showErrors && (problems.length > 0 || numberProblem !== null) ? (
               <div className={styles.validation} role="alert">
                 <div className={styles.validationTitle}>{t.form.validationTitle}</div>
                 <p className={styles.validationBody}>{t.form.validationBody}</p>
@@ -290,6 +322,7 @@ export default function DocumentFormPage() {
                 <Field
                   def={registration.number}
                   value={number}
+                  problem={numberProblem}
                   onChange={(next) => {
                     markDirty();
                     setNumber(next);

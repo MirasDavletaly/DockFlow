@@ -33,6 +33,7 @@ import {
   subscribeDb,
   updateDb,
 } from '@/store/db';
+import { DocumentNumberTakenError, findNumberHolder } from '@/store/documentNumber';
 import { hashPassword, verifyPassword } from '@/store/password';
 
 import type {
@@ -100,7 +101,10 @@ interface SessionValue {
   companies: Company[];
   /** Документы, которые человеку видны в текущей компании. */
   documents: DocumentRecord[];
-  /** Все видимые документы во всех доступных компаниях: только для админ-панели. */
+  /**
+   * Все видимые документы во всех доступных компаниях, включая удалённые:
+   * только для админ-панели, где из корзины их возвращают.
+   */
   allVisibleDocuments: DocumentRecord[];
   /** Люди текущей компании: список выбора в формах. */
   employees: EmployeeBrief[];
@@ -122,8 +126,18 @@ interface SessionValue {
   confirmPassword: (password: string) => Promise<boolean>;
   selectCompany: (companyId: string) => void;
 
+  /**
+   * Сохраняет документ. Сохранение с номером, который уже стоит на другом
+   * документе компании, отказывается исключением `DocumentNumberTakenError`:
+   * экран проверяет номер заранее через `numberTaken`, а это – последняя
+   * линия защиты.
+   */
   saveDocument: (input: SaveDocumentInput) => DocumentRecord;
+  /** Занят ли номер в текущей компании другим сохранённым документом. */
+  numberTaken: (number: string, exceptId?: string) => boolean;
   deleteDocument: (id: string) => void;
+  /** Возвращает удалённый документ в реестр. */
+  restoreDocument: (id: string) => void;
   findDocument: (id: string) => DocumentRecord | undefined;
 
   updateProfile: (patch: ProfilePatch) => void;
@@ -332,7 +346,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const allVisibleDocuments = useMemo(
     () =>
-      visibleDocuments(subject, db.documents).sort(
+      visibleDocuments(subject, db.documents, { withDeleted: true }).sort(
         (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
       ),
     [db.documents, subject],
@@ -353,6 +367,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const company = companyId === null ? undefined : findCompanyIn(companyId);
       const existing =
         input.id === undefined ? undefined : loadDb().documents.find((d) => d.id === input.id);
+
+      if (
+        input.status === 'saved' &&
+        findNumberHolder(loadDb().documents, companyId ?? '', input.number, existing?.id) !==
+          undefined
+      ) {
+        throw new DocumentNumberTakenError(input.number);
+      }
 
       const record: DocumentRecord = {
         id: existing?.id ?? newId('d'),
@@ -432,6 +454,44 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             userName: user?.displayName ?? '',
             companyId: target.companyId,
             event: 'document.delete',
+            target: target.title,
+          },
+        );
+      });
+    },
+    [user],
+  );
+
+  const numberTaken = useCallback<SessionValue['numberTaken']>(
+    (number, exceptId) =>
+      // Проверка идёт по всем документам компании, а не по видимым человеку:
+      // номер уникален в компании, как ограничение в базе. Наружу уходит
+      // только «занят», без названия чужого документа.
+      companyId !== null &&
+      findNumberHolder(db.documents, companyId, number, exceptId) !== undefined,
+    [db.documents, companyId],
+  );
+
+  const restoreDocument = useCallback<SessionValue['restoreDocument']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.documents.find((d) => d.id === id);
+        if (target?.deletedAt === undefined) return cur;
+
+        return appendAudit(
+          {
+            ...cur,
+            documents: cur.documents.map((d) => {
+              if (d.id !== id) return d;
+              const { deletedAt: _at, deletedBy: _by, ...alive } = d;
+              return alive;
+            }),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'document.restore',
             target: target.title,
           },
         );
@@ -686,11 +746,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       confirmPassword,
       selectCompany,
       saveDocument,
+      numberTaken,
       deleteDocument,
+      restoreDocument,
       findDocument: (id) => {
         const found = loadDb().documents.find((d) => d.id === id);
         if (found === undefined) return undefined;
-        return visibleDocuments(subject, [found])[0];
+        // Удалённый документ открывается из корзины админ-панели: политика
+        // пустит к нему только того, кто может его вернуть.
+        return visibleDocuments(subject, [found], { withDeleted: true })[0];
       },
       updateProfile,
       changePassword,
@@ -724,7 +788,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       confirmPassword,
       selectCompany,
       saveDocument,
+      numberTaken,
       deleteDocument,
+      restoreDocument,
       updateProfile,
       changePassword,
       createUser,

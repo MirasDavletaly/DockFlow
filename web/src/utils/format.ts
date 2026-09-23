@@ -29,6 +29,31 @@ export function formatShortDate(iso: string): string {
 }
 
 /**
+ * Смещение Казахстана от UTC в минутах.
+ *
+ * С 1 марта 2024 года вся страна живёт по UTC+5. Считаем от UTC сами, а не
+ * через часовой пояс браузера: у компьютера с устаревшей базой часовых поясов
+ * «Asia/Almaty» до сих пор UTC+6, и время создания документа уехало бы на
+ * час. Когда появится сервер, пояс будет браться из настроек компании
+ * (CLAUDE.md, п. 3.9).
+ */
+const KZ_UTC_OFFSET_MINUTES = 5 * 60;
+
+/** Момент времени в списках и карточке документа: «21.09.2026, 14:05». */
+export function formatDateTime(iso: string): string {
+  const moment = Date.parse(iso);
+  if (Number.isNaN(moment)) return iso;
+
+  const local = new Date(moment + KZ_UTC_OFFSET_MINUTES * 60_000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    `${pad(local.getUTCDate())}.${pad(local.getUTCMonth() + 1)}.${local.getUTCFullYear()}, ` +
+    `${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`
+  );
+}
+
+/**
  * Сумма с разделением разрядов неразрывным пробелом: «450 000».
  *
  * Значение приходит строкой и строкой же остаётся: числа с плавающей точкой

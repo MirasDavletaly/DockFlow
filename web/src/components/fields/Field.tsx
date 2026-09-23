@@ -94,7 +94,8 @@ export function Field({
         ) : null}
       </label>
 
-      <div className={styles.control}>
+      <div className={perLang ? styles.controlWithLang : styles.control}>
+        {perLang ? <span className={styles.translationLabel}>{LANG_LABEL.ru()}</span> : null}
         {renderControl({
           def,
           id,

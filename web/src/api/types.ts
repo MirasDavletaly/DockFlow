@@ -300,7 +300,21 @@ export interface DateLimits {
  */
 export type Run =
   | { text: string; bold?: boolean }
-  | { field: string; fallback?: string; bold?: boolean };
+  | {
+      field: string;
+      fallback?: string;
+      bold?: boolean;
+      /**
+       * Текст по значению поля, а не само значение.
+       *
+       * Нужен там, где выбор в форме меняет формулировку: статья Трудового
+       * кодекса в приказе о расторжении зависит от основания – по инициативе
+       * работника одна, в остальных случаях другая. Не нашлось значения в
+       * таблице – ставится `otherwise`.
+       */
+      map?: Record<string, string>;
+      otherwise?: string;
+    };
 
 /** Абзац: последовательность кусков. */
 export type Para = Run[];

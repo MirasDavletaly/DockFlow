@@ -168,3 +168,32 @@ describe('логотип', () => {
     expect(mark?.querySelector('img')).not.toBeNull();
   });
 });
+
+describe('статьи Трудового кодекса («Тест день 2»)', () => {
+  it.each([
+    ['hr-trip-order', '127'],
+    ['hr-transfer-order', '45'],
+    ['hr-salary-order', '46'],
+    ['hr-discipline-order', '64'],
+  ])('%s ссылается на статью %s на всех трёх языках', (id, article) => {
+    const text = render(knt, id);
+    expect(text).toContain(`Еңбек кодексінің ${article}-бабына сәйкес`);
+    expect(text).toContain(`со статьей ${article} Трудового Кодекса РК`);
+    expect(text).toContain(`Article ${article} of the Labor Code`);
+  });
+
+  it('расторжение: 56 по инициативе работника, 49 в остальных случаях', () => {
+    expect(render(knt, 'hr-dismissal-order', { reason: 'по инициативе работника' })).toContain(
+      'со статьей 56 Трудового Кодекса РК',
+    );
+    expect(render(knt, 'hr-dismissal-order', { reason: 'по соглашению сторон' })).toContain(
+      'со статьей 49 Трудового Кодекса РК',
+    );
+    // Основание ещё не выбрано – ставится общая статья, а не пустое место.
+    expect(render(knt, 'hr-dismissal-order', {})).toContain('со статьей 49 Трудового Кодекса РК');
+  });
+
+  it('у приказа о поощрении статьи нет: норму не подтвердили', () => {
+    expect(render(knt, 'hr-bonus-order')).not.toContain('Трудового Кодекса РК');
+  });
+});

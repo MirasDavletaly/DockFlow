@@ -150,6 +150,13 @@ export default function DocumentFormPage() {
         const employee = employees.find((e) => e.id === next);
         if (employee !== undefined) {
           if ((prev['position'] ?? '') === '') updated['position'] = employee.position;
+          // Должность на казахском и английском – с карточки, если там есть.
+          if ((prev['position.kk'] ?? '') === '' && employee.positionKk !== undefined) {
+            updated['position.kk'] = employee.positionKk;
+          }
+          if ((prev['position.en'] ?? '') === '' && employee.positionEn !== undefined) {
+            updated['position.en'] = employee.positionEn;
+          }
           if ((prev['unit'] ?? '') === '') updated['unit'] = employee.unit;
           if ((prev['positionFrom'] ?? '') === '') updated['positionFrom'] = employee.position;
         }

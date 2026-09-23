@@ -47,7 +47,7 @@
 
 **Қазақша**
 
-- {employee:nom}, {contractDate} жылғы № {contractNumber} еңбек шартына сәйкес {startDate} бастап «{positionKk}» ретінде қабылдансын.
+- {employee:nom}, {contractDate} жылғы № {contractNumber} еңбек шартына сәйкес {startDate} бастап «{position}» ретінде қабылдансын.
 
 **Русский**
 
@@ -55,7 +55,7 @@
 
 **English**
 
-- To accept {employee} as a “{positionEn}” from {startDate}, in accordance with the Labor Contract No. {contractNumber} dated {contractDate}.
+- To accept {employee} as a “{position}” from {startDate}, in accordance with the Labor Contract No. {contractNumber} dated {contractDate}.
 
 **Қазақша**
 
@@ -92,7 +92,7 @@
 
 **Қазақша**
 
-- 1. {employee} {positionKk} {from} бастап {to} қоса алғанда, {workedFrom} – {workedTo} жұмыс кезеңі үшін ұзақтығы {days} ({daysWords}) күнтізбелік күн жыл сайынғы ақылы еңбек демалысын беру.
+- 1. {employee} {position} {from} бастап {to} қоса алғанда, {workedFrom} – {workedTo} жұмыс кезеңі үшін ұзақтығы {days} ({daysWords}) күнтізбелік күн жыл сайынғы ақылы еңбек демалысын беру.
 - 2. Бухгалтерия Қазақстан Республикасының қолданыстағы заңнамасында белгіленген мерзімде және тәртіппен жұмыс істеген кезеңі үшін демалыс күндерін есептесін.
 - 3. Негіздеме: {applicationDate} жылғы {employee:nom}ның жеке мәлімдемесі.
 
@@ -104,7 +104,7 @@
 
 **English**
 
-- 1. To provide paid annual leave to the {positionEn} {employee}, for the duration of {days} ({daysWords}) calendar days from {from} to {to} inclusive, for the worked period from {workedFrom} till {workedTo}.
+- 1. To provide paid annual leave to the {position} {employee}, for the duration of {days} ({daysWords}) calendar days from {from} to {to} inclusive, for the worked period from {workedFrom} till {workedTo}.
 - 2. To Accountant Department – to perform payment for the worked period within the time and according to the procedure stated by the current legislation of the Republic of Kazakhstan.
 - 3. Basis: personal statement of {employee} dated {applicationDate}.
 
@@ -131,7 +131,7 @@
 
 **Қазақша**
 
-- 1. {positionKk} {employee} {from} бастап {days} ({daysWords}) күнтізбелік күн мерзімге ақысыз демалыс беру.
+- 1. {position} {employee} {from} бастап {days} ({daysWords}) күнтізбелік күн мерзімге ақысыз демалыс беру.
 - Негіздеме: {employee:nom}ның {applicationDate} жылғы жеке өтініші.
 
 **Русский**
@@ -141,7 +141,7 @@
 
 **English**
 
-- 1. To grant unpaid leave to the {positionEn} {employee} from {from}, for a period of {days} ({daysWords}) calendar day(s).
+- 1. To grant unpaid leave to the {position} {employee} from {from}, for a period of {days} ({daysWords}) calendar day(s).
 - Basis: Personal request of {employee} dated {applicationDate}.
 
 ---
@@ -167,7 +167,7 @@
 
 **Қазақша**
 
-- {employee:nom} {startDate} бастап «{positionKk}» лауазымына барлық коммерциялық, бухгалтерлік және банктік құжаттарға бірінші қол қою құқығымен тағайындалсын.
+- {employee:nom} {startDate} бастап «{position}» лауазымына барлық коммерциялық, бухгалтерлік және банктік құжаттарға бірінші қол қою құқығымен тағайындалсын.
 
 **Русский**
 
@@ -175,7 +175,7 @@
 
 **English**
 
-- To appoint {employee} to the position of “{positionEn}” from {startDate}, with the right of first signature on all commercial, accounting and banking documents.
+- To appoint {employee} to the position of “{position}” from {startDate}, with the right of first signature on all commercial, accounting and banking documents.
 
 ---
 
@@ -195,13 +195,16 @@
 
 **Источник текста:** написан по образцу ваших приказов. Проверить полностью.
 
-**Ссылка на статью закона: НЕТ.** Нужно дать – её не присылали.
+**Ссылка на статью закона:** есть, проверить.
 
 ### Тема приказа
 
 - **Қазақша.** «Іссапарға жіберу туралы»
+- **Қазақша.** ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 127-бабына сәйкес.
 - **Русский.** «О направлении в командировку»
+- **Русский.** В соответствии со статьей 127 Трудового Кодекса РК от 23 ноября 2015 года №414-V.
 - **English.** “On business trip assignment”
+- **English.** In accordance with Article 127 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.
 
 ### Распоряжение
 
@@ -237,13 +240,16 @@
 
 **Источник текста:** написан по образцу ваших приказов. Проверить полностью.
 
-**Ссылка на статью закона: НЕТ.** Нужно дать – её не присылали.
+**Ссылка на статью закона:** есть, проверить.
 
 ### Тема приказа
 
 - **Қазақша.** «Басқа лауазымға ауыстыру туралы»
+- **Қазақша.** ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 45-бабына сәйкес.
 - **Русский.** «О переводе на другую должность»
+- **Русский.** В соответствии со статьей 45 Трудового Кодекса РК от 23 ноября 2015 года №414-V.
 - **English.** “On transfer to another position”
+- **English.** In accordance with Article 45 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.
 
 ### Распоряжение
 
@@ -276,13 +282,16 @@
 
 **Источник текста:** написан по образцу ваших приказов. Проверить полностью.
 
-**Ссылка на статью закона: НЕТ.** Нужно дать – её не присылали.
+**Ссылка на статью закона:** есть, проверить.
 
 ### Тема приказа
 
 - **Қазақша.** «Лауазымдық жалақыны өзгерту туралы»
+- **Қазақша.** ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 46-бабына сәйкес.
 - **Русский.** «Об изменении должностного оклада»
+- **Русский.** В соответствии со статьей 46 Трудового Кодекса РК от 23 ноября 2015 года №414-V.
 - **English.** “On change of the official salary”
+- **English.** In accordance with Article 46 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.
 
 ### Распоряжение
 
@@ -315,13 +324,16 @@
 
 **Источник текста:** написан по образцу ваших приказов. Проверить полностью.
 
-**Ссылка на статью закона: НЕТ.** Нужно дать – её не присылали.
+**Ссылка на статью закона:** есть, проверить.
 
 ### Тема приказа
 
 - **Қазақша.** «Еңбек шартын бұзу туралы»
+- **Қазақша.** ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің {reason}-бабына сәйкес.
 - **Русский.** «О расторжении трудового договора»
+- **Русский.** В соответствии со статьей {reason} Трудового Кодекса РК от 23 ноября 2015 года №414-V.
 - **English.** “On termination of the employment contract”
+- **English.** In accordance with Article {reason} of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.
 
 ### Распоряжение
 
@@ -432,13 +444,16 @@
 
 **Источник текста:** написан по образцу ваших приказов. Проверить полностью.
 
-**Ссылка на статью закона: НЕТ.** Нужно дать – её не присылали.
+**Ссылка на статью закона:** есть, проверить.
 
 ### Тема приказа
 
 - **Қазақша.** «Тәртіптік жаза қолдану туралы»
+- **Қазақша.** ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 64-бабына сәйкес.
 - **Русский.** «О применении дисциплинарного взыскания»
+- **Русский.** В соответствии со статьей 64 Трудового Кодекса РК от 23 ноября 2015 года №414-V.
 - **English.** “On imposing a disciplinary sanction”
+- **English.** In accordance with Article 64 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.
 
 ### Распоряжение
 

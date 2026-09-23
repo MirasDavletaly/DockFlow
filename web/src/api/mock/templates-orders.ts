@@ -553,7 +553,7 @@ export const activityOrders: DocumentTemplate[] = [
     langs: ['kk', 'ru', 'en'],
     fields: [
       employeeField('Кому предоставляется', 'Право подписи'),
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Право подписи' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Право подписи', perLang: true },
       {
         id: 'scope',
         kind: 'textarea',
@@ -965,7 +965,7 @@ export const activityOrders: DocumentTemplate[] = [
     langs: ['kk', 'ru', 'en'],
     fields: [
       employeeField('Кто назначается', 'Назначение'),
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Назначение' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Назначение', perLang: true },
       {
         id: 'fromDate',
         kind: 'date',

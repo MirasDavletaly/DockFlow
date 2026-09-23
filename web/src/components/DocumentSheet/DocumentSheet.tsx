@@ -95,10 +95,12 @@ export function DocumentSheet({
       }
 
       const resolved =
-        resolveField(run.field, values, company, fieldsById, people, lang) ||
-        (run.fallback === undefined
-          ? ''
-          : resolveField(run.fallback, values, company, fieldsById, people, lang));
+        run.map !== undefined
+          ? (run.map[values[baseFieldId(run.field)] ?? ''] ?? run.otherwise ?? '')
+          : resolveField(run.field, values, company, fieldsById, people, lang) ||
+            (run.fallback === undefined
+              ? ''
+              : resolveField(run.fallback, values, company, fieldsById, people, lang));
       const isActive = activeFieldId !== null && baseFieldId(run.field) === activeFieldId;
 
       if (resolved === '') {

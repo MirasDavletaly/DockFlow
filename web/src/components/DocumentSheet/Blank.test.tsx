@@ -166,8 +166,8 @@ describe('приказ о приёме на работу', () => {
   const values = {
     employee: translated.id,
     position: 'Младший инженер-конструктор',
-    positionKk: 'Кіші жобалаушы инженер',
-    positionEn: 'Junior Design Engineer',
+    'position.kk': 'Кіші жобалаушы инженер',
+    'position.en': 'Junior Design Engineer',
     startDate: '2026-10-01',
     contractNumber: '004-2026/GS',
     contractDate: '2026-09-20',
@@ -209,7 +209,7 @@ describe('приказ о приёме на работу', () => {
   });
 
   it('должность без перевода не оставляет пустого места в колонке', () => {
-    const { positionKk: _kk, positionEn: _en, ...noTranslation } = values;
+    const { 'position.kk': _kk, 'position.en': _en, ...noTranslation } = values;
 
     render(
       <DocumentSheet
@@ -346,8 +346,8 @@ describe('сверка с присланным приказом', () => {
     fullNameKkDative: 'Хамит Нурдаулет Алмазұлы',
     fullNameEn: 'Nurdaulet Khamit',
     position: 'Юристу',
-    positionKk: 'Заңгерге',
-    positionEn: 'Lawyer',
+    'position.kk': 'Заңгерге',
+    'position.en': 'Lawyer',
     unit: 'Юридический отдел',
   };
 
@@ -360,8 +360,8 @@ describe('сверка с присланным приказом', () => {
         values={{
           employee: lawyer.id,
           position: 'Юристу',
-          positionKk: 'Заңгерге',
-          positionEn: 'Lawyer',
+          'position.kk': 'Заңгерге',
+          'position.en': 'Lawyer',
           days: '24',
           daysWords: 'двадцать четыре',
           from: '2026-09-04',
@@ -494,14 +494,37 @@ describe('три поля на три языка', () => {
     expect(matches).toHaveLength(3);
   });
 
-  it('перевод помечен только у имени и числа прописью', () => {
-    // Остальное остаётся одним полем – так просил человек.
+  it('на трёх языках пишутся только имя, должность и число прописью', () => {
+    // Остальное остаётся одним полем – так просил человек («Тест день 2»:
+    // должность на русском, казахском и английском добавлена к имени и числам).
+    const allowed = ['employee', 'position', 'positionFrom', 'daysWords', 'remainingDaysWords'];
     for (const tpl of blankTemplates) {
       for (const field of tpl.fields) {
         if (field.perLang !== true) continue;
-        expect(['employee', 'daysWords'], `${tpl.id}: ${field.id}`).toContain(field.id);
+        expect(allowed, `${tpl.id}: ${field.id}`).toContain(field.id);
       }
     }
+  });
+
+  it('должность в каждой колонке своя', () => {
+    render(
+      <DocumentSheet
+        template={template('hr-hire-order')}
+        values={{
+          employee: 'Нуржанов Диас Жанболатович',
+          position: 'Юрист',
+          'position.kk': 'Заңгер',
+          'position.en': 'Lawyer',
+        }}
+        company={company}
+        date="2026-09-22"
+      />,
+    );
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('«Заңгер» ретінде');
+    expect(text).toContain('в качестве «Юрист»');
+    expect(text).toContain('as a “Lawyer”');
   });
 });
 

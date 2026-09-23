@@ -113,6 +113,7 @@ function migrate(raw: Partial<Database>): Database {
 
   const documents = (raw.documents ?? []).map<DocumentRecord>((doc) => ({
     ...doc,
+    values: renamePositionKeys(doc.values ?? {}),
     description: typeof doc.description === 'string' ? doc.description : '',
     subject: typeof doc.subject === 'string' ? doc.subject : '',
     // Согласования и утверждения больше нет: всё, что не черновик, — сохранено.
@@ -136,6 +137,22 @@ function migrate(raw: Partial<Database>): Database {
     documents,
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: raw.settings?.adminIpAllowList ?? [] },
+  };
+}
+
+/**
+ * Перевод должности раньше лежал в отдельных полях `positionKk`/`positionEn`,
+ * теперь – под ключами «position.kk» и «position.en», как у любого значения на
+ * трёх языках. Без переименования в старых черновиках пропал бы перевод.
+ */
+function renamePositionKeys(values: Record<string, string>): Record<string, string> {
+  if (!('positionKk' in values) && !('positionEn' in values)) return values;
+
+  const { positionKk, positionEn, ...rest } = values;
+  return {
+    ...rest,
+    ...(positionKk === undefined || 'position.kk' in rest ? {} : { 'position.kk': positionKk }),
+    ...(positionEn === undefined || 'position.en' in rest ? {} : { 'position.en': positionEn }),
   };
 }
 

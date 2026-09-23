@@ -19,6 +19,18 @@ import { activityOrders } from '@/api/mock/templates-orders';
 import type { CatalogEntry, DocumentTemplate } from '@/api/types';
 
 /**
+ * Статья Трудового кодекса для приказа о расторжении – по основанию.
+ *
+ * Номера статей даны человеком 23.09.2026: общий перечень оснований – 49,
+ * расторжение по инициативе работника – 56. Для «иных оснований» названы
+ * статьи 57–58, но какое из значений списка к ним относится, не сказано –
+ * вопрос в docs/questions.md, Q32.
+ */
+const DISMISSAL_ARTICLE: Record<string, string> = {
+  'по инициативе работника': '56',
+};
+
+/**
  * Шаблоны на простом одноязычном листе.
  *
  * Документы, для которых ещё нет проверенного казахского и английского
@@ -49,7 +61,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       { id: 'city', kind: 'text', label: 'Город назначения', required: true, group: 'Командировка' },
       {
         id: 'organization',
@@ -100,6 +112,11 @@ const simpleTemplates: DocumentTemplate[] = [
         kk: [[{ text: '«Іссапарға жіберу туралы»', bold: true }]],
         ru: [[{ text: '«О направлении в командировку»', bold: true }]],
         en: [[{ text: '“On business trip assignment”', bold: true }]],
+      },
+      basis: {
+        kk: [[{ text: 'ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 127-бабына сәйкес.' }]],
+        ru: [[{ text: 'В соответствии со статьей 127 Трудового Кодекса РК от 23 ноября 2015 года №414-V.' }]],
+        en: [[{ text: 'In accordance with Article 127 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.' }]],
       },
       body: {
         kk: [
@@ -244,8 +261,9 @@ const simpleTemplates: DocumentTemplate[] = [
         required: true,
         group: 'Работник',
         hint: 'Подставится из справочника',
+        perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Новая должность', required: true, group: 'Перевод' },
+      { id: 'position', kind: 'text', label: 'Новая должность', required: true, group: 'Перевод', perLang: true },
       { id: 'unit', kind: 'text', label: 'Новое подразделение', required: true, group: 'Перевод' },
       {
         id: 'transferDate',
@@ -285,6 +303,11 @@ const simpleTemplates: DocumentTemplate[] = [
         kk: [[{ text: '«Басқа лауазымға ауыстыру туралы»', bold: true }]],
         ru: [[{ text: '«О переводе на другую должность»', bold: true }]],
         en: [[{ text: '“On transfer to another position”', bold: true }]],
+      },
+      basis: {
+        kk: [[{ text: 'ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 45-бабына сәйкес.' }]],
+        ru: [[{ text: 'В соответствии со статьей 45 Трудового Кодекса РК от 23 ноября 2015 года №414-V.' }]],
+        en: [[{ text: 'In accordance with Article 45 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.' }]],
       },
       body: {
         kk: [
@@ -421,7 +444,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       {
         id: 'salary',
         kind: 'money',
@@ -460,6 +483,11 @@ const simpleTemplates: DocumentTemplate[] = [
         kk: [[{ text: '«Лауазымдық жалақыны өзгерту туралы»', bold: true }]],
         ru: [[{ text: '«Об изменении должностного оклада»', bold: true }]],
         en: [[{ text: '“On change of the official salary”', bold: true }]],
+      },
+      basis: {
+        kk: [[{ text: 'ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 46-бабына сәйкес.' }]],
+        ru: [[{ text: 'В соответствии со статьей 46 Трудового Кодекса РК от 23 ноября 2015 года №414-V.' }]],
+        en: [[{ text: 'In accordance with Article 46 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.' }]],
       },
       body: {
         kk: [
@@ -587,7 +615,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       { id: 'unit', kind: 'text', label: 'Подразделение', required: true, group: 'Работник' },
       {
         id: 'dismissDate',
@@ -643,6 +671,29 @@ const simpleTemplates: DocumentTemplate[] = [
         kk: [[{ text: '«Еңбек шартын бұзу туралы»', bold: true }]],
         ru: [[{ text: '«О расторжении трудового договора»', bold: true }]],
         en: [[{ text: '“On termination of the employment contract”', bold: true }]],
+      },
+      basis: {
+        kk: [
+          [
+            { text: 'ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің ' },
+            { field: 'reason', map: DISMISSAL_ARTICLE, otherwise: '49' },
+            { text: '-бабына сәйкес.' },
+          ],
+        ],
+        ru: [
+          [
+            { text: 'В соответствии со статьей ' },
+            { field: 'reason', map: DISMISSAL_ARTICLE, otherwise: '49' },
+            { text: ' Трудового Кодекса РК от 23 ноября 2015 года №414-V.' },
+          ],
+        ],
+        en: [
+          [
+            { text: 'In accordance with Article ' },
+            { field: 'reason', map: DISMISSAL_ARTICLE, otherwise: '49' },
+            { text: ' of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.' },
+          ],
+        ],
       },
       body: {
         kk: [
@@ -779,7 +830,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       {
         id: 'recallDate',
         kind: 'date',
@@ -939,7 +990,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       {
         id: 'kind',
         kind: 'select',
@@ -1101,7 +1152,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       {
         id: 'penalty',
         kind: 'select',
@@ -1149,6 +1200,11 @@ const simpleTemplates: DocumentTemplate[] = [
         kk: [[{ text: '«Тәртіптік жаза қолдану туралы»', bold: true }]],
         ru: [[{ text: '«О применении дисциплинарного взыскания»', bold: true }]],
         en: [[{ text: '“On imposing a disciplinary sanction”', bold: true }]],
+      },
+      basis: {
+        kk: [[{ text: 'ҚР 2015 жылғы 23 қарашадағы №414-V Еңбек кодексінің 64-бабына сәйкес.' }]],
+        ru: [[{ text: 'В соответствии со статьей 64 Трудового Кодекса РК от 23 ноября 2015 года №414-V.' }]],
+        en: [[{ text: 'In accordance with Article 64 of the Labor Code of the Republic of Kazakhstan dated November 23, 2015 No. 414-V.' }]],
       },
       body: {
         kk: [
@@ -1268,7 +1324,7 @@ const simpleTemplates: DocumentTemplate[] = [
         group: 'Работник',
         perLang: true,
       },
-      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
+      { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник', perLang: true },
       { id: 'unit', kind: 'text', label: 'Подразделение', required: true, group: 'Работник' },
       {
         id: 'startDate',

@@ -7,6 +7,7 @@
  */
 import { useNavigate } from 'react-router-dom';
 
+import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
 import { useSession } from '@/store/session';
 import { buildAccentPalette } from '@/theme/color';
@@ -28,7 +29,10 @@ export default function ChooseCompanyPage() {
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
-        <h1 className={styles.title}>{t.auth.companyTitle}</h1>
+        <div className={styles.head}>
+          <h1 className={styles.title}>{t.auth.companyTitle}</h1>
+          <LanguageSwitch tone="light" />
+        </div>
         <p className={styles.body}>{t.auth.companyBody}</p>
 
         {companies.length === 0 ? <p className={styles.body}>{t.auth.noCompanies}</p> : null}

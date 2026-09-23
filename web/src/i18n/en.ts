@@ -49,6 +49,7 @@ export const en: Dictionary = {
   nav: {
     create: 'New document',
     myDocuments: 'My documents',
+    companyDocuments: 'Company documents',
     sections: 'Sections',
     logout: 'Sign out',
     company: 'Company',
@@ -67,10 +68,6 @@ export const en: Dictionary = {
     recentTitle: 'Latest documents',
     recentEmpty: 'No documents yet. Start with «New document».',
     recentAll: 'Full registry',
-    quickTitle: 'Frequent documents',
-    quickBody: 'Counted from this company documents: the more often created, the higher.',
-    quickEmptyBody: 'Nothing to count yet: no document has been created in this company.',
-    quickTimes: 'times',
     counters: {
       drafts: 'Drafts',
       saved: 'Saved',
@@ -80,8 +77,6 @@ export const en: Dictionary = {
 
   company: {
     title: 'Company details',
-    body:
-      'These values go into every document. A mismatch with the charter is a reason to stop and say so.',
     snapshotNote:
       'Documents already saved keep a snapshot of the details and do not change when you edit here.',
     legalName: 'Full legal name',
@@ -233,6 +228,7 @@ export const en: Dictionary = {
 
   registry: {
     title: 'My documents',
+    titleAll: 'Company documents',
     subtitleOwn: 'Your documents in this company. Columns with an underlined heading can be sorted.',
     subtitleAll: 'All documents of the company. Columns with an underlined heading can be sorted.',
     count: 'records',

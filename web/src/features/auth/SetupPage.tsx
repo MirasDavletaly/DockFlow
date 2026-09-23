@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
+import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
@@ -67,11 +68,16 @@ export default function SetupPage() {
   return (
     <main className={styles.page}>
       <aside className={styles.desk}>
-        <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true">
-            DF
-          </span>
-          <span className={styles.brandName}>{t.app.name}</span>
+        <div className={styles.deskTop}>
+          <div className={styles.brand}>
+            <span className={styles.brandMark} aria-hidden="true">
+              DF
+            </span>
+            <span className={styles.brandName}>{t.app.name}</span>
+          </div>
+          {/* Язык выбирают до входа: человеку, который не читает по-русски,
+              экран входа тоже должен быть понятен («Тест день 2»). */}
+          <LanguageSwitch />
         </div>
         <p className={styles.deskLine}>{t.auth.subtitle}</p>
         <div className={styles.deskFoot}>{t.app.tagline}</div>

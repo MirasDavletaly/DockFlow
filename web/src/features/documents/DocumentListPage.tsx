@@ -69,7 +69,7 @@ export default function DocumentListPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title={t.registry.title}
+        title={seesAll ? t.registry.titleAll : t.registry.title}
         subtitle={seesAll ? t.registry.subtitleAll : t.registry.subtitleOwn}
       />
 

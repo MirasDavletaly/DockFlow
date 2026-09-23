@@ -50,7 +50,6 @@ export default function CompanyPage() {
     <div className={styles.page}>
       <PageHeader
         title={t.company.title}
-        subtitle={t.company.body}
         actions={
           editable && draft === null ? (
             <button type="button" className={styles.action} onClick={startEdit}>

@@ -6,29 +6,36 @@
  */
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { can, canUseSection } from '@/access/policy';
+import { can, canUseSection, isPlatformWide } from '@/access/policy';
 import { sections } from '@/api/mock/sections';
-import { useLanguage } from '@/app/App';
+import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
+import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 
 import styles from './AppLayout.module.css';
-
-import type { Lang } from '@/i18n';
 
 export function AppLayout() {
   const { company, user, companies, signOut, selectCompany } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const { lang, switchTo } = useLanguage();
 
   if (company === null || user === null) return null;
 
-  function handleSwitchCompany() {
-    selectCompany('');
-    navigate('/choose-company');
+  // Администратор работает во всех компаниях, и название в углу для него –
+  // переключатель. Остальным переключать нечего или незачем: название ведёт
+  // на реквизиты своей компании («Тест день 2»).
+  const switchesCompany = isPlatformWide(user) && companies.length > 1;
+
+  function handleCompanyClick() {
+    if (switchesCompany) {
+      selectCompany('');
+      navigate('/choose-company');
+      return;
+    }
+    navigate('/company');
   }
 
   /**
@@ -42,6 +49,7 @@ export function AppLayout() {
 
   const allowedSections = sections.filter((section) => canUseSection(user, section.id));
   const showAdmin = can({ user, companyId: company.id }, 'admin.panel');
+  const seesAll = can({ user, companyId: company.id }, 'documents.viewAll');
 
   return (
     <div className={styles.shell}>
@@ -49,11 +57,8 @@ export function AppLayout() {
         <button
           type="button"
           className={styles.company}
-          onClick={handleSwitchCompany}
-          // Одна компания — переключать не на что, но кнопка остаётся
-          // названием компании, в которой человек работает.
-          disabled={companies.length < 2}
-          title={companies.length < 2 ? undefined : t.nav.switchCompany}
+          onClick={handleCompanyClick}
+          title={switchesCompany ? t.nav.switchCompany : t.nav.requisites}
         >
           {/* Логотип на белой подложке: в присланных файлах фон у части
               компаний прозрачный, у части белый, и на тёмной панели без
@@ -95,7 +100,7 @@ export function AppLayout() {
           </li>
           <li>
             <NavLink to="/documents" className={navClass}>
-              {t.nav.myDocuments}
+              {seesAll ? t.nav.companyDocuments : t.nav.myDocuments}
             </NavLink>
           </li>
           <li>
@@ -125,7 +130,7 @@ export function AppLayout() {
                       activeSection === section.id && styles.navItemActive,
                     )}
                   >
-                    {section.short}
+                    {tc(section.short)}
                   </NavLink>
                 </li>
               ))}
@@ -134,18 +139,8 @@ export function AppLayout() {
         )}
 
         <div className={styles.railFooter}>
-          <div className={styles.language} role="group" aria-label={t.nav.language}>
-            {(['ru', 'en'] as Lang[]).map((code) => (
-              <button
-                key={code}
-                type="button"
-                className={cx(styles.langButton, lang === code && styles.langButtonActive)}
-                onClick={() => switchTo(code)}
-                aria-pressed={lang === code}
-              >
-                {code.toUpperCase()}
-              </button>
-            ))}
+          <div className={styles.language}>
+            <LanguageSwitch />
           </div>
 
           <NavLink to="/profile" className={cx(styles.user)}>

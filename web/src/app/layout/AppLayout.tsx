@@ -55,13 +55,29 @@ export function AppLayout() {
           disabled={companies.length < 2}
           title={companies.length < 2 ? undefined : t.nav.switchCompany}
         >
-          <span className={styles.companyMark} aria-hidden="true">
-            {company.monogram}
-          </span>
-          <span className={styles.companyText}>
-            <span className={styles.companyName}>{company.name}</span>
-            <span className={styles.companyHint}>{t.nav.company}</span>
-          </span>
+          {/* Логотип на белой подложке: в присланных файлах фон у части
+              компаний прозрачный, у части белый, и на тёмной панели без
+              подложки одни выглядели бы вырезанными, другие – заплаткой.
+              Логотипы у группы словесные, поэтому название под ними не
+              повторяется: его заменяет подпись «Компания». */}
+          {company.logo === undefined ? (
+            <>
+              <span className={styles.companyMark} aria-hidden="true">
+                {company.monogram}
+              </span>
+              <span className={styles.companyText}>
+                <span className={styles.companyName}>{company.name}</span>
+                <span className={styles.companyHint}>{t.nav.company}</span>
+              </span>
+            </>
+          ) : (
+            <span className={styles.companyText}>
+              <span className={styles.companyLogoBox}>
+                <img className={styles.companyLogo} src={company.logo} alt={company.name} />
+              </span>
+              <span className={styles.companyHint}>{t.nav.company}</span>
+            </span>
+          )}
         </button>
 
         <NavLink to="/create" className={cx(styles.primary)}>

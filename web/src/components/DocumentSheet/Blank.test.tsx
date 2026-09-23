@@ -346,8 +346,8 @@ describe('сверка с присланным приказом', () => {
     fullNameKkDative: 'Хамит Нурдаулет Алмазұлы',
     fullNameEn: 'Nurdaulet Khamit',
     position: 'Юристу',
-    'position.kk': 'Заңгерге',
-    'position.en': 'Lawyer',
+    positionKk: 'Заңгерге',
+    positionEn: 'Lawyer',
     unit: 'Юридический отдел',
   };
 

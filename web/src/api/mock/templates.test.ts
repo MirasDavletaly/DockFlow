@@ -112,18 +112,30 @@ describe('бланк приказа', () => {
 });
 
 describe('колонки', () => {
-  it('у пяти документов тело в трёх языках, у остальных пока в одном', () => {
-    const three = templates.filter((tpl) => tpl.langs.length === 3);
-    const one = templates.filter((tpl) => tpl.langs.length === 1);
+  /**
+   * Документы, у которых казахского и английского текста ещё нет.
+   *
+   * Список именно перечислен, а не выведен из данных: перевод добавляется
+   * этапами, и каждый раз должно быть видно, что осталось. Пустой список –
+   * значит все документы вышли в три колонки.
+   */
+  const AWAITING_TRANSLATION = [
+    'hr-bonus-order',
+    'hr-discipline-order',
+    'hr-dismissal-order',
+    'hr-work-certificate',
+  ];
 
-    expect(three.map((tpl) => tpl.id).sort()).toEqual([
-      'corporate-director-appointment',
-      'hr-hire-order',
-      'hr-unpaid-leave-order',
-      'hr-vacation-order',
-    ]);
-    // Доверенность на двух языках, поэтому в три не попадает.
-    expect(one.length).toBe(templates.length - three.length - poa.length);
+  it('одноязычными остались только те, что ждут перевода', () => {
+    const one = templates.filter((tpl) => tpl.langs.length === 1).map((tpl) => tpl.id);
+    expect(one.sort()).toEqual([...AWAITING_TRANSLATION].sort());
+  });
+
+  it('остальные приказы выходят в три колонки', () => {
+    for (const tpl of orders) {
+      if (AWAITING_TRANSLATION.includes(tpl.id)) continue;
+      expect(tpl.langs, tpl.title).toEqual(['kk', 'ru', 'en']);
+    }
   });
 
   it('в каждой строке таблицы заполнены ровно объявленные языки', () => {

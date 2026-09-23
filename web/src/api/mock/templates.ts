@@ -34,13 +34,20 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Служебная поездка работника с выдачей аванса на расходы.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       { id: 'city', kind: 'text', label: 'Город назначения', required: true, group: 'Командировка' },
       {
@@ -59,6 +66,15 @@ const simpleTemplates: DocumentTemplate[] = [
         hint: 'Одной фразой: что именно нужно сделать',
       },
       { id: 'days', kind: 'number', label: 'Срок', required: true, unit: 'кал. дней', group: 'Сроки' },
+      {
+        id: 'daysWords',
+        kind: 'text',
+        label: 'Срок прописью',
+        required: true,
+        group: 'Сроки',
+        hint: 'Как в приказе: пять, двенадцать',
+        perLang: true,
+      },
       {
         id: 'from',
         kind: 'date',
@@ -79,30 +95,119 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'О направлении в командировку', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Іссапарға жіберу туралы»', bold: true }]],
+        ru: [[{ text: '«О направлении в командировку»', bold: true }]],
+        en: [[{ text: '“On business trip assignment”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'from' },
+            { text: ' бастап ' },
+            { field: 'to' },
+            { text: ' қоса алғанда ' },
+            { field: 'days' },
+            { text: ' (' },
+            { field: 'daysWords' },
+            { text: ') күнтізбелік күн мерзімге ' },
+            { field: 'city' },
+            { text: ' қаласына, ' },
+            { field: 'organization' },
+            { text: ', іссапарға жіберілсін.' },
+          ],
+          [{ text: '2. Іссапардың мақсаты: ' }, { field: 'purpose' }, { text: '.' }],
+          [{ text: '3. Бухгалтерия іссапар шығыстарына аванс шығу күніне дейін берсін.' }],
+          [
+            {
+              text:
+                '4. Қызметкер оралғаннан кейін белгіленген мерзімде аванстық есеп ' +
+                'тапсырсын.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { text: 'бөлім басшысының қызметтік жазбасы.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Направить ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: ', в командировку в г. ' },
-                      { field: 'city' },
-                      { text: ', ' },
-                      { field: 'organization' },
-                      { text: ', сроком на ' },
-                      { field: 'days' },
-                      { text: ' календарных дней с ' },
-                      { field: 'from' },
-                      { text: ' по ' },
-                      { field: 'to' },
-                      { text: '.' },
-                    ],
-                    [{ text: 'Цель командировки: ' }, { field: 'purpose' }, { text: '.' }],
-                    [{ text: 'Бухгалтерии выдать аванс на командировочные расходы до даты выезда.' }],
-                    [{ text: 'Работнику представить авансовый отчёт в установленный срок после возвращения.' }],
-          [{ text: 'Основание: ', bold: true }, { text: 'служебная записка руководителя подразделения' }]
+            { text: '1. Направить ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', в командировку в г. ' },
+            { field: 'city' },
+            { text: ', ' },
+            { field: 'organization' },
+            { text: ', сроком на ' },
+            { field: 'days' },
+            { text: ' (' },
+            { field: 'daysWords' },
+            { text: ') календарных дней с ' },
+            { field: 'from' },
+            { text: ' по ' },
+            { field: 'to' },
+            { text: '.' },
+          ],
+          [{ text: '2. Цель командировки: ' }, { field: 'purpose' }, { text: '.' }],
+          [{ text: '3. Бухгалтерии выдать аванс на командировочные расходы до даты выезда.' }],
+          [
+            {
+              text:
+                '4. Работнику представить авансовый отчёт в установленный срок после ' +
+                'возвращения.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'служебная записка руководителя подразделения.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To send ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', on a business trip to ' },
+            { field: 'city' },
+            { text: ', ' },
+            { field: 'organization' },
+            { text: ', for ' },
+            { field: 'days' },
+            { text: ' (' },
+            { field: 'daysWords' },
+            { text: ') calendar days from ' },
+            { field: 'from' },
+            { text: ' to ' },
+            { field: 'to' },
+            { text: '.' },
+          ],
+          [{ text: '2. Purpose of the trip: ' }, { field: 'purpose' }, { text: '.' }],
+          [
+            {
+              text:
+                '3. To Accountant Department – to issue an advance for travel expenses ' +
+                'before the departure date.',
+            },
+          ],
+          [
+            {
+              text:
+                '4. The employee shall submit an expense report within the established ' +
+                'period after return.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'memorandum of the head of the department.' },
+          ],
         ],
       },
     }),
@@ -117,13 +222,20 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Перевод работника на другую должность или в другое подразделение.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       {
         id: 'positionFrom',
         kind: 'text',
@@ -168,38 +280,116 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'О переводе на другую должность', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Басқа лауазымға ауыстыру туралы»', bold: true }]],
+        ru: [[{ text: '«О переводе на другую должность»', bold: true }]],
+        en: [[{ text: '“On transfer to another position”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: 'transferDate' },
+            { text: ' бастап «' },
+            { field: 'positionFrom' },
+            { text: '» лауазымынан «' },
+            { field: 'position' },
+            { text: '» лауазымына «' },
+            { field: 'unit' },
+            { text: '» бөліміне ауыстырылсын.' },
+          ],
+          [
+            { text: '2. Ауыстырылған күннен бастап айына ' },
+            { field: 'salary' },
+            { text: ' теңге лауазымдық жалақы белгіленсін.' },
+          ],
+          [
+            {
+              text:
+                '3. Кадр бөлімі ауыстыру туралы жазбаны еңбек кітапшасына және жеке ' +
+                'карточкасына енгізсін, бухгалтерия жаңа жалақы бойынша есептесін.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { field: 'agreementDate' },
+            { text: ' жылғы № ' },
+            { field: 'agreementNumber' },
+            { text: ' еңбек шартына қосымша келісім.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Перевести ' },
-                      { field: 'employee' },
-                      { text: ' с должности «' },
-                      { field: 'positionFrom' },
-                      { text: '» на должность «' },
-                      { field: 'position' },
-                      { text: '» в подразделение «' },
-                      { field: 'unit' },
-                      { text: '» с ' },
-                      { field: 'transferDate' },
-                      { text: '.' },
-                    ],
-                    [
-                      { text: 'Установить должностной оклад в размере ' },
-                      { field: 'salary' },
-                      { text: ' тенге в месяц с даты перевода.' },
-                    ],
-                    [
-                      {
-                        text:
-                          'Отделу кадров внести запись о переводе в трудовую книжку и личную карточку ' +
-                          'работника, бухгалтерии – производить начисление по новому окладу.',
-                      },
-                    ],
-          [{ text: 'Основание: ', bold: true }, { text: 'дополнительное соглашение к трудовому договору от ' },
-                    { field: 'agreementDate' },
-                    { text: ' № ' },
-                    { field: 'agreementNumber' }]
+            { text: '1. Перевести ' },
+            { field: 'employee', bold: true },
+            { text: ' с должности «' },
+            { field: 'positionFrom' },
+            { text: '» на должность «' },
+            { field: 'position' },
+            { text: '» в подразделение «' },
+            { field: 'unit' },
+            { text: '» с ' },
+            { field: 'transferDate' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Установить должностной оклад в размере ' },
+            { field: 'salary' },
+            { text: ' тенге в месяц с даты перевода.' },
+          ],
+          [
+            {
+              text:
+                '3. Отделу кадров внести запись о переводе в трудовую книжку и личную ' +
+                'карточку работника, бухгалтерии – производить начисление по новому окладу.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'дополнительное соглашение к трудовому договору от ' },
+            { field: 'agreementDate' },
+            { text: ' № ' },
+            { field: 'agreementNumber' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To transfer ' },
+            { field: 'employee', bold: true },
+            { text: ' from the position of “' },
+            { field: 'positionFrom' },
+            { text: '” to the position of “' },
+            { field: 'position' },
+            { text: '” in the “' },
+            { field: 'unit' },
+            { text: '” unit from ' },
+            { field: 'transferDate' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. To set the official salary of ' },
+            { field: 'salary' },
+            { text: ' tenge per month from the date of transfer.' },
+          ],
+          [
+            {
+              text:
+                '3. To HR Department – to enter the transfer record in the employment ' +
+                'record book and the personal card of the employee; to Accountant ' +
+                'Department – to calculate payments at the new salary.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'supplementary agreement to the employment contract dated ' },
+            { field: 'agreementDate' },
+            { text: ' No. ' },
+            { field: 'agreementNumber' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -216,13 +406,20 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'sensitive',
     purpose: 'Изменение должностного оклада работника с определённой даты.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'salary',
@@ -258,36 +455,109 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'Об изменении должностного оклада', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Лауазымдық жалақыны өзгерту туралы»', bold: true }]],
+        ru: [[{ text: '«Об изменении должностного оклада»', bold: true }]],
+        en: [[{ text: '“On change of the official salary”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'fromDate' },
+            { text: ' бастап айына ' },
+            { field: 'salary' },
+            { text: ' теңге лауазымдық жалақы белгіленсін.' },
+          ],
+          [{ text: '2. Бухгалтерия осы бұйрықты ескере отырып жалақы есептесін.' }],
+          [
+            {
+              text:
+                '3. Кадр бөлімі штат кестесіне және қызметкердің жеке карточкасына ' +
+                'өзгеріс енгізсін.',
+            },
+          ],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { field: 'agreementDate' },
+            { text: ' жылғы № ' },
+            { field: 'agreementNumber' },
+            { text: ' еңбек шартына қосымша келісім.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Установить ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: ', должностной оклад в размере ' },
-                      { field: 'salary' },
-                      { text: ' тенге в месяц с ' },
-                      { field: 'fromDate' },
-                      { text: '.' },
-                    ],
-                    [
-                      {
-                        text:
-                          'Бухгалтерии производить начисление заработной платы с учётом настоящего приказа.',
-                      },
-                    ],
-                    [
-                      {
-                        text:
-                          'Отделу кадров внести изменение в штатное расписание и личную карточку работника.',
-                      },
-                    ],
-          [{ text: 'Основание: ', bold: true }, { text: 'дополнительное соглашение к трудовому договору от ' },
-                    { field: 'agreementDate' },
-                    { text: ' № ' },
-                    { field: 'agreementNumber' }]
+            { text: '1. Установить ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', должностной оклад в размере ' },
+            { field: 'salary' },
+            { text: ' тенге в месяц с ' },
+            { field: 'fromDate' },
+            { text: '.' },
+          ],
+          [
+            {
+              text:
+                '2. Бухгалтерии производить начисление заработной платы с учётом ' +
+                'настоящего приказа.',
+            },
+          ],
+          [
+            {
+              text:
+                '3. Отделу кадров внести изменение в штатное расписание и личную ' +
+                'карточку работника.',
+            },
+          ],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'дополнительное соглашение к трудовому договору от ' },
+            { field: 'agreementDate' },
+            { text: ' № ' },
+            { field: 'agreementNumber' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To set for ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', the official salary of ' },
+            { field: 'salary' },
+            { text: ' tenge per month from ' },
+            { field: 'fromDate' },
+            { text: '.' },
+          ],
+          [
+            {
+              text:
+                '2. To Accountant Department – to calculate wages taking this order ' +
+                'into account.',
+            },
+          ],
+          [
+            {
+              text:
+                '3. To HR Department – to amend the staffing table and the personal ' +
+                'card of the employee.',
+            },
+          ],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'supplementary agreement to the employment contract dated ' },
+            { field: 'agreementDate' },
+            { text: ' No. ' },
+            { field: 'agreementNumber' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -308,7 +578,14 @@ const simpleTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['ru'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       { id: 'unit', kind: 'text', label: 'Подразделение', required: true, group: 'Работник' },
       {
@@ -407,13 +684,20 @@ const simpleTemplates: DocumentTemplate[] = [
     profile: 'standard',
     purpose: 'Возвращение работника из отпуска с его согласия. Остаток переносится.',
     reviewed: false,
-    // Бланк тот же, что у остальных документов, но тело выходит в одну
-    // колонку: проверенного казахского и английского текста ещё нет.
-    // Список фраз для переводчика – docs/translation-request.md.
     layout: 'order',
-    langs: ['ru'],
+    // Казахский и английский текст написан по образцу присланных приказов
+    // теми же оборотами. Ссылки на статью закона здесь нет: для этого
+    // документа она не прислана, а нормы права не выдумываются.
+    langs: ['kk', 'ru', 'en'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'recallDate',
@@ -430,6 +714,15 @@ const simpleTemplates: DocumentTemplate[] = [
         required: true,
         unit: 'кал. дней',
         group: 'Отзыв',
+      },
+      {
+        id: 'remainingDaysWords',
+        kind: 'text',
+        label: 'Остаток прописью',
+        required: true,
+        group: 'Отзыв',
+        hint: 'Как в приказе: семь, четырнадцать',
+        perLang: true,
       },
       {
         id: 'reason',
@@ -451,27 +744,92 @@ const simpleTemplates: DocumentTemplate[] = [
       },
     ],
     body: orderBody({
-      subject: { ru: [[{ text: 'Об отзыве из трудового отпуска', bold: true }]] },
+      subject: {
+        kk: [[{ text: '«Еңбек демалысынан кері шақыру туралы»', bold: true }]],
+        ru: [[{ text: '«Об отзыве из трудового отпуска»', bold: true }]],
+        en: [[{ text: '“On recall from labour leave”', bold: true }]],
+      },
       body: {
+        kk: [
+          [
+            { text: '1. ' },
+            { field: 'employee:nom', bold: true },
+            { text: ' ' },
+            { field: 'position' },
+            { text: ' ' },
+            { field: 'recallDate' },
+            { text: ' бастап жыл сайынғы ақылы еңбек демалысынан кері шақырылсын. Себебі: ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Демалыстың пайдаланылмаған ' },
+            { field: 'remainingDays' },
+            { text: ' (' },
+            { field: 'remainingDaysWords' },
+            { text: ') күнтізбелік күні қызметкермен келісілген мерзімде берілсін.' },
+          ],
+          [{ text: '3. Бухгалтерия демалыс ақысын қайта есептесін.' }],
+          [
+            { text: 'Негіздеме: ', bold: true },
+            { text: 'қызметкердің ' },
+            { field: 'consentDate' },
+            { text: ' жылғы жазбаша келісімі.' },
+          ],
+        ],
         ru: [
           [
-                      { text: 'Отозвать ' },
-                      { field: 'employee' },
-                      { text: ', ' },
-                      { field: 'position' },
-                      { text: ', из ежегодного оплачиваемого трудового отпуска с ' },
-                      { field: 'recallDate' },
-                      { text: '. Причина: ' },
-                      { field: 'reason' },
-                      { text: '.' },
-                    ],
-                    [
-                      { text: 'Неиспользованную часть отпуска продолжительностью ' },
-                      { field: 'remainingDays' },
-                      { text: ' календарных дней предоставить в согласованный с работником срок.' },
-                    ],
-                    [{ text: 'Бухгалтерии произвести перерасчёт отпускных выплат.' }],
-          [{ text: 'Основание: ', bold: true }, { text: 'письменное согласие работника от ' }, { field: 'consentDate' }]
+            { text: '1. Отозвать ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', из ежегодного оплачиваемого трудового отпуска с ' },
+            { field: 'recallDate' },
+            { text: '. Причина: ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. Неиспользованную часть отпуска продолжительностью ' },
+            { field: 'remainingDays' },
+            { text: ' (' },
+            { field: 'remainingDaysWords' },
+            { text: ') календарных дней предоставить в согласованный с работником срок.' },
+          ],
+          [{ text: '3. Бухгалтерии произвести перерасчёт отпускных выплат.' }],
+          [
+            { text: 'Основание: ', bold: true },
+            { text: 'письменное согласие работника от ' },
+            { field: 'consentDate' },
+            { text: '.' },
+          ],
+        ],
+        en: [
+          [
+            { text: '1. To recall ' },
+            { field: 'employee', bold: true },
+            { text: ', ' },
+            { field: 'position' },
+            { text: ', from the annual paid labour leave from ' },
+            { field: 'recallDate' },
+            { text: '. Reason: ' },
+            { field: 'reason' },
+            { text: '.' },
+          ],
+          [
+            { text: '2. The unused part of the leave of ' },
+            { field: 'remainingDays' },
+            { text: ' (' },
+            { field: 'remainingDaysWords' },
+            { text: ') calendar days shall be granted at a time agreed with the employee.' },
+          ],
+          [{ text: '3. To Accountant Department – to recalculate the leave payments.' }],
+          [
+            { text: 'Basis: ', bold: true },
+            { text: 'written consent of the employee dated ' },
+            { field: 'consentDate' },
+            { text: '.' },
+          ],
         ],
       },
     }),
@@ -492,7 +850,14 @@ const simpleTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['ru'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'kind',
@@ -571,7 +936,14 @@ const simpleTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['ru'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       {
         id: 'penalty',
@@ -663,7 +1035,14 @@ const simpleTemplates: DocumentTemplate[] = [
     layout: 'order',
     langs: ['ru'],
     fields: [
-      { id: 'employee', kind: 'employee', label: 'Работник', required: true, group: 'Работник' },
+      {
+        id: 'employee',
+        kind: 'employee',
+        label: 'Работник',
+        required: true,
+        group: 'Работник',
+        perLang: true,
+      },
       { id: 'position', kind: 'text', label: 'Должность', required: true, group: 'Работник' },
       { id: 'unit', kind: 'text', label: 'Подразделение', required: true, group: 'Работник' },
       {

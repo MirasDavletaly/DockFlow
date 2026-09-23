@@ -376,7 +376,15 @@ export default function DocumentFormPage() {
         </section>
 
         <section className={styles.sheetColumn} aria-label={t.form.sheetTitle}>
-          {doc.reviewed ? null : (
+          {/* Типовой шаблон собран по распространённым образцам, а не по
+              документу компании: об этом сказано сверху, до листа
+              («Тест день 2»). На бумагу пометка не идёт. */}
+          {doc.generic === true ? (
+            <div className={styles.legalNotice} role="note">
+              <div className={styles.legalTitle}>{t.form.genericTitle}</div>
+              <p className={styles.legalBody}>{t.form.genericBody}</p>
+            </div>
+          ) : doc.reviewed ? null : (
             <div className={styles.legalNotice}>
               <div className={styles.legalTitle}>{t.form.legalDraftTitle}</div>
               <p className={styles.legalBody}>{t.form.legalDraftBody}</p>

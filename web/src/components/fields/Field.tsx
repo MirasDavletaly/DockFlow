@@ -116,18 +116,32 @@ export function Field({
       {extraLangs.map((lang) => (
         <label key={lang} className={styles.translation}>
           <span className={styles.translationLabel}>{LANG_LABEL[lang]()}</span>
-          <input
-            className={styles.input}
-            id={`field-${def.id}.${lang}`}
-            type="text"
-            value={translations[lang] ?? ''}
-            // Пока перевода нет, в колонку идёт то, что показано подсказкой:
-            // значение из справочника или русский текст.
-            placeholder={placeholders[lang] ?? ''}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            onChange={(e) => onTranslate?.(lang, e.target.value)}
-          />
+          {/* Пока перевода нет, в колонку идёт то, что показано подсказкой:
+              значение из справочника или русский текст. Многострочное поле
+              переводится тоже в многострочном. */}
+          {def.kind === 'textarea' ? (
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              id={`field-${def.id}.${lang}`}
+              rows={3}
+              value={translations[lang] ?? ''}
+              placeholder={placeholders[lang] ?? ''}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              onChange={(e) => onTranslate?.(lang, e.target.value)}
+            />
+          ) : (
+            <input
+              className={styles.input}
+              id={`field-${def.id}.${lang}`}
+              type="text"
+              value={translations[lang] ?? ''}
+              placeholder={placeholders[lang] ?? ''}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              onChange={(e) => onTranslate?.(lang, e.target.value)}
+            />
+          )}
         </label>
       ))}
 

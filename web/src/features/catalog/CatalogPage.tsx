@@ -10,7 +10,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import { canUseSection } from '@/access/policy';
 import { sections } from '@/api/mock/sections';
-import { catalogEntries } from '@/api/mock/templates';
+import { catalogEntries, findTemplate } from '@/api/mock/templates';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
 import { tc } from '@/i18n/content';
@@ -145,6 +145,11 @@ export default function CatalogPage() {
                       <li key={entry.id}>
                         <Link className={styles.item} to={`/create/${entry.id}`}>
                           <span className={styles.itemTitle}>{tc(entry.title)}</span>
+                          {findTemplate(entry.id)?.generic === true ? (
+                            <span className={styles.genericMark} title={t.form.genericBody}>
+                              {t.catalog.generic}
+                            </span>
+                          ) : null}
                           <span className={styles.itemGo} aria-hidden="true">
                             →
                           </span>

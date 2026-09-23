@@ -158,6 +158,13 @@ export default function DocumentPage() {
             </div>
           )}
 
+          {template.generic === true ? (
+            <div className={styles.draftNote} role="note">
+              <div className={styles.savedTitle}>{t.form.genericTitle}</div>
+              <p className={styles.savedBody}>{t.form.genericBody}</p>
+            </div>
+          ) : null}
+
           {isDraft ? (
             <div className={styles.draftNote} role="note">
               <div className={styles.savedTitle}>{t.document.draftTitle}</div>

@@ -13,6 +13,8 @@
  * реквизиты компании, руководитель, город, дата и номер документа.
  */
 import { DOCUMENT_WORDS, documentBody, orderBody } from '@/api/mock/blank';
+import { genericTemplatesA } from '@/api/mock/templates-generic';
+import { genericTemplatesB } from '@/api/mock/templates-generic-2';
 import { blankTemplates } from '@/api/mock/templates-blank';
 import { activityOrders } from '@/api/mock/templates-orders';
 
@@ -1420,6 +1422,9 @@ export const templates: DocumentTemplate[] = [
   ...blankTemplates,
   ...simpleTemplates,
   ...activityOrders,
+  // Типовые шаблоны – в конце: образца от компании для них нет.
+  ...genericTemplatesA,
+  ...genericTemplatesB,
 ];
 
 export function findTemplate(id: string): DocumentTemplate | undefined {
@@ -1427,77 +1432,15 @@ export function findTemplate(id: string): DocumentTemplate | undefined {
 }
 
 /**
- * Документы, которые уже учтены в каталоге, но шаблон для них ещё не заполнен.
+ * Документы, которые учтены в каталоге, но шаблон для них ещё не заполнен.
  *
- * Показываем их наравне с готовыми и честно помечаем: иначе человек будет
- * думать, что система документ не поддерживает, и уйдёт делать его в Word.
- * Список — выборка из catalog/source/documents-list.txt; полностью каталог
- * наполняется на этапе 8.
+ * Показываются наравне с готовыми и честно помечаются: иначе человек решит,
+ * что система документ не поддерживает, и уйдёт делать его в Word. Сейчас
+ * список пуст: оставшиеся документы получили типовые шаблоны
+ * (`templates-generic*.ts`, «Тест день 2»). Новый документ каталога без
+ * шаблона добавляется сюда.
  */
-const soon: Array<[string, string, string]> = [
-  ['Трудовой договор', 'hr', 'hr-documents'],
-  ['Дополнительное соглашение к трудовому договору', 'hr', 'hr-documents'],
-  ['Должностная инструкция', 'hr', 'hr-documents'],
-  ['Соглашение о неразглашении (NDA)', 'hr', 'hr-documents'],
-  ['Правила трудового распорядка', 'hr', 'hr-policies'],
-  ['Положение об оплате труда и премировании', 'hr', 'hr-policies'],
-
-  ['Договор поставки', 'legal', 'legal-contracts'],
-  ['Договор оказания услуг', 'legal', 'legal-contracts'],
-  ['Договор аренды', 'legal', 'legal-contracts'],
-  ['Дополнительное соглашение к договору', 'legal', 'legal-contracts'],
-  ['Претензия', 'legal', 'legal-claims'],
-  ['Ответ на претензию', 'legal', 'legal-claims'],
-  ['Исковое заявление', 'legal', 'legal-claims'],
-  ['Гарантийное письмо', 'legal', 'legal-other'],
-  ['Официальное письмо контрагенту', 'legal', 'legal-other'],
-
-  ['Решение единственного участника', 'corporate', 'corporate-decisions'],
-  ['Протокол общего собрания участников', 'corporate', 'corporate-decisions'],
-
-  ['Счёт на оплату', 'finance', 'finance-primary'],
-  ['Акт выполненных работ', 'finance', 'finance-primary'],
-  ['Авансовый отчёт', 'finance', 'finance-primary'],
-  ['Акт сверки взаиморасчётов', 'finance', 'finance-primary'],
-  ['Заявка на оплату', 'finance', 'finance-planning'],
-
-  ['Заявка на закупку', 'procurement-sales', 'procurement'],
-  ['Запрос коммерческих предложений', 'procurement-sales', 'procurement'],
-  ['Протокол выбора поставщика', 'procurement-sales', 'procurement'],
-  ['Коммерческое предложение', 'procurement-sales', 'sales'],
-  ['Спецификация к договору', 'procurement-sales', 'sales'],
-
-  ['Приходная накладная', 'warehouse', ''],
-  ['Накладная на внутреннее перемещение', 'warehouse', ''],
-  ['Путевой лист', 'warehouse', ''],
-  ['Акт инвентаризации склада', 'warehouse', ''],
-  ['Доверенность на получение товара', 'warehouse', ''],
-
-  ['Протокол совещания', 'administration', 'administration-records'],
-  ['Номенклатура дел', 'administration', 'administration-records'],
-  ['Акт приёма-передачи дел', 'administration', 'administration-records'],
-  ['Заявка на ремонт', 'administration', 'administration-facilities'],
-  ['Заявка на хозяйственные нужды', 'administration', 'administration-facilities'],
-
-  ['Устав проекта', 'projects', 'projects-initiation'],
-  ['Техническое задание', 'projects', 'projects-planning'],
-  ['Статус-отчёт по проекту', 'projects', 'projects-execution'],
-  ['Акт приёмки результатов проекта', 'projects', 'projects-closing'],
-
-  ['Заявка на ИТ-обслуживание', 'it-security', 'it'],
-  ['Акт приёма-передачи техники работнику', 'it-security', 'it'],
-  ['Заявка на предоставление доступа', 'it-security', 'security'],
-  ['Политика информационной безопасности', 'it-security', 'security'],
-
-  ['Журнал вводного инструктажа', 'hse', 'hse-labour'],
-  ['Наряд-допуск на работы повышенной опасности', 'hse', 'hse-labour'],
-  ['Акт о несчастном случае', 'hse', 'hse-incidents'],
-  ['Инструкция о мерах пожарной безопасности', 'hse', 'hse-fire'],
-
-  ['Бриф на рекламу', 'marketing', ''],
-  ['Договор с рекламным агентством', 'marketing', ''],
-  ['Отчёт о рекламной кампании', 'marketing', ''],
-];
+const soon: Array<[string, string, string]> = [];
 
 export const catalogEntries: CatalogEntry[] = [
   ...templates.map<CatalogEntry>((tpl) => ({

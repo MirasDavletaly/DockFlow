@@ -71,7 +71,10 @@ export function orderBody({
 interface DocumentInput {
   /** Заголовок: «СПРАВКА». Тот же вид, что и «ПРИКАЗ». */
   words: { kk: string; ru: string; en: string };
-  body: TriRow;
+  /** Тело: одна строка таблицы или несколько – по пункту на строку. */
+  body: TriRow | TriRow[];
+  /** Строка над подписью руководителя (см. `tri-signature`). */
+  caption?: { kk: string; ru: string; en: string } | null;
 }
 
 /**
@@ -81,13 +84,13 @@ interface DocumentInput {
  * «ПРИКАЗЫВАЮ» и листа ознакомления у неё нет. Всё остальное – шапка,
  * город с датой, заголовок с номером, подпись – то же самое.
  */
-export function documentBody({ words, body }: DocumentInput): DocBlock[] {
+export function documentBody({ words, body, caption }: DocumentInput): DocBlock[] {
   return [
     { kind: 'letterhead' },
     { kind: 'place-date' },
     { kind: 'order-title', words },
-    { kind: 'tri-table', rows: [body] },
-    { kind: 'tri-signature' },
+    { kind: 'tri-table', rows: Array.isArray(body) ? body : [body] },
+    caption === undefined ? { kind: 'tri-signature' } : { kind: 'tri-signature', caption },
   ];
 }
 

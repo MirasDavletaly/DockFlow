@@ -144,6 +144,7 @@ export const en: Dictionary = {
     soonBody: 'The document is in the catalogue, but its template is not filled in yet.',
     documentsCount: 'documents',
     allSections: 'All sections',
+    generic: 'typical',
   },
 
   form: {
@@ -178,6 +179,9 @@ export const en: Dictionary = {
     descriptionLabel: 'Note',
     descriptionHint:
       'Optional. Visible only in «My documents», never printed in the document itself.',
+    genericTitle: 'Typical template – not specific',
+    genericBody:
+      'The text follows common samples, not a document of your company. Check it with a lawyer and against your situation before signing.',
     legalDraftTitle: 'Draft wording',
     legalDraftBody:
       'The wording has not been checked by a lawyer. Have the text approved before the document goes into use.',

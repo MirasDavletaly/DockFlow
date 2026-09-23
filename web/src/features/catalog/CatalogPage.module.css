@@ -171,6 +171,21 @@ a.item:focus-visible .itemGo {
   white-space: nowrap;
 }
 
+/* Типовой шаблон: собран по распространённым образцам, а не по документу
+   компании. Метка тихая – документ всё равно можно создать. */
+.genericMark {
+  flex: none;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
 /* ── Пусто ────────────────────────────────────────────────────────────── */
 
 .empty {

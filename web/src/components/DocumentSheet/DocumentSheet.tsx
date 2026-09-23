@@ -271,11 +271,22 @@ export function DocumentSheet({
           .join(' / ');
         const middle = Math.floor(roles.length / 2);
 
+        // Строка над подписью: своя у документа (договор, заявка) или
+        // «Жұмыс беруші» из бланка компании.
+        const caption =
+          block.caption === undefined
+            ? company.employerCaption === true
+              ? t.sheet.employer
+              : null
+            : block.caption === null
+              ? null
+              : `${block.caption.kk} / ${block.caption.ru} / ${block.caption.en}:`;
+
         return (
           <div key={key} className={styles.signature}>
-            {company.employerCaption === true ? (
-              <div className={styles.signatureCaption}>{t.sheet.employer}</div>
-            ) : null}
+            {caption === null ? null : (
+              <div className={styles.signatureCaption}>{caption}</div>
+            )}
             <div className={styles.signatureRows}>
               <div className={styles.signatureRoles}>
                 {roles.map((role) => (

@@ -109,9 +109,38 @@ function render(): string {
     lines.push(
       FROM_YOUR_FILES.has(tpl.id)
         ? '**Источник текста:** ваш файл, взят буквой в букву.'
-        : '**Источник текста:** написан по образцу ваших приказов. Проверить полностью.',
+        : tpl.generic === true
+          ? '**Источник текста:** типовой шаблон – неконкретный, собран по распространённым образцам. ' +
+            'Проверить полностью и под компанию; ссылок на статьи закона в нём нет нарочно.'
+          : '**Источник текста:** написан по образцу ваших приказов. Проверить полностью.',
     );
     lines.push('');
+
+    // Типовой шаблон – не приказ: темы и распоряжения у него нет, весь текст
+    // идёт подряд, пункт за пунктом.
+    if (tpl.generic === true) {
+      lines.push('### Текст');
+      lines.push('');
+      for (const block of tpl.body) {
+        if (block.kind === 'tri-table') {
+          for (const row of block.rows) {
+            for (const lang of tpl.langs) {
+              for (const line of paras(row[lang])) lines.push(`- **${LANG_TITLE[lang]}.** ${line}`);
+            }
+            lines.push('');
+          }
+        }
+        if (block.kind === 'bi-table') {
+          for (const row of block.rows) {
+            for (const lang of ['ru', 'en'] as const) {
+              for (const line of paras(row[lang])) lines.push(`- **${LANG_TITLE[lang]}.** ${line}`);
+            }
+            lines.push('');
+          }
+        }
+      }
+      continue;
+    }
 
     if (tpl.layout === 'poa') {
       lines.push('Доверенность: выходит на русском и английском, казахской колонки нет.');

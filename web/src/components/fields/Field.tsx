@@ -8,9 +8,10 @@
 import { useId } from 'react';
 
 import { counterparties } from '@/api/mock/directory';
-import { t } from '@/i18n';
+import { lang, t } from '@/i18n';
 import { tc } from '@/i18n/content';
 import { formatMoney } from '@/utils/format';
+import { translateJobTitle } from '@/utils/jobTitles';
 
 import styles from './Field.module.css';
 
@@ -279,7 +280,9 @@ function renderControl({
           <datalist id={listId}>
             {employees.map((employee) => (
               <option key={employee.id} value={employee.fullName}>
-                {employee.position}
+                {lang === 'en'
+                  ? (employee.positionEn ?? translateJobTitle(employee.position, 'en') ?? employee.position)
+                  : employee.position}
               </option>
             ))}
           </datalist>

@@ -26,6 +26,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { findCounterparty } from '@/api/mock/directory';
 import { findEmployeeIn } from '@/store/db';
+import { translateJobTitle } from '@/utils/jobTitles';
 import { englishName, kazakhDative } from '@/utils/names';
 import { t } from '@/i18n';
 import { formatDocumentDate, formatLongDate, formatMoney, formatShortDate } from '@/utils/format';
@@ -656,6 +657,12 @@ function resolveField(
           : kazakhDative(written);
       }
       return written;
+    }
+    // Перевода не вписали, но должность или подразделение есть в словаре –
+    // в колонку идёт перевод, а не русское слово.
+    if (def.kind === 'text') {
+      const translated = translateJobTitle(raw, lang);
+      if (translated !== undefined) return translated;
     }
   }
 

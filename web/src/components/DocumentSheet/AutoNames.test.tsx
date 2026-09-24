@@ -96,3 +96,19 @@ describe('имя работника без перевода в карточке'
     expect(text).toContain('Ким Ирина Сергеевнаға');
   });
 });
+
+describe('должность без перевода', () => {
+  it('из словаря частых должностей встаёт в казахскую и английскую колонки', () => {
+    const text = render('hr-vacation-order', { employee: 'p-1', position: 'Бухгалтер' });
+    expect(text).toContain('Accountant');
+  });
+
+  it('вписанный руками перевод главнее словаря', () => {
+    const text = render('hr-vacation-order', {
+      employee: 'p-1',
+      position: 'Бухгалтер',
+      'position.en': 'Senior Accountant',
+    });
+    expect(text).toContain('Senior Accountant');
+  });
+});

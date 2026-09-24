@@ -441,6 +441,11 @@ export const en: Dictionary = {
     personGenitiveHint: 'Used in the Russian wording «принять Ахметова Асхата Каировича»',
     personPosition: 'Position',
     personUnit: 'Unit',
+    personUnitKk: 'Unit in Kazakh',
+    personUnitEn: 'Unit in English',
+    personNameRu: 'Full name in Russian',
+    personAutoHint:
+      'The name in Latin script and in Kazakh, the position and the unit in Kazakh and English are filled in automatically. Check and correct them if needed.',
 
     documentsBody:
       'All documents of the companies available to you, deleted ones included. A deleted document comes back with «Return to the registry».',

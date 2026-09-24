@@ -215,6 +215,9 @@ export interface EmployeeBrief {
   positionKk?: string;
   positionEn?: string;
   unit: string;
+  /** Подразделение на казахском и английском: для колонок приказа и английского экрана. */
+  unitKk?: string;
+  unitEn?: string;
 }
 
 export interface Counterparty {

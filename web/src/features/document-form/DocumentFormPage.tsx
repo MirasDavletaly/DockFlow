@@ -28,6 +28,7 @@ import { lang, t } from '@/i18n';
 import { tc } from '@/i18n/content';
 import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
+import { translateJobTitle } from '@/utils/jobTitles';
 import { englishName, transliterate } from '@/utils/names';
 import { numberToWords } from '@/utils/numberWords';
 
@@ -174,6 +175,13 @@ export default function DocumentFormPage() {
             updated['position.en'] = employee.positionEn;
           }
           if ((prev['unit'] ?? '') === '') updated['unit'] = employee.unit;
+          // Подразделение на казахском и английском – с карточки, если там есть.
+          if ((prev['unit.kk'] ?? '') === '' && employee.unitKk !== undefined) {
+            updated['unit.kk'] = employee.unitKk;
+          }
+          if ((prev['unit.en'] ?? '') === '' && employee.unitEn !== undefined) {
+            updated['unit.en'] = employee.unitEn;
+          }
           if ((prev['positionFrom'] ?? '') === '') updated['positionFrom'] = employee.position;
         }
       }
@@ -189,6 +197,24 @@ export default function DocumentFormPage() {
           const key = `${field.id}.${lang}`;
           const current = prev[key] ?? '';
           if (current === '' || current === before[lang]) updated[key] = after[lang];
+        }
+      }
+
+      // Должность и подразделение на казахском и английском – из словаря
+      // частых названий, для каждого поля на трёх языках, которое поменялось
+      // (в том числе подставленного с карточки работника). Нет в словаре –
+      // перевод остаётся за человеком; поправленный руками не затирается.
+      for (const def of doc.fields) {
+        if (def.perLang !== true || def.kind === 'employee') continue;
+        const before = prev[def.id] ?? '';
+        const after = updated[def.id] ?? '';
+        if (before === after) continue;
+        for (const lang of ['kk', 'en'] as const) {
+          const key = `${def.id}.${lang}`;
+          const current = updated[key] ?? '';
+          const autoBefore = translateJobTitle(before, lang) ?? '';
+          const autoAfter = translateJobTitle(after, lang) ?? '';
+          if (current === '' || current === autoBefore) updated[key] = autoAfter;
         }
       }
 

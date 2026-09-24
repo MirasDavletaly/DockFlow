@@ -98,7 +98,9 @@ export default function CompanyPage() {
  * На английском в строках стоят английские значения карточки: наименование,
  * адрес, руководитель («Тест день 2»: «реквизиты не переводятся»). Отдельные
  * строки «…на английском» тогда не нужны – они повторили бы то же самое.
- * Казахское наименование остаётся: это реквизит, а не перевод.
+ * Строки на казахском на английском экране тоже не показываются: они
+ * повторяли бы английское наименование и должность казахскими словами.
+ * На русском экране они есть – это реквизиты для казахской колонки бланка.
  */
 function ReadView({ company }: { company: Company }) {
   const en = lang === 'en';
@@ -117,7 +119,7 @@ function ReadView({ company }: { company: Company }) {
           label={t.company.legalName}
           value={en ? (company.legalNameEn ?? company.legalName) : company.legalName}
         />
-        <Requisite label={t.company.legalNameKk} value={company.legalNameKk} />
+        {en ? null : <Requisite label={t.company.legalNameKk} value={company.legalNameKk} />}
         {en ? null : <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />}
         <Requisite label={t.company.bin} value={company.bin} mono />
         <Requisite label={t.company.kbe} value={company.kbe} mono />
@@ -144,7 +146,9 @@ function ReadView({ company }: { company: Company }) {
           value={`${companyDirectorTitle(company)}, ${companyDirector(company)}`}
         />
         {en ? null : <Requisite label={t.company.directorEn} value={company.directorNameEn} />}
-        <Requisite label={t.company.directorTitleKk} value={company.directorTitleKk} />
+        {en ? null : (
+          <Requisite label={t.company.directorTitleKk} value={company.directorTitleKk} />
+        )}
         {en ? null : (
           <Requisite label={t.company.directorTitleEn} value={company.directorTitleEn} />
         )}

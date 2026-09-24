@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { lang, t } from '@/i18n';
 import { companyBasis, companyDirector, companyDirectorTitle } from '@/i18n/company';
 import { tc } from '@/i18n/content';
+import { englishAddress } from '@/utils/address';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
@@ -120,13 +121,23 @@ function ReadView({ company }: { company: Company }) {
         {en ? null : <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />}
         <Requisite label={t.company.bin} value={company.bin} mono />
         <Requisite label={t.company.kbe} value={company.kbe} mono />
-        <Requisite
-          label={t.company.address}
-          value={en ? (company.addressEn ?? addressLine(company)) : addressLine(company)}
-        />
+        {/* Адрес без английского в карточке собирается по словарю адресных
+            слов («город» – «city»), а не показывается по-русски. */}
+        <Requisite label={t.company.address} value={en ? addressLineEn(company) : addressLine(company)} />
         {en ? null : <Requisite label={t.company.addressEn} value={company.addressEn} />}
-        <Requisite label={t.company.actualAddress} value={company.actualAddress} />
-        <Requisite label={t.company.phone} value={company.phone} />
+        <Requisite
+          label={t.company.actualAddress}
+          value={
+            en && company.actualAddress !== undefined
+              ? (company.actualAddressEn ?? englishAddress(company.actualAddress))
+              : company.actualAddress
+          }
+        />
+        <Requisite
+          label={t.company.phone}
+          // «вн. 144» – добавочный номер; на английском это «ext. 144».
+          value={en ? company.phone?.replace(/(^|\s)вн\.\s*/u, '$1ext. ') : company.phone}
+        />
         <Requisite label={t.company.email} value={company.email} />
         <Requisite
           label={t.company.director}
@@ -319,9 +330,19 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
           onChange={(v) => set({ address: v })}
         />
         <Text
+          label={t.company.addressEn}
+          value={draft.addressEn ?? ''}
+          onChange={(v) => set({ addressEn: v })}
+        />
+        <Text
           label={t.company.actualAddress}
           value={draft.actualAddress ?? ''}
           onChange={(v) => set({ actualAddress: v })}
+        />
+        <Text
+          label={t.company.actualAddressEn}
+          value={draft.actualAddressEn ?? ''}
+          onChange={(v) => set({ actualAddressEn: v })}
         />
         <Text label={t.company.city} value={draft.city} onChange={(v) => set({ city: v })} />
         <Text
@@ -422,6 +443,12 @@ function Text({ label, value, hint, onChange }: TextProps) {
 /** Индекс и адрес одной строкой. Без индекса запятая не появляется. */
 function addressLine(company: Company): string {
   return [company.postalCode, company.address].filter(isFilled).join(', ');
+}
+
+/** То же на английском: адрес из карточки, а если его нет – собранный. */
+function addressLineEn(company: Company): string {
+  const address = isFilled(company.addressEn) ? company.addressEn : englishAddress(company.address);
+  return [company.postalCode, address].filter(isFilled).join(', ');
 }
 
 /** Телефон, почта и PEC головного офиса одной строкой. */

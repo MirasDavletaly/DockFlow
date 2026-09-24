@@ -42,6 +42,8 @@ export const companies: Company[] = [
     kbe: '17',
     postalCode: '060011',
     address: 'Республика Казахстан, город Атырау, улица Бактыгерей Кулманов, строение 113В',
+    // Английское написание – как у ТОО «Algoritmi KZ» по тому же адресу.
+    addressEn: 'Republic of Kazakhstan, Atyrau city, Baktigerei Kulmanov street, 113B',
     directorName: 'Хамит Нурдаулет Алмазович',
     directorNameShort: 'Хамит Н.А.',
     // Латиница взята из карточки ТОО «EFFEGI EURASIA»: там тот же человек
@@ -195,8 +197,11 @@ export const companies: Company[] = [
     postalCode: '090302',
     address:
       'Западно-Казахстанская область, Бурлинский район, город Аксай, 5 микрорайон, дом 20, квартира 113',
+    addressEn:
+      'West Kazakhstan Region, Burlin district, Aksai city, 5th microdistrict, house 20, apartment 113',
     // На бланке компании стоит другой адрес — это её фактический адрес.
     actualAddress: 'город Аксай, проспект Абая, 20, офис 1',
+    actualAddressEn: 'Aksai city, Abai Ave., 20, office 1',
     phone: '+7 771 487 87 87',
     email: 'office@novalliance.kz',
     // Прислано только «Султангалиева А.Т.»: полного ФИО нет, а в приказе
@@ -249,6 +254,9 @@ export const companies: Company[] = [
     // Technologies LLP.
     actualAddress:
       'Z05T3E5, город Астана, район Есиль, проспект Мәңгілік Ел, 55/16, блок C3.1, офисы 333/334',
+    // Написание проспекта – как у Kazakhstan New Technologies LLP в том же здании.
+    actualAddressEn:
+      'Z05T3E5, Astana city, Yesil district, Mangilik El Ave., 55/16, block C3.1, offices 333/334',
     phone: '+7 (7172) 73-49-72',
     email: 'info@green-spark.net',
     directorName: 'Танатаров Амир Маратович',

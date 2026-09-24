@@ -91,6 +91,7 @@ export const en: Dictionary = {
     postalCode: 'Postal code',
     addressEn: 'Address in English',
     actualAddress: 'Actual address',
+    actualAddressEn: 'Actual address in English',
     city: 'City',
     phone: 'Phone',
     email: 'Email',

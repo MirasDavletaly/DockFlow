@@ -91,6 +91,7 @@ export const ru = {
     postalCode: 'Индекс',
     addressEn: 'Адрес на английском',
     actualAddress: 'Фактический адрес',
+    actualAddressEn: 'Фактический адрес на английском',
     city: 'Город',
     phone: 'Телефон',
     email: 'Электронная почта',

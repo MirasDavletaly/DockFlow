@@ -26,6 +26,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { findCounterparty } from '@/api/mock/directory';
 import { findEmployeeIn } from '@/store/db';
+import { englishName, kazakhDative } from '@/utils/names';
 import { t } from '@/i18n';
 import { formatDocumentDate, formatLongDate, formatMoney, formatShortDate } from '@/utils/format';
 
@@ -597,13 +598,18 @@ function fieldForm(fieldId: string): 'nom' | 'obj' {
  * видна на листе, и человек сразу поймёт, что данных не хватает.
  */
 function employeeName(person: EmployeeBrief, lang: DocLang, form: 'nom' | 'obj'): string {
-  // В английском падежей нет: обе формы дают одно и то же написание.
-  if (lang === 'en') return person.fullNameEn ?? person.fullName;
+  // В английском падежей нет: обе формы дают одно и то же написание. Нет
+  // латиницы в карточке – собирается транслитерацией, а не идёт кириллица.
+  if (lang === 'en') return person.fullNameEn ?? englishName(person.fullName);
 
   const nominative = lang === 'kk' ? (person.fullNameKk ?? person.fullName) : person.fullName;
   if (form === 'nom') return nominative;
 
-  return lang === 'kk' ? (person.fullNameKkDative ?? nominative) : person.fullNameGenitive;
+  // Дательный падеж в казахском: с карточки, иначе окончание ставится по
+  // правилам («…Жанболатовичке»).
+  return lang === 'kk'
+    ? (person.fullNameKkDative ?? kazakhDative(nominative))
+    : person.fullNameGenitive;
 }
 
 /**
@@ -638,7 +644,19 @@ function resolveField(
   // заполняются на каждом языке своим полем.
   if (def?.perLang === true && lang !== 'ru') {
     const written = values[`${fieldId}.${lang}`];
-    if (written !== undefined && written.trim() !== '') return written;
+    if (written !== undefined && written.trim() !== '') {
+      // Имя на казахском в приказе стоит в дательном падеже. Написание
+      // совпадает с карточкой – падеж берётся с неё, иначе окончание
+      // ставится к тому, что вписано.
+      if (def.kind === 'employee' && lang === 'kk' && form === 'obj') {
+        const person = people?.[raw] ?? findEmployeeIn(company.id, raw);
+        const cardName = person === undefined ? undefined : (person.fullNameKk ?? person.fullName);
+        return cardName === written.trim() && person?.fullNameKkDative !== undefined
+          ? person.fullNameKkDative
+          : kazakhDative(written);
+      }
+      return written;
+    }
   }
 
   switch (def?.kind) {
@@ -651,7 +669,11 @@ function resolveField(
       // Если ФИО вписано руками, а не выбрано из справочника, падежа у него
       // нет – оно идёт в документ как есть. Форма об этом предупреждает.
       const person = people?.[raw] ?? findEmployeeIn(company.id, raw);
-      return person === undefined ? raw : employeeName(person, lang, form);
+      if (person !== undefined) return employeeName(person, lang, form);
+      // ФИО вписано руками: по-русски как есть, латиницей и в казахском
+      // падеже – по правилам.
+      if (lang === 'en') return englishName(raw);
+      return lang === 'kk' && form === 'obj' ? kazakhDative(raw) : raw;
     }
     case 'counterparty':
       // Вписанная руками организация идёт в документ как есть.

@@ -28,6 +28,8 @@ import { t } from '@/i18n';
 import { tc } from '@/i18n/content';
 import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
+import { englishName } from '@/utils/names';
+import { numberToWords } from '@/utils/numberWords';
 
 import { dateBounds, checkField, validateFields } from './validation';
 
@@ -174,6 +176,29 @@ export default function DocumentFormPage() {
           if ((prev['unit'] ?? '') === '') updated['unit'] = employee.unit;
           if ((prev['positionFrom'] ?? '') === '') updated['positionFrom'] = employee.position;
         }
+      }
+
+      // Имя на казахском и латиницей встаёт само («Тест день 2»): с карточки,
+      // а если там нет – казахское совпадает с русским, латиница собирается
+      // транслитерацией. Написание, которое человек поправил руками, не
+      // затирается: меняется только то, что было подставлено автоматически.
+      if (field.kind === 'employee' && field.perLang === true) {
+        const before = autoNames(prev[field.id] ?? '', employees);
+        const after = autoNames(next, employees);
+        for (const lang of ['kk', 'en'] as const) {
+          const key = `${field.id}.${lang}`;
+          const current = prev[key] ?? '';
+          if (current === '' || current === before[lang]) updated[key] = after[lang];
+        }
+      }
+
+      // Число прописью считается из числа – на трёх языках сразу. Число
+      // поменяли – слова пересчитываются: слова от прежнего числа в
+      // документе были бы ошибкой.
+      for (const words of doc.fields.filter((f) => f.wordsOf === field.id)) {
+        updated[words.id] = numberToWords(next, 'ru');
+        updated[`${words.id}.kk`] = numberToWords(next, 'kk');
+        updated[`${words.id}.en`] = numberToWords(next, 'en');
       }
 
       return updated;
@@ -451,15 +476,25 @@ function placeholdersOf(
   if (def.perLang !== true) return {};
 
   const raw = values[def.id] ?? '';
-  if (def.kind === 'employee') {
-    const person = employees.find((e) => e.id === raw);
-    return {
-      kk: person?.fullNameKk ?? person?.fullName ?? raw,
-      en: person?.fullNameEn ?? person?.fullName ?? raw,
-    };
-  }
+  if (def.kind === 'employee') return autoNames(raw, employees);
 
   return { kk: raw, en: raw };
+}
+
+/**
+ * Имя работника на казахском и латиницей, если его не вписали руками.
+ *
+ * С карточки, а если там пусто – казахское пишется как русское (кириллица
+ * одна), латиница собирается транслитерацией: «Askhat Akhmetov».
+ */
+function autoNames(raw: string, employees: EmployeeBrief[]): { kk: string; en: string } {
+  if (raw.trim() === '') return { kk: '', en: '' };
+  const person = employees.find((e) => e.id === raw);
+  const fullName = person?.fullName ?? raw;
+  return {
+    kk: person?.fullNameKk ?? fullName,
+    en: person?.fullNameEn ?? englishName(fullName),
+  };
 }
 
 /**

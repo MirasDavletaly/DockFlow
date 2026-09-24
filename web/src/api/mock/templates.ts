@@ -83,6 +83,7 @@ const simpleTemplates: DocumentTemplate[] = [
       { id: 'days', kind: 'number', label: 'Срок', required: true, unit: 'кал. дней', group: 'Сроки' },
       {
         id: 'daysWords',
+        wordsOf: 'days',
         kind: 'text',
         label: 'Срок прописью',
         required: true,
@@ -851,6 +852,7 @@ const simpleTemplates: DocumentTemplate[] = [
       },
       {
         id: 'remainingDaysWords',
+        wordsOf: 'remainingDays',
         kind: 'text',
         label: 'Остаток прописью',
         required: true,

@@ -177,9 +177,19 @@ export const field = {
   }),
 };
 
-/** Сумма прописью – на каждом языке своя. */
-export function amountWords(id = 'amountWords', group = 'Сумма'): FieldDef {
-  return field.tri(id, 'Сумма прописью', group, { hint: 'Как в документе: сто пятьдесят тысяч' });
+/**
+ * Сумма прописью – на каждом языке своя. Считается из поля суммы: по
+ * умолчанию из поля с тем же именем без «Words» («salaryWords» – из «salary»).
+ */
+export function amountWords(
+  id = 'amountWords',
+  group = 'Сумма',
+  source = id.replace(/Words$/u, ''),
+): FieldDef {
+  return field.tri(id, 'Сумма прописью', group, {
+    hint: 'Считается из суммы, можно поправить',
+    wordsOf: source,
+  });
 }
 
 /* ── Общее для всех типовых шаблонов ─────────────────────────────────── */

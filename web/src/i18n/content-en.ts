@@ -729,7 +729,7 @@ export const contentEn: Record<string, string> = {
   'Как в договоре: на неопределённый срок, на один год':
     'As in the contract: indefinite term, one year',
   'Например: три месяца; без испытательного срока': 'For example: three months; no probation',
-  'Как в документе: сто пятьдесят тысяч': 'As in the document: one hundred and fifty thousand',
+  'Считается из суммы, можно поправить': 'Calculated from the amount, can be corrected',
   'Например: пятидневная рабочая неделя с 9:00 до 18:00':
     'For example: five-day week from 9:00 to 18:00',
   'Новая редакция пункта: должность, оклад, режим работы':

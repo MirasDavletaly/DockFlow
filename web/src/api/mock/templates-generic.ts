@@ -627,7 +627,7 @@ export const genericTemplatesA: DocumentTemplate[] = [
       field.date('contractDate', 'Дата договора', 'Основание', { dateLimits: { notAfter: 'today' } }),
       field.area('violation', 'В чём нарушение', 'Суть претензии'),
       field.money('claimAmount', 'Сумма требования', 'Суть претензии'),
-      amountWords('amountWords', 'Суть претензии'),
+      amountWords('amountWords', 'Суть претензии', 'claimAmount'),
       field.number('answerDays', 'Срок ответа', 'Суть претензии', { unit: 'дней' }),
     ],
     clauses: [
@@ -701,7 +701,7 @@ export const genericTemplatesA: DocumentTemplate[] = [
       field.text('counterpartyBin', 'БИН контрагента', 'Ответчик', { hint: 'Двенадцать цифр' }),
       field.area('facts', 'Обстоятельства дела', 'Суть иска'),
       field.money('claimAmount', 'Сумма иска', 'Суть иска'),
-      amountWords('amountWords', 'Суть иска'),
+      amountWords('amountWords', 'Суть иска', 'claimAmount'),
       field.area('attachments', 'Приложения', 'Приложения', {
         required: false,
         hint: 'По одному документу на строку',

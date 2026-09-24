@@ -23,6 +23,18 @@ const poa = templates.filter((tpl) => tpl.layout === 'poa');
 describe('все документы', () => {
   // Раздел старых записей восстанавливается по началу идентификатора шаблона
   // (`sectionOfDocument`), и от этого зависит, кто видит документ.
+  // Слова считаются из числа (`wordsOf`): поле «прописью» без источника
+  // снова пришлось бы заполнять руками в трёх колонках.
+  it('у каждого поля «прописью» есть число, из которого оно считается', () => {
+    for (const tpl of templates) {
+      for (const def of tpl.fields.filter((f) => f.id.endsWith('Words'))) {
+        const source = tpl.fields.find((f) => f.id === def.wordsOf);
+        expect(source?.kind, `${tpl.id}: ${def.id}`).toMatch(/^(number|money)$/u);
+        expect(def.perLang, `${tpl.id}: ${def.id}`).toBe(true);
+      }
+    }
+  });
+
   it('идентификатор шаблона начинается с его раздела', () => {
     for (const tpl of templates) {
       expect(tpl.id.startsWith(`${tpl.sectionId}-`), tpl.id).toBe(true);

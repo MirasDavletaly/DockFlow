@@ -265,7 +265,9 @@ export const blankTemplates: DocumentTemplate[] = [
       {
         id: 'daysWords',
         // Число прописью в каждой колонке своё: «двадцать четыре»,
-        // «жиырма төрт», «twenty-four». Перевести его на лету нельзя.
+        // «жиырма төрт», «twenty-four». Считается из числа дней, но
+        // остаётся полем – слова можно поправить.
+        wordsOf: 'days',
         perLang: true,
         kind: 'text',
         label: 'Продолжительность прописью',
@@ -506,7 +508,9 @@ export const blankTemplates: DocumentTemplate[] = [
       {
         id: 'daysWords',
         // Число прописью в каждой колонке своё: «двадцать четыре»,
-        // «жиырма төрт», «twenty-four». Перевести его на лету нельзя.
+        // «жиырма төрт», «twenty-four». Считается из числа дней, но
+        // остаётся полем – слова можно поправить.
+        wordsOf: 'days',
         perLang: true,
         kind: 'text',
         label: 'Продолжительность прописью',

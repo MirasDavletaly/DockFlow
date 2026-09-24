@@ -23,6 +23,12 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['src/test/setup.ts'],
   },
+  optimizeDeps: {
+    // Библиотеки «Скачать PDF» грузятся лениво, по кнопке. Без предварительной
+    // сборки dev-сервер находил их только в момент первого нажатия, пересобирал
+    // зависимости, и первое скачивание зависало. В рабочей сборке этого нет.
+    include: ['jspdf', 'html2canvas-pro'],
+  },
   server: {
     port: 5173,
     proxy: {

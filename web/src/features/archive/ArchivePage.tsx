@@ -228,10 +228,12 @@ export default function ArchivePage() {
                             <span className={styles.source}>{t.archive.sourceCreated}</span>
                           </td>
                           <td className={styles.sub}>{row.doc.authorName}</td>
-                          <td className={styles.actions}>
-                            <Link className={styles.action} to={`/documents/${row.doc.id}`}>
-                              {t.archive.open}
-                            </Link>
+                          <td>
+                            <div className={styles.actions}>
+                              <Link className={styles.action} to={`/documents/${row.doc.id}`}>
+                                {t.archive.open}
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ) : (
@@ -253,34 +255,36 @@ export default function ArchivePage() {
                             </span>
                           </td>
                           <td className={styles.sub}>{row.file.uploadedByName}</td>
-                          <td className={styles.actions}>
-                            <button
-                              type="button"
-                              className={styles.action}
-                              onClick={() => void open(row.file, false)}
-                            >
-                              {t.archive.open}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.action}
-                              onClick={() => void open(row.file, true)}
-                            >
-                              {t.archive.download}
-                            </button>
-                            {canDeleteArchiveFile(subject, row.file) ? (
+                          <td>
+                            <div className={styles.actions}>
                               <button
                                 type="button"
-                                className={styles.danger}
-                                onClick={() => {
-                                  if (window.confirm(t.archive.deleteConfirm)) {
-                                    deleteArchiveFile(row.file.id);
-                                  }
-                                }}
+                                className={styles.action}
+                                onClick={() => void open(row.file, false)}
                               >
-                                {t.common.remove}
+                                {t.archive.open}
                               </button>
-                            ) : null}
+                              <button
+                                type="button"
+                                className={styles.action}
+                                onClick={() => void open(row.file, true)}
+                              >
+                                {t.archive.download}
+                              </button>
+                              {canDeleteArchiveFile(subject, row.file) ? (
+                                <button
+                                  type="button"
+                                  className={styles.danger}
+                                  onClick={() => {
+                                    if (window.confirm(t.archive.deleteConfirm)) {
+                                      deleteArchiveFile(row.file.id);
+                                    }
+                                  }}
+                                >
+                                  {t.common.remove}
+                                </button>
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       ),

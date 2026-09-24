@@ -15,6 +15,7 @@ import { findRole } from '@/api/mock/roles';
 import { sections } from '@/api/mock/sections';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
+import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
@@ -50,7 +51,7 @@ export default function ProfilePage() {
       ? t.common.all
       : companies
           .filter((c) => user.companyIds.includes(c.id))
-          .map((c) => c.name)
+          .map(companyName)
           .join(', ');
 
   const mySections =

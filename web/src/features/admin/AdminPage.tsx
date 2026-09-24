@@ -34,6 +34,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { searchDocuments } from '@/features/documents/search';
 import { t } from '@/i18n';
+import { companyDirector, companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { newId, resetDb } from '@/store/db';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
@@ -41,6 +42,7 @@ import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatDateTime, formatShortDate } from '@/utils/format';
 import { isValidAddress } from '@/utils/ip';
+import { englishName } from '@/utils/names';
 import { matchesQuery } from '@/utils/search';
 
 import styles from './AdminPage.module.css';
@@ -224,7 +226,7 @@ function CompaniesTab({ query }: TabProps) {
   const { companies, saveCompany, removeCompany } = useSession();
 
   const found = companies.filter((c) =>
-    matchesQuery(query, [c.name, c.legalName, c.bin, c.directorName, c.city]),
+    matchesQuery(query, [c.name, companyName(c), c.legalName, c.bin, c.directorName, companyDirector(c), c.city]),
   );
 
   function addCompany() {
@@ -274,23 +276,25 @@ function CompaniesTab({ query }: TabProps) {
             {found.map((company: Company) => (
               <tr key={company.id}>
                 <td>
-                  {company.name}
+                  {companyName(company)}
                   {company.placeholder === true ? (
                     <span className={styles.badge}>{t.auth.companyPlaceholder}</span>
                   ) : null}
                 </td>
                 <td className="tabular">{company.bin === '' ? t.company.missing : company.bin}</td>
-                <td>{company.directorName === '' ? t.company.missing : company.directorName}</td>
-                <td className={styles.rowActions}>
-                  <button
-                    type="button"
-                    className={styles.danger}
-                    onClick={() => {
-                      if (window.confirm(t.admin.companyRemoveConfirm)) removeCompany(company.id);
-                    }}
-                  >
-                    {t.common.remove}
-                  </button>
+                <td>{company.directorName === '' ? t.company.missing : companyDirector(company)}</td>
+                <td>
+                  <div className={styles.rowActions}>
+                    <button
+                      type="button"
+                      className={styles.danger}
+                      onClick={() => {
+                        if (window.confirm(t.admin.companyRemoveConfirm)) removeCompany(company.id);
+                      }}
+                    >
+                      {t.common.remove}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -327,7 +331,7 @@ function UsersTab({ subject, query }: TabProps) {
       ? t.common.all
       : companies
           .filter((c) => user.companyIds.includes(c.id))
-          .map((c) => c.name)
+          .map(companyName)
           .join(', ') || t.common.none;
 
   const found = users.filter((u) =>
@@ -410,53 +414,55 @@ function UsersTab({ subject, query }: TabProps) {
                     <td className={styles.muted}>
                       {sectionNames(user, user.viewSectionIds ?? [])}
                     </td>
-                    <td className={styles.rowActions}>
-                      {manageable ? (
-                        <>
-                          <button
-                            type="button"
-                            className={styles.link}
-                            onClick={() => setForm({ mode: 'edit', user })}
-                          >
-                            {t.admin.userAccess}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.link}
-                            onClick={() => {
-                              const next = window.prompt(t.admin.userResetPassword);
-                              if (next === null) return;
-                              if (next.length < MIN_PASSWORD_LENGTH) {
-                                setMessage(t.auth.passwordTooShort);
-                                return;
-                              }
-                              void setUserPassword(user.id, next).then(() =>
-                                setMessage(t.admin.userPasswordSet),
-                              );
-                            }}
-                          >
-                            {t.admin.userResetPassword}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.link}
-                            onClick={() => updateUser(user.id, { blocked: user.blocked !== true })}
-                          >
-                            {user.blocked === true ? t.admin.userUnblock : t.admin.userBlock}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.danger}
-                            disabled={lastAdmin}
-                            title={lastAdmin ? t.admin.userLastAdmin : undefined}
-                            onClick={() => {
-                              if (window.confirm(t.admin.userRemoveConfirm)) removeUser(user.id);
-                            }}
-                          >
-                            {t.common.remove}
-                          </button>
-                        </>
-                      ) : null}
+                    <td>
+                      <div className={styles.rowActions}>
+                        {manageable ? (
+                          <>
+                            <button
+                              type="button"
+                              className={styles.link}
+                              onClick={() => setForm({ mode: 'edit', user })}
+                            >
+                              {t.admin.userAccess}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.link}
+                              onClick={() => {
+                                const next = window.prompt(t.admin.userResetPassword);
+                                if (next === null) return;
+                                if (next.length < MIN_PASSWORD_LENGTH) {
+                                  setMessage(t.auth.passwordTooShort);
+                                  return;
+                                }
+                                void setUserPassword(user.id, next).then(() =>
+                                  setMessage(t.admin.userPasswordSet),
+                                );
+                              }}
+                            >
+                              {t.admin.userResetPassword}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.link}
+                              onClick={() => updateUser(user.id, { blocked: user.blocked !== true })}
+                            >
+                              {user.blocked === true ? t.admin.userUnblock : t.admin.userBlock}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.danger}
+                              disabled={lastAdmin}
+                              title={lastAdmin ? t.admin.userLastAdmin : undefined}
+                              onClick={() => {
+                                if (window.confirm(t.admin.userRemoveConfirm)) removeUser(user.id);
+                              }}
+                            >
+                              {t.common.remove}
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -637,7 +643,7 @@ function UserForm({
                   checked={companyIds.includes(company.id)}
                   onChange={() => setCompanyIds((prev) => toggle(prev, company.id))}
                 />
-                {company.name}
+                {companyName(company)}
               </label>
             ))}
           </div>
@@ -768,7 +774,7 @@ function PeopleTab({ subject, query }: TabProps) {
           >
             {ownCompanies.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {companyName(c)}
               </option>
             ))}
           </select>
@@ -892,8 +898,11 @@ function PeopleTab({ subject, query }: TabProps) {
               <tr key={person.id}>
                 <td>{person.fullName}</td>
                 <td className={styles.muted}>{person.fullNameGenitive}</td>
-                <td className={styles.muted}>{person.fullNameKk ?? t.company.missing}</td>
-                <td className={styles.muted}>{person.fullNameEn ?? t.company.missing}</td>
+                {/* Пустые казахское и латинское написание показываются так, как
+                    их соберёт документ: казахское – как русское, латиница –
+                    транслитерацией. */}
+                <td className={styles.muted}>{person.fullNameKk ?? person.fullName}</td>
+                <td className={styles.muted}>{person.fullNameEn ?? englishName(person.fullName)}</td>
                 <td>
                   {person.position}
                   {person.positionKk === undefined && person.positionEn === undefined ? null : (
@@ -903,19 +912,21 @@ function PeopleTab({ subject, query }: TabProps) {
                   )}
                 </td>
                 <td className={styles.muted}>{person.unit}</td>
-                <td className={styles.rowActions}>
-                  <button type="button" className={styles.link} onClick={() => setDraft(person)}>
-                    {t.common.edit}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.danger}
-                    onClick={() => {
-                      if (window.confirm(t.admin.personRemoveConfirm)) removeEmployee(person.id);
-                    }}
-                  >
-                    {t.common.remove}
-                  </button>
+                <td>
+                  <div className={styles.rowActions}>
+                    <button type="button" className={styles.link} onClick={() => setDraft(person)}>
+                      {t.common.edit}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.danger}
+                      onClick={() => {
+                        if (window.confirm(t.admin.personRemoveConfirm)) removeEmployee(person.id);
+                      }}
+                    >
+                      {t.common.remove}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -931,8 +942,11 @@ function PeopleTab({ subject, query }: TabProps) {
 function DocumentsTab({ subject, query }: TabProps) {
   const { allVisibleDocuments, companies, deleteDocument, restoreDocument } = useSession();
 
-  const companyName = (id: string) => companies.find((c) => c.id === id)?.name ?? id;
-  const found = searchDocuments(allVisibleDocuments, query, (doc) => [companyName(doc.companyId)]);
+  const nameOf = (id: string) => {
+    const found = companies.find((c) => c.id === id);
+    return found === undefined ? id : companyName(found);
+  };
+  const found = searchDocuments(allVisibleDocuments, query, (doc) => [nameOf(doc.companyId)]);
 
   return (
     <section className={styles.section}>
@@ -965,7 +979,7 @@ function DocumentsTab({ subject, query }: TabProps) {
                     {tc(doc.title)}
                   </Link>
                 </td>
-                <td className={styles.muted}>{companyName(doc.companyId)}</td>
+                <td className={styles.muted}>{nameOf(doc.companyId)}</td>
                 <td>{doc.subject === '' ? t.registry.noValue : doc.subject}</td>
                 <td className={styles.muted}>{doc.authorName}</td>
                 <td>
@@ -976,32 +990,34 @@ function DocumentsTab({ subject, query }: TabProps) {
                   )}
                 </td>
                 <td className={cx(styles.muted, 'tabular')}>{formatShortDate(doc.createdAt)}</td>
-                <td className={styles.rowActions}>
-                  {canEditDocument(subject, doc) ? (
-                    <Link className={styles.link} to={`/create/${doc.templateId}?doc=${doc.id}`}>
-                      {t.common.edit}
-                    </Link>
-                  ) : null}
-                  {canDeleteDocument(subject, doc) ? (
-                    <button
-                      type="button"
-                      className={styles.danger}
-                      onClick={() => {
-                        if (window.confirm(t.document.deleteConfirm)) deleteDocument(doc.id);
-                      }}
-                    >
-                      {t.common.remove}
-                    </button>
-                  ) : null}
-                  {canRestoreDocument(subject, doc) ? (
-                    <button
-                      type="button"
-                      className={styles.link}
-                      onClick={() => restoreDocument(doc.id)}
-                    >
-                      {t.document.restore}
-                    </button>
-                  ) : null}
+                <td>
+                  <div className={styles.rowActions}>
+                    {canEditDocument(subject, doc) ? (
+                      <Link className={styles.link} to={`/create/${doc.templateId}?doc=${doc.id}`}>
+                        {t.common.edit}
+                      </Link>
+                    ) : null}
+                    {canDeleteDocument(subject, doc) ? (
+                      <button
+                        type="button"
+                        className={styles.danger}
+                        onClick={() => {
+                          if (window.confirm(t.document.deleteConfirm)) deleteDocument(doc.id);
+                        }}
+                      >
+                        {t.common.remove}
+                      </button>
+                    ) : null}
+                    {canRestoreDocument(subject, doc) ? (
+                      <button
+                        type="button"
+                        className={styles.link}
+                        onClick={() => restoreDocument(doc.id)}
+                      >
+                        {t.document.restore}
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1019,17 +1035,21 @@ function AuditTab({ query }: TabProps) {
 
   // Действие без компании – вход, настройки платформы, работа администратора
   // вне компании – помечается прочерком, а не пустой клеткой.
-  const companyName = (id: string) =>
-    id === '' ? t.registry.noValue : (companies.find((c) => c.id === id)?.name ?? id);
+  const nameOf = (id: string) => {
+    if (id === '') return t.registry.noValue;
+    const found = companies.find((c) => c.id === id);
+    return found === undefined ? id : companyName(found);
+  };
   const eventName = (event: string) => t.admin.events[event] ?? event;
 
   const found = audit.filter((entry) =>
     matchesQuery(query, [
       formatDateTime(entry.at),
       entry.userName,
-      companyName(entry.companyId),
+      nameOf(entry.companyId),
       eventName(entry.event),
       entry.target,
+      tc(entry.target),
     ]),
   );
 
@@ -1057,9 +1077,9 @@ function AuditTab({ query }: TabProps) {
               <tr key={entry.id}>
                 <td className={cx(styles.muted, 'tabular')}>{formatDateTime(entry.at)}</td>
                 <td>{entry.userName}</td>
-                <td className={styles.muted}>{companyName(entry.companyId)}</td>
+                <td className={styles.muted}>{nameOf(entry.companyId)}</td>
                 <td>{eventName(entry.event)}</td>
-                <td className={styles.muted}>{entry.target}</td>
+                <td className={styles.muted}>{tc(entry.target)}</td>
               </tr>
             ))}
           </tbody>

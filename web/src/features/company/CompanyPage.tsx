@@ -13,7 +13,9 @@ import { useRef, useState } from 'react';
 
 import { can } from '@/access/policy';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
-import { t } from '@/i18n';
+import { lang, t } from '@/i18n';
+import { companyBasis, companyDirector, companyDirectorTitle } from '@/i18n/company';
+import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
@@ -89,7 +91,17 @@ export default function CompanyPage() {
   );
 }
 
+/**
+ * Реквизиты на языке интерфейса.
+ *
+ * На английском в строках стоят английские значения карточки: наименование,
+ * адрес, руководитель («Тест день 2»: «реквизиты не переводятся»). Отдельные
+ * строки «…на английском» тогда не нужны – они повторили бы то же самое.
+ * Казахское наименование остаётся: это реквизит, а не перевод.
+ */
 function ReadView({ company }: { company: Company }) {
+  const en = lang === 'en';
+
   return (
     <>
       {company.logo === undefined ? null : (
@@ -100,27 +112,41 @@ function ReadView({ company }: { company: Company }) {
       )}
 
       <dl className={styles.requisites}>
-        <Requisite label={t.company.legalName} value={company.legalName} />
+        <Requisite
+          label={t.company.legalName}
+          value={en ? (company.legalNameEn ?? company.legalName) : company.legalName}
+        />
         <Requisite label={t.company.legalNameKk} value={company.legalNameKk} />
-        <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />
+        {en ? null : <Requisite label={t.company.legalNameEn} value={company.legalNameEn} />}
         <Requisite label={t.company.bin} value={company.bin} mono />
         <Requisite label={t.company.kbe} value={company.kbe} mono />
-        <Requisite label={t.company.address} value={addressLine(company)} />
-        <Requisite label={t.company.addressEn} value={company.addressEn} />
+        <Requisite
+          label={t.company.address}
+          value={en ? (company.addressEn ?? addressLine(company)) : addressLine(company)}
+        />
+        {en ? null : <Requisite label={t.company.addressEn} value={company.addressEn} />}
         <Requisite label={t.company.actualAddress} value={company.actualAddress} />
         <Requisite label={t.company.phone} value={company.phone} />
         <Requisite label={t.company.email} value={company.email} />
         <Requisite
           label={t.company.director}
-          value={`${company.directorTitle}, ${company.directorName}`}
+          value={`${companyDirectorTitle(company)}, ${companyDirector(company)}`}
         />
-        <Requisite label={t.company.directorEn} value={company.directorNameEn} />
+        {en ? null : <Requisite label={t.company.directorEn} value={company.directorNameEn} />}
         <Requisite label={t.company.directorTitleKk} value={company.directorTitleKk} />
-        <Requisite label={t.company.directorTitleEn} value={company.directorTitleEn} />
-        <Requisite label={t.company.basis} value={company.directorBasis} />
-        <Requisite label={t.company.bank} value={company.bank?.name} />
+        {en ? null : (
+          <Requisite label={t.company.directorTitleEn} value={company.directorTitleEn} />
+        )}
+        <Requisite label={t.company.basis} value={companyBasis(company)} />
+        <Requisite
+          label={t.company.bank}
+          value={company.bank === undefined ? undefined : tc(company.bank.name)}
+        />
         <Requisite label={t.company.bik} value={company.bank?.bik} mono />
-        <Requisite label={t.company.taxOffice} value={company.taxOffice?.name} />
+        <Requisite
+          label={t.company.taxOffice}
+          value={company.taxOffice === undefined ? undefined : tc(company.taxOffice.name)}
+        />
         <Requisite label={t.company.taxOfficeBin} value={company.taxOffice?.bin} mono />
         <Requisite label={t.company.vat} value={vatLine(company)} />
 
@@ -258,6 +284,12 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
 
       <div className={styles.formGrid}>
         <Text label={t.company.shortName} value={draft.name} onChange={(v) => set({ name: v })} />
+        <Text
+          label={t.company.shortNameEn}
+          value={draft.nameEn ?? ''}
+          hint={t.company.shortNameEnHint}
+          onChange={(v) => set({ nameEn: v })}
+        />
         <Text
           label={t.company.legalName}
           value={draft.legalName}
@@ -403,8 +435,8 @@ function vatLine(company: Company): string | undefined {
   const vat = company.vat;
   if (vat === undefined) return undefined;
 
-  const issued = isFilled(vat.issuedAt) ? ` от ${formatShortDate(vat.issuedAt)}` : '';
-  return `серия ${vat.series} № ${vat.number}${issued}`;
+  const issued = isFilled(vat.issuedAt) ? ` ${t.company.vatDated} ${formatShortDate(vat.issuedAt)}` : '';
+  return `${t.company.vatSeries} ${vat.series} № ${vat.number}${issued}`;
 }
 
 function isFilled(value: string | undefined): value is string {

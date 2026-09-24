@@ -373,6 +373,14 @@ export const contentEn: Record<string, string> = {
   'выговор': 'reprimand',
   'строгий выговор': 'severe reprimand',
 
+  // ── Реквизиты: банки, налоговые органы, основание полномочий ───────────
+  // Это данные карточки, а не строки интерфейса. Переводятся только на
+  // экране реквизитов; в документ идёт то, что записано в карточке.
+  'АО «Банк ЦентрКредит»': 'Bank CenterCredit JSC',
+  'АО «Народный Банк Казахстана»': 'Halyk Bank of Kazakhstan JSC',
+  'РГУ «УГД по городу Атырау ДГД по Атырауской области КГД МФ РК»':
+    'State Revenue Office for Atyrau city, State Revenue Department for Atyrau region, State Revenue Committee of the Ministry of Finance of the Republic of Kazakhstan',
+
   // ── Типовые шаблоны: назначение ─────────────────────────────────────────
   'Типовой трудовой договор: должность, срок, оплата, режим работы и отпуск.':
     'Typical employment contract: position, term, pay, working hours and leave.',

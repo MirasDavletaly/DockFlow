@@ -18,7 +18,36 @@ const SCALE = 2.5;
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 
+/** Сколько ждать сборки, прежде чем сказать, что не получилось. */
+const TIMEOUT_MS = 45_000;
+
+/**
+ * Чего не копировать в снимок.
+ *
+ * html2canvas копирует страницу целиком и ждёт, пока в копии загрузится всё,
+ * что она подключает. Шрифты интерфейса грузятся из сети (Google Fonts), и
+ * при медленной связи сборка висела, пока они не придут. Листу они не нужны:
+ * документ набран Times New Roman, он есть в системе.
+ */
+function skipInSnapshot(element: Element): boolean {
+  if (element.tagName !== 'LINK') return false;
+  const href = element.getAttribute('href') ?? '';
+  return /^https?:\/\//u.test(href) && !href.startsWith(window.location.origin);
+}
+
 export async function exportPdf(root: HTMLElement, fileName: string, title: string): Promise<void> {
+  let timer = 0;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error('сборка PDF не уложилась во время')), TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([build(root, fileName, title), timeout]);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+async function build(root: HTMLElement, fileName: string, title: string): Promise<void> {
   const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
     import('jspdf'),
     import('html2canvas-pro'),
@@ -35,6 +64,7 @@ export async function exportPdf(root: HTMLElement, fileName: string, title: stri
       scale: SCALE,
       backgroundColor: '#ffffff',
       logging: false,
+      ignoreElements: skipInSnapshot,
       onclone: (doc) => {
         // На экране лист уменьшен под ширину окна и отбрасывает тень. В
         // снимок идёт настоящий размер и чистая бумага.

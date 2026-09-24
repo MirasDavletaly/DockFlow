@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
+import { companyCity, companyDirector, companyName } from '@/i18n/company';
 import { useSession } from '@/store/session';
 import { buildAccentPalette } from '@/theme/color';
 
@@ -61,8 +62,10 @@ export default function ChooseCompanyPage() {
                     )}
                   </span>
                   <span className={styles.text}>
-                    <span className={styles.name}>{company.name}</span>
-                    <span className={styles.meta}>{company.city} · {company.directorName}</span>
+                    <span className={styles.name}>{companyName(company)}</span>
+                    <span className={styles.meta}>
+                      {companyCity(company)} · {companyDirector(company)}
+                    </span>
                   </span>
 
                   {/* Вымышленные компании помечены здесь, а не только внутри:

@@ -24,11 +24,11 @@ import { DocumentSheet } from '@/components/DocumentSheet/DocumentSheet';
 import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { Field } from '@/components/fields/Field';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
-import { t } from '@/i18n';
+import { lang, t } from '@/i18n';
 import { tc } from '@/i18n/content';
 import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
-import { englishName } from '@/utils/names';
+import { englishName, transliterate } from '@/utils/names';
 import { numberToWords } from '@/utils/numberWords';
 
 import { dateBounds, checkField, validateFields } from './validation';
@@ -280,7 +280,7 @@ export default function DocumentFormPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        eyebrow={`${path} · ${t.form.series} ${doc.series}`}
+        eyebrow={`${path} · ${t.form.series} ${lang === 'en' ? transliterate(doc.series) : doc.series}`}
         title={tc(doc.title)}
         subtitle={tc(doc.purpose)}
         actions={

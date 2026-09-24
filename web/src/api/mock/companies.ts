@@ -32,6 +32,7 @@ export const companies: Company[] = [
   {
     id: 'c-exlumen',
     name: 'ТОО «ExLumen»',
+    nameEn: 'ExLumen LLP',
     legalName: 'Товарищество с ограниченной ответственностью «ExLumen»',
     // Форма собственности записана так же, как в присланных бланках ТОО.
     // Само наименование – имя собственное и не переводится.
@@ -77,6 +78,7 @@ export const companies: Company[] = [
   {
     id: 'c-knt',
     name: 'Kazakhstan New Technologies LLP',
+    nameEn: 'Kazakhstan New Technologies LLP',
     // Шапка взята из приказа «AL Nurdaulet KNT»: наименование на трёх
     // языках стоит там тремя строками подряд.
     legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «KAZAKHSTAN NEW TECHNOLOGIES LLP»',
@@ -127,6 +129,7 @@ export const companies: Company[] = [
   {
     id: 'c-algoritmi',
     name: 'ТОО «Algoritmi KZ»',
+    nameEn: 'Algoritmi KZ LLP',
     // Из приказа «Order EA Dinara Kakimova». Там же город — Астана,
     // а не Атырау, как записано ниже (расхождение в docs/questions.md).
     legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «Algoritmi Kz»',
@@ -182,6 +185,7 @@ export const companies: Company[] = [
   {
     id: 'c-novalliance',
     name: 'ТОО NOVALLIANCE',
+    nameEn: 'NOVALLIANCE LLP',
     // Полное наименование прислано в кратком виде «ТОО NOVALLIANCE».
     // Развёрнуто по общему образцу и ждёт сверки с уставом (Q21).
     legalName: 'Товарищество с ограниченной ответственностью «NOVALLIANCE»',
@@ -227,6 +231,7 @@ export const companies: Company[] = [
   {
     id: 'c-greenspark-power',
     name: 'ТОО «GREEN SPARK POWER 01»',
+    nameEn: 'GREEN SPARK POWER 01 LLP',
     // Из приказа «Приказ EA Aliya».
     legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK POWER 01»',
     directorTitleKk: 'Бас директор',
@@ -282,6 +287,7 @@ export const companies: Company[] = [
   {
     id: 'c-greensparklimited',
     name: 'ТОО «GREENSPARKLIMITED»',
+    nameEn: 'GREENSPARKLIMITED LLP',
     // Из приказов «AL Maksut», «Order EA Дидар Сагын», «unpaid leave Dias».
     // В них наименование пишется с пробелами — «GREEN SPARK LIMITED».
     legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «GREEN SPARK LIMITED»',
@@ -337,6 +343,7 @@ export const companies: Company[] = [
   {
     id: 'c-effegi',
     name: 'ТОО «EFFEGI EURASIA»',
+    nameEn: 'EFFEGI EURASIA LLP',
     legalName: 'Товарищество с ограниченной ответственностью «EFFEGI EURASIA»',
     legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «EFFEGI EURASIA»',
     legalNameEn: '«EFFEGI EURASIA» LLP',

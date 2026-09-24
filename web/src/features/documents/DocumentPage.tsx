@@ -20,6 +20,7 @@ import { DocumentSheet } from '@/components/DocumentSheet/DocumentSheet';
 import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
+import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { formatDateTime } from '@/utils/format';
@@ -209,7 +210,7 @@ export default function DocumentPage() {
             </div>
             <div className={styles.metaRow}>
               <dt>{t.document.meta.company}</dt>
-              <dd>{sheetCompany.name}</dd>
+              <dd>{companyName(sheetCompany)}</dd>
             </div>
           </dl>
 

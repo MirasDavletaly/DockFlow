@@ -10,6 +10,7 @@ import { can, canUseSection, isPlatformWide } from '@/access/policy';
 import { sections } from '@/api/mock/sections';
 import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
+import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
@@ -71,14 +72,14 @@ export function AppLayout() {
                 {company.monogram}
               </span>
               <span className={styles.companyText}>
-                <span className={styles.companyName}>{company.name}</span>
+                <span className={styles.companyName}>{companyName(company)}</span>
                 <span className={styles.companyHint}>{t.nav.company}</span>
               </span>
             </>
           ) : (
             <span className={styles.companyText}>
               <span className={styles.companyLogoBox}>
-                <img className={styles.companyLogo} src={company.logo} alt={company.name} />
+                <img className={styles.companyLogo} src={company.logo} alt={companyName(company)} />
               </span>
               <span className={styles.companyHint}>{t.nav.company}</span>
             </span>

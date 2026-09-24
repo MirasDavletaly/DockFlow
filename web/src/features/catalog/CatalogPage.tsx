@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { canUseSection } from '@/access/policy';
+import { useLanguage } from '@/app/App';
 import { sections } from '@/api/mock/sections';
 import { catalogEntries, findTemplate } from '@/api/mock/templates';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -24,6 +25,7 @@ export default function CatalogPage() {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const { user } = useSession();
+  const { lang } = useLanguage();
 
   const activeSection = params.get('section');
 
@@ -55,7 +57,9 @@ export default function CatalogPage() {
   }, [activeSection, allowed, query]);
 
   /** Группируем по разделу и подразделу — так же, как документы лежат в деле. */
-  const grouped = useMemo(() => groupEntries(visible), [visible]);
+  // Язык в зависимостях: заголовки групп переводятся здесь, а экран при
+  // смене языка не пересоздаётся, только перерисовывается.
+  const grouped = useMemo(() => groupEntries(visible), [visible, lang]);
 
   function selectSection(sectionId: string | null) {
     if (sectionId === null) {

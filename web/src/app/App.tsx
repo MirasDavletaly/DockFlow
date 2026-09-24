@@ -42,8 +42,11 @@ export function App() {
         <SessionProvider>
           <BrowserRouter>
             <ThemeBridge />
-            {/* Ключ по языку: смена языка перерисовывает дерево целиком,
-                поэтому ни один экран не держит строки в состоянии. */}
+            {/* Смена языка перерисовывает экраны, но не пересоздаёт их:
+                раньше дерево пересоздавалось по ключу языка, и начатая
+                правка (реквизиты, сотрудник, загрузка в архив) пропадала
+                при переключении («Тест день 2»). Строки экраны читают из
+                `t` при отрисовке, поэтому новой отрисовки достаточно. */}
             <LanguageBoundary lang={lang}>
               <AppRoutes />
             </LanguageBoundary>
@@ -55,7 +58,11 @@ export function App() {
 }
 
 function LanguageBoundary({ lang, children }: { lang: Lang; children: ReactNode }) {
-  return <div key={lang} className="languageRoot">{children}</div>;
+  return (
+    <div className="languageRoot" lang={lang}>
+      {children}
+    </div>
+  );
 }
 
 /** Отдельный компонент: тема берёт компанию из сессии, а не из пропсов. */

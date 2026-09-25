@@ -19,7 +19,10 @@ import {
   canEditDocument,
   canGrantDocument,
   canManageUser,
+  canPurgeArchiveFile,
+  canPurgeDocument,
   canReceiveGrant,
+  canRestoreArchiveFile,
   canRestoreDocument,
   canSeeAuditEntry,
   canSeeUser,
@@ -376,5 +379,60 @@ describe('архив загруженных файлов («Тест день 2�
     expect(visibleArchive({ user: director, companyId: COMPANY_A }, [file(), gone])).toHaveLength(1);
     expect(canDeleteArchiveFile({ user: director, companyId: COMPANY_A }, gone)).toBe(false);
     expect(canDeleteArchiveFile({ user: employee, companyId: COMPANY_A }, file())).toBe(false);
+  });
+});
+
+describe('удаление навсегда («Тест день 3»)', () => {
+  const removed = doc({ authorId: employee.id, deletedAt: '2026-09-25T00:00:00.000Z' });
+  const foreignRemoved = doc({ companyId: COMPANY_B, deletedAt: '2026-09-25T00:00:00.000Z' });
+
+  it('только из корзины: живой документ навсегда не удаляется', () => {
+    expect(canPurgeDocument({ user: director, companyId: COMPANY_A }, doc())).toBe(false);
+    expect(canPurgeDocument({ user: admin, companyId: COMPANY_A }, doc())).toBe(false);
+  });
+
+  it('директор своей компании и администратор – да, работник – нет, даже автор', () => {
+    expect(canPurgeDocument({ user: director, companyId: COMPANY_A }, removed)).toBe(true);
+    expect(canPurgeDocument({ user: admin, companyId: COMPANY_A }, removed)).toBe(true);
+    expect(canPurgeDocument({ user: employee, companyId: COMPANY_A }, removed)).toBe(false);
+  });
+
+  it('директор не стирает документ чужой компании', () => {
+    expect(canPurgeDocument({ user: director, companyId: COMPANY_A }, foreignRemoved)).toBe(false);
+    expect(canPurgeDocument({ user: admin, companyId: COMPANY_A }, foreignRemoved)).toBe(true);
+  });
+
+  it('файл архива – по тем же правилам, и его можно вернуть', () => {
+    const file: ArchiveFile = {
+      id: 'f-1',
+      companyId: COMPANY_A,
+      title: 'Скан',
+      number: null,
+      documentDate: '2019-03-01',
+      sectionId: 'hr',
+      description: '',
+      fileName: 'a.pdf',
+      size: 1,
+      sha256: 'x',
+      uploadedBy: employee.id,
+      uploadedByName: 'Работник',
+      uploadedAt: '2026-09-23T00:00:00.000Z',
+    };
+    const gone = { ...file, deletedAt: '2026-09-25T00:00:00.000Z' };
+
+    expect(canPurgeArchiveFile({ user: director, companyId: COMPANY_A }, file)).toBe(false);
+    expect(canPurgeArchiveFile({ user: director, companyId: COMPANY_A }, gone)).toBe(true);
+    expect(canPurgeArchiveFile({ user: employee, companyId: COMPANY_A }, gone)).toBe(false);
+    expect(canRestoreArchiveFile({ user: director, companyId: COMPANY_A }, gone)).toBe(true);
+    expect(canRestoreArchiveFile({ user: employee, companyId: COMPANY_A }, gone)).toBe(false);
+    expect(canRestoreArchiveFile({ user: director, companyId: COMPANY_A }, file)).toBe(false);
+
+    // В корзине удалённый файл виден тому, кто может его вернуть, и никому больше.
+    expect(
+      visibleArchive({ user: director, companyId: COMPANY_A }, [file, gone], { withDeleted: true }),
+    ).toHaveLength(2);
+    expect(
+      visibleArchive({ user: employee, companyId: COMPANY_A }, [file, gone], { withDeleted: true }),
+    ).toHaveLength(1);
   });
 });

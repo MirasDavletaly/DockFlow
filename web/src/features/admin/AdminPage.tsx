@@ -25,6 +25,9 @@ import {
   canDeleteDocument,
   canEditDocument,
   canManageUser,
+  canPurgeArchiveFile,
+  canPurgeDocument,
+  canRestoreArchiveFile,
   canRestoreDocument,
   managedCompanyIds,
 } from '@/access/policy';
@@ -1035,11 +1038,14 @@ function withTranslations(draft: EmployeeBrief, patch: Partial<EmployeeBrief>): 
 /* ── Документы ─────────────────────────────────────────────────────────── */
 
 function DocumentsTab({ subject, query }: TabProps) {
-  const { allVisibleDocuments, companies, deleteDocument, restoreDocument } = useSession();
+  const { allVisibleDocuments, companies, deleteDocument, restoreDocument, purgeDocument } =
+    useSession();
 
+  // Документ компании, которую убрали из группы, лежит в корзине: вместо
+  // идентификатора пишем, что компании больше нет.
   const nameOf = (id: string) => {
     const found = companies.find((c) => c.id === id);
-    return found === undefined ? id : companyName(found);
+    return found === undefined ? t.admin.companyGone : companyName(found);
   };
   const found = searchDocuments(allVisibleDocuments, query, (doc) =>
     companyNames(companies.find((c) => c.id === doc.companyId)),
@@ -1114,6 +1120,17 @@ function DocumentsTab({ subject, query }: TabProps) {
                         {t.document.restore}
                       </button>
                     ) : null}
+                    {canPurgeDocument(subject, doc) ? (
+                      <button
+                        type="button"
+                        className={styles.danger}
+                        onClick={() => {
+                          if (window.confirm(t.admin.purgeConfirm)) purgeDocument(doc.id);
+                        }}
+                      >
+                        {t.admin.purge}
+                      </button>
+                    ) : null}
                   </div>
                 </td>
               </tr>
@@ -1121,7 +1138,95 @@ function DocumentsTab({ subject, query }: TabProps) {
           </tbody>
         </table>
       )}
+
+      <ArchiveBin subject={subject} query={query} nameOf={nameOf} />
     </section>
+  );
+}
+
+/**
+ * Удалённые файлы архива («Тест день 3»): в архиве их больше не видно,
+ * здесь – вернуть или удалить навсегда. Пустая корзина не показывается.
+ */
+function ArchiveBin({ subject, query, nameOf }: TabProps & { nameOf: (id: string) => string }) {
+  const { archiveBin, restoreArchiveFile, purgeArchiveFile } = useSession();
+
+  const found = archiveBin.filter((file) =>
+    matchesQuery(query, [
+      file.title,
+      file.number,
+      file.description,
+      file.fileName,
+      file.uploadedByName,
+      file.deletedBy,
+      nameOf(file.companyId),
+    ]),
+  );
+
+  if (archiveBin.length === 0) return null;
+
+  return (
+    <div className={styles.group}>
+      <h3 className={styles.groupTitle}>
+        {t.admin.binFilesTitle} <span className={cx(styles.muted, 'tabular')}>{archiveBin.length}</span>
+      </h3>
+      <p className={styles.sectionBody}>{t.admin.binFilesBody}</p>
+
+      {found.length === 0 ? (
+        <NothingFound />
+      ) : (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>{t.archive.columns.number}</th>
+              <th>{t.archive.columns.title}</th>
+              <th>{t.nav.company}</th>
+              <th>{t.archive.columns.date}</th>
+              <th>{t.archive.columns.who}</th>
+              <th aria-label={t.common.remove} />
+            </tr>
+          </thead>
+          <tbody>
+            {found.map((file) => (
+              <tr key={file.id} className={styles.gone}>
+                <td className="tabular">{file.number ?? t.registry.noNumber}</td>
+                <td>
+                  {file.title}
+                  <div className={styles.muted}>{file.fileName}</div>
+                </td>
+                <td className={styles.muted}>{nameOf(file.companyId)}</td>
+                <td className={cx(styles.muted, 'tabular')}>{formatShortDate(file.documentDate)}</td>
+                <td className={styles.muted}>{personName(file.uploadedByName)}</td>
+                <td>
+                  <div className={styles.rowActions}>
+                    {canRestoreArchiveFile(subject, file) ? (
+                      <button
+                        type="button"
+                        className={styles.link}
+                        onClick={() => restoreArchiveFile(file.id)}
+                      >
+                        {t.admin.restoreFile}
+                      </button>
+                    ) : null}
+                    {canPurgeArchiveFile(subject, file) ? (
+                      <button
+                        type="button"
+                        className={styles.danger}
+                        onClick={() => {
+                          if (window.confirm(t.admin.purgeFileConfirm)) void purgeArchiveFile(file.id);
+                        }}
+                      >
+                        {t.admin.purge}
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 

@@ -300,3 +300,68 @@ describe('загрузка в архив', () => {
     expect(loadDb().archive).toEqual([]);
   });
 });
+
+describe('удаление навсегда («Тест день 3»)', () => {
+  it('работник не удаляет документ даже в корзину, вызвав действие мимо экрана', () => {
+    signInAs('worker-a', A);
+    act(() => session.deleteDocument('doc-a'));
+
+    expect(loadDb().documents.find((d) => d.id === 'doc-a')?.deletedAt).toBeUndefined();
+  });
+
+  it('директор стирает документ из корзины, а в журнале остаётся запись', () => {
+    signInAs('director-a', A);
+    act(() => session.deleteDocument('doc-a'));
+    act(() => session.purgeDocument('doc-a'));
+
+    expect(loadDb().documents.some((d) => d.id === 'doc-a')).toBe(false);
+    expect(loadDb().audit.some((e) => e.event === 'document.purge' && e.companyId === A)).toBe(true);
+  });
+
+  it('живой документ навсегда не стирается: сначала корзина', () => {
+    signInAs('director-a', A);
+    act(() => session.purgeDocument('doc-a'));
+
+    expect(loadDb().documents.some((d) => d.id === 'doc-a')).toBe(true);
+  });
+
+  it('директор не стирает документ чужой компании, работник – никакой', () => {
+    updateDb((db) => ({
+      ...db,
+      documents: db.documents.map((d) => ({ ...d, deletedAt: '2026-09-25T00:00:00.000Z' })),
+    }));
+
+    signInAs('director-a', A);
+    act(() => session.purgeDocument('doc-b'));
+    act(() => root.unmount());
+    root = createRoot(container);
+    signInAs('worker-a', A);
+    act(() => session.purgeDocument('doc-a'));
+
+    expect(loadDb().documents.map((d) => d.id).sort()).toEqual(['doc-a', 'doc-b']);
+  });
+
+  it('файл архива возвращается из корзины и стирается навсегда', async () => {
+    updateDb((db) => ({
+      ...db,
+      archive: [
+        { id: 'f-1', companyId: A, title: 'Скан', number: null, documentDate: '2019-03-01', sectionId: 'hr', description: '', fileName: 'a.pdf', size: 1, sha256: 'x', uploadedBy: 'worker-a', uploadedByName: 'worker-a', uploadedAt: '2026-09-23T00:00:00.000Z' },
+      ],
+    }));
+    signInAs('director-a', A);
+
+    act(() => session.deleteArchiveFile('f-1'));
+    expect(session.archive).toEqual([]);
+    expect(session.archiveBin.map((f) => f.id)).toEqual(['f-1']);
+
+    act(() => session.restoreArchiveFile('f-1'));
+    expect(session.archive.map((f) => f.id)).toEqual(['f-1']);
+
+    act(() => session.deleteArchiveFile('f-1'));
+    await act(async () => {
+      await session.purgeArchiveFile('f-1');
+    });
+    expect(loadDb().archive).toEqual([]);
+    expect(loadDb().audit.some((e) => e.event === 'archive.purge')).toBe(true);
+  });
+});

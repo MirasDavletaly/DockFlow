@@ -222,7 +222,7 @@ export const en: Dictionary = {
     edit: 'Edit',
     delete: 'Delete',
     deleteConfirm:
-      'Delete the document? It disappears from the registry but stays in the activity log.',
+      'Delete the document? It disappears from the registry and the archive and goes to the admin panel bin, where it can be restored or deleted for good.',
     restore: 'Return to the registry',
     deletedTitle: 'Document deleted',
     accessTitle: 'Access to the document',
@@ -317,7 +317,8 @@ export const en: Dictionary = {
     empty: 'The archive is empty so far. Saved documents land here by themselves.',
     nothingFound: 'Nothing found.',
     search: 'Number, title, section, date…',
-    deleteConfirm: 'Delete the file from the archive? The record stays in the activity log.',
+    deleteConfirm:
+      'Delete the file from the archive? It goes to the admin panel bin, where it can be restored or deleted for good.',
     columns: {
       number: 'Number',
       title: 'Document',
@@ -452,9 +453,19 @@ export const en: Dictionary = {
       'The name in Latin script and in Kazakh, the position and the unit in Kazakh and English are filled in automatically. Check and correct them if needed.',
 
     documentsBody:
-      'All documents of the companies available to you, deleted ones included. A deleted document comes back with «Return to the registry».',
+      'All documents of the companies available to you, deleted ones included. A deleted document comes back with «Return to the registry» or is erased with «Delete for good».',
     documentsEmpty: 'No documents yet.',
     documentDeleted: 'Deleted',
+    purge: 'Delete for good',
+    purgeConfirm:
+      'Delete the document for good?\n\nIt will be erased from the database and cannot be restored. Only a record of who deleted it and when stays in the activity log.',
+    purgeFileConfirm:
+      'Delete the file for good?\n\nIt will be erased from the database and cannot be restored. Only a record of who deleted it and when stays in the activity log.',
+    binFilesTitle: 'Deleted archive files',
+    binFilesBody:
+      'Old documents uploaded to the archive as PDF files and deleted from there. They can be returned to the archive or deleted for good.',
+    restoreFile: 'Return to the archive',
+    companyGone: 'company deleted',
 
     auditBody: 'Who did what and when. The records are neither edited nor deleted.',
     auditEmpty: 'No records yet.',
@@ -475,6 +486,9 @@ export const en: Dictionary = {
       'document.revoke': 'Closed access to a document',
       'archive.upload': 'Uploaded a file to the archive',
       'archive.delete': 'Deleted a file from the archive',
+      'archive.restore': 'Returned a file to the archive',
+      'archive.purge': 'Deleted a file for good',
+      'document.purge': 'Deleted a document for good',
       'user.create': 'Added an employee',
       'user.update': 'Changed employee access',
       'user.block': 'Blocked',

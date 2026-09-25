@@ -148,6 +148,20 @@ export function canRestoreDocument(subject: Subject, doc: DocumentRecord): boole
   return canViewDocument(subject, doc) && can(subject, 'documents.restore');
 }
 
+/**
+ * Может ли человек стереть документ навсегда («Тест день 3»).
+ *
+ * Отступление от CLAUDE.md, п. 3.4 («физического удаления нет») по решению
+ * человека, docs/questions.md. Ограничено так, чтобы случайно стереть было
+ * нельзя: только из корзины, то есть после обычного удаления, и только тем,
+ * кто может документ вернуть, – директором своей компании и администратором.
+ * Запись в журнале остаётся.
+ */
+export function canPurgeDocument(subject: Subject, doc: DocumentRecord): boolean {
+  if (doc.deletedAt === undefined) return false;
+  return canViewDocument(subject, doc) && can(subject, 'documents.purge');
+}
+
 /** Может ли человек выдавать другим доступ к этому документу. */
 export function canGrantDocument(subject: Subject, doc: DocumentRecord): boolean {
   if (doc.deletedAt !== undefined) return false;
@@ -288,7 +302,28 @@ export function canDeleteArchiveFile(subject: Subject, file: ArchiveFile): boole
   return canViewArchiveFile(subject, file) && can(subject, 'documents.delete');
 }
 
-/** Отбор файлов архива – одно правило для списка и для поштучной проверки. */
-export function visibleArchive(subject: Subject, files: ArchiveFile[]): ArchiveFile[] {
-  return files.filter((file) => file.deletedAt === undefined && canViewArchiveFile(subject, file));
+/** Вернуть удалённый файл в архив – тот же, кто возвращает документы. */
+export function canRestoreArchiveFile(subject: Subject, file: ArchiveFile): boolean {
+  if (file.deletedAt === undefined) return false;
+  return canViewArchiveFile(subject, file) && can(subject, 'documents.restore');
+}
+
+/** Стереть файл навсегда – только из корзины, как документ (`canPurgeDocument`). */
+export function canPurgeArchiveFile(subject: Subject, file: ArchiveFile): boolean {
+  if (file.deletedAt === undefined) return false;
+  return canViewArchiveFile(subject, file) && can(subject, 'documents.purge');
+}
+
+/**
+ * Отбор файлов архива – одно правило для списка и для поштучной проверки.
+ * Удалённые – только по флагу `withDeleted`: их просит корзина админ-панели.
+ */
+export function visibleArchive(
+  subject: Subject,
+  files: ArchiveFile[],
+  { withDeleted = false }: { withDeleted?: boolean } = {},
+): ArchiveFile[] {
+  return files.filter(
+    (file) => (withDeleted || file.deletedAt === undefined) && canViewArchiveFile(subject, file),
+  );
 }

@@ -14,6 +14,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   canDeleteArchiveFile,
+  canDeleteDocument,
   canUploadArchive,
   canUseSection,
   sectionOfDocument,
@@ -47,7 +48,8 @@ function sectionTitle(id: string | undefined): string {
 }
 
 export default function ArchivePage() {
-  const { documents, archive, user, company, openArchiveFile, deleteArchiveFile } = useSession();
+  const { documents, archive, user, company, openArchiveFile, deleteArchiveFile, deleteDocument } =
+    useSession();
   const [params, setParams] = useSearchParams();
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -234,6 +236,21 @@ export default function ArchivePage() {
                               <Link className={styles.action} to={`/documents/${row.doc.id}`}>
                                 {t.archive.open}
                               </Link>
+                              {/* Удаление – в корзину админ-панели, как из реестра
+                                  («Тест день 3»: «в архиве не могу удалить документ»). */}
+                              {canDeleteDocument(subject, row.doc) ? (
+                                <button
+                                  type="button"
+                                  className={styles.danger}
+                                  onClick={() => {
+                                    if (window.confirm(t.document.deleteConfirm)) {
+                                      deleteDocument(row.doc.id);
+                                    }
+                                  }}
+                                >
+                                  {t.common.remove}
+                                </button>
+                              ) : null}
                             </div>
                           </td>
                         </tr>

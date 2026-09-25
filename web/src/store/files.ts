@@ -52,6 +52,11 @@ export async function putFile(id: string, blob: Blob): Promise<void> {
   await run('readwrite', (store) => store.put(blob, id));
 }
 
+/** Стирает файл. Файла и так нет – не ошибка. */
+export async function deleteFile(id: string): Promise<void> {
+  await run('readwrite', (store) => store.delete(id));
+}
+
 /** Достаёт файл. Нет – `undefined`: запись в базе есть, а файл потерян. */
 export async function getFile(id: string): Promise<Blob | undefined> {
   const found = await run<unknown>('readonly', (store) => store.get(id));

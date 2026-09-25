@@ -25,9 +25,14 @@ import {
   assignableRoles,
   can,
   canDeleteArchiveFile,
+  canDeleteDocument,
   canGrantDocument,
   canManageUser,
+  canPurgeArchiveFile,
+  canPurgeDocument,
   canReceiveGrant,
+  canRestoreArchiveFile,
+  canRestoreDocument,
   canSeeAuditEntry,
   canSeeUser,
   canUploadArchive,
@@ -50,7 +55,7 @@ import {
   updateDb,
 } from '@/store/db';
 import { DocumentNumberTakenError, findNumberHolder } from '@/store/documentNumber';
-import { getFile, putFile } from '@/store/files';
+import { deleteFile, getFile, putFile } from '@/store/files';
 import { hashPassword, verifyPassword } from '@/store/password';
 import { withRussianSpelling } from '@/utils/names';
 import { MAX_PDF_BYTES, isPdf, readBytes, sha256Hex } from '@/utils/pdf';
@@ -203,12 +208,22 @@ interface SessionValue {
   deleteDocument: (id: string) => void;
   /** Возвращает удалённый документ в реестр. */
   restoreDocument: (id: string) => void;
+  /**
+   * Стирает документ из корзины навсегда («Тест день 3»). Живой документ не
+   * стирается: сначала он должен попасть в корзину. В журнале остаётся запись.
+   */
+  purgeDocument: (id: string) => void;
   /** Файлы архива текущей компании, которые человеку видны. */
   archive: ArchiveFile[];
   uploadArchiveFile: (input: ArchiveUploadInput) => Promise<ArchiveUploadResult>;
   /** Достаёт файл и сверяет его SHA-256 с тем, что записали при загрузке. */
   openArchiveFile: (id: string) => Promise<ArchiveOpenResult>;
   deleteArchiveFile: (id: string) => void;
+  /** Удалённые файлы архива во всех доступных компаниях: корзина админ-панели. */
+  archiveBin: ArchiveFile[];
+  restoreArchiveFile: (id: string) => void;
+  /** Стирает файл из корзины навсегда: запись и сам файл в хранилище. */
+  purgeArchiveFile: (id: string) => Promise<void>;
   /** Выдаёт или снимает (`null`) доступ человека к документу. */
   setDocumentGrant: (docId: string, userId: string, level: 'view' | 'edit' | null) => void;
   findDocument: (id: string) => DocumentRecord | undefined;
@@ -546,13 +561,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       updateDb((cur) => {
         const target = cur.documents.find((d) => d.id === id);
-        if (target === undefined) return cur;
+        // Вторая проверка – здесь, а не только на экране (CLAUDE.md, п. 3.2).
+        if (target === undefined || !canDeleteDocument(subject, target)) return cur;
 
         return appendAudit(
           {
             ...cur,
-            // Физического удаления нет: запись помечается и пропадает из
-            // реестров, но остаётся в базе (CLAUDE.md, п. 3.4).
+            // Удаление – пометка: запись пропадает из реестров и лежит в
+            // корзине, откуда её возвращают или стирают навсегда.
             documents: cur.documents.map((d) =>
               d.id === id ? { ...d, deletedAt: now, deletedBy: user?.displayName ?? '' } : d,
             ),
@@ -567,7 +583,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         );
       });
     },
-    [user],
+    [subject, user],
   );
 
   const numberTaken = useCallback<SessionValue['numberTaken']>(
@@ -584,7 +600,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     (id) => {
       updateDb((cur) => {
         const target = cur.documents.find((d) => d.id === id);
-        if (target?.deletedAt === undefined) return cur;
+        if (target === undefined || !canRestoreDocument(subject, target)) return cur;
 
         return appendAudit(
           {
@@ -605,7 +621,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         );
       });
     },
-    [user],
+    [subject, user],
+  );
+
+  const purgeDocument = useCallback<SessionValue['purgeDocument']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.documents.find((d) => d.id === id);
+        if (target === undefined || !canPurgeDocument(subject, target)) return cur;
+
+        return appendAudit(
+          { ...cur, documents: cur.documents.filter((d) => d.id !== id) },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'document.purge',
+            // Самого документа больше нет: в журнале остаётся, что это было.
+            target: target.number === null ? target.title : `${target.title} № ${target.number}`,
+          },
+        );
+      });
+    },
+    [subject, user],
   );
 
   const uploadArchiveFile = useCallback<SessionValue['uploadArchiveFile']>(
@@ -709,6 +747,66 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           },
         );
       });
+    },
+    [subject, user],
+  );
+
+  const archiveBin = useMemo(
+    () =>
+      visibleArchive(subject, db.archive, { withDeleted: true })
+        .filter((f) => f.deletedAt !== undefined)
+        .sort((a, b) => (b.deletedAt ?? '').localeCompare(a.deletedAt ?? '')),
+    [db.archive, subject],
+  );
+
+  const restoreArchiveFile = useCallback<SessionValue['restoreArchiveFile']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.archive.find((f) => f.id === id);
+        if (target === undefined || !canRestoreArchiveFile(subject, target)) return cur;
+
+        return appendAudit(
+          {
+            ...cur,
+            archive: cur.archive.map((f) => {
+              if (f.id !== id) return f;
+              const { deletedAt: _at, deletedBy: _by, ...alive } = f;
+              return alive;
+            }),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'archive.restore',
+            target: target.title,
+          },
+        );
+      });
+    },
+    [subject, user],
+  );
+
+  const purgeArchiveFile = useCallback<SessionValue['purgeArchiveFile']>(
+    async (id) => {
+      const target = loadDb().archive.find((f) => f.id === id);
+      if (target === undefined || !canPurgeArchiveFile(subject, target)) return;
+
+      // Сначала запись, потом файл: если хранилище файлов недоступно, в базе
+      // не останется записи, которая ссылается на стёртое.
+      updateDb((cur) =>
+        appendAudit(
+          { ...cur, archive: cur.archive.filter((f) => f.id !== id) },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'archive.purge',
+            target: target.title,
+          },
+        ),
+      );
+      await deleteFile(id).catch(() => undefined);
     },
     [subject, user],
   );
@@ -1129,11 +1227,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       numberTaken,
       deleteDocument,
       restoreDocument,
+      purgeDocument,
       setDocumentGrant,
       archive,
       uploadArchiveFile,
       openArchiveFile,
       deleteArchiveFile,
+      archiveBin,
+      restoreArchiveFile,
+      purgeArchiveFile,
       findDocument: (id) => {
         const found = loadDb().documents.find((d) => d.id === id);
         if (found === undefined) return undefined;
@@ -1172,6 +1274,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       uploadArchiveFile,
       openArchiveFile,
       deleteArchiveFile,
+      archiveBin,
+      restoreArchiveFile,
+      purgeArchiveFile,
+      purgeDocument,
       db.users.length,
       db.companies,
       subject,

@@ -14,7 +14,12 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { canDeleteDocument, canEditDocument, canRestoreDocument } from '@/access/policy';
+import {
+  canDeleteDocument,
+  canEditDocument,
+  canPurgeDocument,
+  canRestoreDocument,
+} from '@/access/policy';
 import { findTemplate } from '@/api/mock/templates';
 import { DocumentSheet } from '@/components/DocumentSheet/DocumentSheet';
 import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
@@ -35,7 +40,8 @@ export default function DocumentPage() {
   const { documentId } = useParams<{ documentId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { findDocument, company, user, deleteDocument, restoreDocument } = useSession();
+  const { findDocument, company, user, deleteDocument, restoreDocument, purgeDocument } =
+    useSession();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfFailed, setPdfFailed] = useState(false);
@@ -100,6 +106,20 @@ export default function DocumentPage() {
               }}
             >
               {t.document.restore}
+            </button>
+          ) : null}
+
+          {canPurgeDocument(subject, record) ? (
+            <button
+              type="button"
+              className={styles.delete}
+              onClick={() => {
+                if (!window.confirm(t.admin.purgeConfirm)) return;
+                purgeDocument(record.id);
+                navigate('/admin?tab=documents', { replace: true });
+              }}
+            >
+              {t.admin.purge}
             </button>
           ) : null}
 

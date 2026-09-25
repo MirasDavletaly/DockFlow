@@ -589,6 +589,8 @@ export type Action =
   | 'documents.editAny'
   | 'documents.delete'
   | 'documents.restore'
+  /** Стереть документ или файл из корзины навсегда («Тест день 3»). */
+  | 'documents.purge'
   | 'documents.grant'
   | 'settings.manage'
   | 'audit.view';

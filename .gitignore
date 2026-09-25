@@ -29,3 +29,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Пакеты для сервера (scripts/deploy/pack.ps1)
+/dist-deploy/

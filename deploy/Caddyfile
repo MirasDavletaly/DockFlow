@@ -1,0 +1,49 @@
+# Веб-сервер DocFlow (docs/deploy.md, docs/adr/0002-publikaciya-caddy.md).
+#
+# Caddy сам получает и продлевает сертификат HTTPS для домена. HTTPS здесь
+# обязателен, а не желателен: пароли на сайте проверяются через WebCrypto,
+# а браузер даёт его только на защищённых страницах.
+#
+# Значения – из переменных окружения (deploy/.env):
+#   DOCFLOW_DOMAIN      домен сайта: docs.example.kz
+#   DOCFLOW_ACME_EMAIL  почта для писем о сертификате
+#   DOCFLOW_AUTH_USER   логин пароля на весь сайт
+#   DOCFLOW_AUTH_HASH   хеш пароля (caddy hash-password)
+{
+	email {$DOCFLOW_ACME_EMAIL}
+}
+
+{$DOCFLOW_DOMAIN} {
+	# Пароль на весь сайт, до входа в само приложение. В коде сайта лежат
+	# реквизиты компаний (БИН, счета) – без этого их скачал бы любой, кто
+	# знает адрес. Снять – убрать этот блок (и понимать последствия).
+	basic_auth {
+		{$DOCFLOW_AUTH_USER} {$DOCFLOW_AUTH_HASH}
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Та же политика, что в index.html (web/vite.config.ts), плюс запрет
+		# встраивать сайт в чужие страницы – его в <meta> не задать.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# Файлы сборки с хешем в имени не меняются – кешируются надолго;
+	# index.html – всегда свежий, иначе после обновления открывалась бы старая версия.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@page not path /assets/*
+	header @page Cache-Control "no-cache"
+
+	root * "{$DOCFLOW_SITE_ROOT:/srv}"
+	# Адреса страниц сайта (/documents/…, /admin) – это один index.html.
+	try_files {path} /index.html
+	file_server
+}

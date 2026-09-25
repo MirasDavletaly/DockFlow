@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { queryClient } from '@/api/queryClient';
 import { AppRoutes } from '@/app/router';
-import { readLanguage, setLanguage } from '@/i18n';
+import { readLanguage, setLanguage, t } from '@/i18n';
 import { SessionProvider, useSession } from '@/store/session';
 import { CompanyTheme } from '@/theme/CompanyTheme';
 
@@ -35,6 +35,18 @@ export function App() {
   }, []);
 
   const language = useMemo<LanguageValue>(() => ({ lang, switchTo }), [lang, switchTo]);
+
+  // Пароли проверяются через WebCrypto, а браузер даёт его только на
+  // защищённых страницах: https:// или localhost. Открытый по http://IP сайт
+  // падал бы на первом входе непонятной ошибкой – говорим прямо, в чём дело.
+  if (window.isSecureContext === false) {
+    return (
+      <main className="insecure" lang={lang}>
+        <h1>{t.errors.insecureTitle}</h1>
+        <p>{t.errors.insecureBody}</p>
+      </main>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

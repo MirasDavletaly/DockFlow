@@ -1,0 +1,36 @@
+# Публикация сайта DocFlow на сервере (docs/deploy.md).
+#
+#   cd deploy
+#   cp .env.example .env      # заполнить
+#   docker compose up -d --build
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: docflow-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOCFLOW_DOMAIN: ${DOCFLOW_DOMAIN:?укажите DOCFLOW_DOMAIN в deploy/.env}
+      DOCFLOW_ACME_EMAIL: ${DOCFLOW_ACME_EMAIL:?укажите DOCFLOW_ACME_EMAIL в deploy/.env}
+      DOCFLOW_AUTH_USER: ${DOCFLOW_AUTH_USER:?укажите DOCFLOW_AUTH_USER в deploy/.env}
+      DOCFLOW_AUTH_HASH: ${DOCFLOW_AUTH_HASH:?укажите DOCFLOW_AUTH_HASH в deploy/.env}
+    volumes:
+      # Сертификаты HTTPS переживают пересборку и перезапуск.
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

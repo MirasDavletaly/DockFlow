@@ -70,6 +70,18 @@ describe('запуск', () => {
     expect(container.textContent).toContain('Проверка пароля идёт в браузере');
   });
 
+  it('по адресу без HTTPS говорит, что нужен защищённый адрес, а не падает при входе', async () => {
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+    try {
+      window.history.pushState({}, '', '/setup');
+      await render();
+      expect(container.textContent).toContain('Откройте сайт по защищённому адресу');
+      expect(container.textContent).not.toContain('Первый запуск');
+    } finally {
+      Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    }
+  });
+
   it('неизвестный адрес не роняет страницу', async () => {
     window.history.pushState({}, '', '/такого-адреса-нет');
     await render();

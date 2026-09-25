@@ -107,3 +107,13 @@ a:hover {
 body {
   overflow-wrap: break-word;
 }
+
+/* Сайт открыт без HTTPS (App.tsx): одно сообщение по центру, без оболочки. */
+.insecure {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 640px;
+  margin: 15vh auto 0;
+  padding: 0 var(--space-6);
+  line-height: var(--leading-normal);
+}

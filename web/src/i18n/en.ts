@@ -634,6 +634,9 @@ export const en: Dictionary = {
     documentNotFound: 'Document not found',
     noAccessTitle: 'No access',
     noAccessBody: 'This part is not open to you.',
+    insecureTitle: 'Open the site at a secure address',
+    insecureBody:
+      'The site is open at an address without HTTPS. The browser does not allow password checks there, so sign-in and first run do not work. Open the same address starting with https://, or ask whoever installed the system (docs/deploy.md).',
   },
 
   common: {

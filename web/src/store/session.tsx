@@ -59,7 +59,9 @@ import {
   pruneImages,
   publicUser,
   resolveImage,
+  restored,
   subscribeDb,
+  trashed,
   updateDb,
 } from '@/store/db';
 import { DocumentNumberTakenError, findNumberHolder } from '@/store/documentNumber';
@@ -589,13 +591,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           { ...cur, documents },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: record.companyId,
-            event: existing === undefined ? 'document.create' : 'document.update',
-            target: record.title,
-          },
+          by(
+            user,
+            record.companyId,
+            existing === undefined ? 'document.create' : 'document.update',
+            record.title,
+          ),
         );
       });
 
@@ -619,16 +620,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             // Удаление – пометка: запись пропадает из реестров и лежит в
             // корзине, откуда её возвращают или стирают навсегда.
             documents: cur.documents.map((d) =>
-              d.id === id ? { ...d, deletedAt: now, deletedBy: user?.displayName ?? '' } : d,
+              d.id === id ? trashed(d, user?.displayName ?? '', now) : d,
             ),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'document.delete',
-            target: target.title,
-          },
+          by(user, target.companyId, 'document.delete', target.title),
         );
       });
     },
@@ -654,19 +649,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return appendAudit(
           {
             ...cur,
-            documents: cur.documents.map((d) => {
-              if (d.id !== id) return d;
-              const { deletedAt: _at, deletedBy: _by, ...alive } = d;
-              return alive;
-            }),
+            documents: cur.documents.map((d) => (d.id === id ? restored(d) : d)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'document.restore',
-            target: target.title,
-          },
+          by(user, target.companyId, 'document.restore', target.title),
         );
       });
     },
@@ -681,14 +666,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           pruneImages({ ...cur, documents: cur.documents.filter((d) => d.id !== id) }),
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'document.purge',
-            // Самого документа больше нет: в журнале остаётся, что это было.
-            target: target.number === null ? target.title : `${target.title} № ${target.number}`,
-          },
+          // Самого документа больше нет: в журнале остаётся, что это было.
+          by(
+            user,
+            target.companyId,
+            'document.purge',
+            target.number === null ? target.title : `${target.title} № ${target.number}`,
+          ),
         );
       });
     },
@@ -781,19 +765,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return appendAudit(
           {
             ...cur,
-            archive: cur.archive.map((f) =>
-              f.id === id
-                ? { ...f, deletedAt: new Date().toISOString(), deletedBy: user?.displayName ?? '' }
-                : f,
-            ),
+            archive: cur.archive.map((f) => (f.id === id ? trashed(f, user?.displayName ?? '') : f)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'archive.delete',
-            target: target.title,
-          },
+          by(user, target.companyId, 'archive.delete', target.title),
         );
       });
     },
@@ -817,19 +791,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return appendAudit(
           {
             ...cur,
-            archive: cur.archive.map((f) => {
-              if (f.id !== id) return f;
-              const { deletedAt: _at, deletedBy: _by, ...alive } = f;
-              return alive;
-            }),
+            archive: cur.archive.map((f) => (f.id === id ? restored(f) : f)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'archive.restore',
-            target: target.title,
-          },
+          by(user, target.companyId, 'archive.restore', target.title),
         );
       });
     },
@@ -846,13 +810,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       updateDb((cur) =>
         appendAudit(
           { ...cur, archive: cur.archive.filter((f) => f.id !== id) },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'archive.purge',
-            target: target.title,
-          },
+          by(user, target.companyId, 'archive.purge', target.title),
         ),
       );
       await deleteFile(id).catch(() => undefined);
@@ -891,13 +849,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             ...cur,
             documents: cur.documents.map((d) => (d.id === docId ? { ...d, grants } : d)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: doc.companyId,
-            event: level === null ? 'document.revoke' : `document.grant.${level}`,
-            target: `${doc.title} – ${target.displayName}`,
-          },
+          by(
+            user,
+            doc.companyId,
+            level === null ? 'document.revoke' : `document.grant.${level}`,
+            `${doc.title} – ${target.displayName}`,
+          ),
         );
       });
     },
@@ -1020,13 +977,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               },
             ],
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: companyIds[0] ?? '',
-            event: 'user.create',
-            target: login,
-          },
+          by(user, companyIds[0] ?? '', 'user.create', login),
         ),
       );
 
@@ -1074,13 +1025,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           { ...cur, users: cur.users.map((u) => (u.id === id ? next : u)) },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: withinScope(next.companyIds)[0] ?? '',
-            event: patch.blocked === undefined ? 'user.update' : patch.blocked ? 'user.block' : 'user.unblock',
-            target: target.login,
-          },
+          by(
+            user,
+            withinScope(next.companyIds)[0] ?? '',
+            patch.blocked === undefined ? 'user.update' : patch.blocked ? 'user.block' : 'user.unblock',
+            target.login,
+          ),
         );
       });
     },
@@ -1099,13 +1049,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             ...cur,
             users: cur.users.map((u) => (u.id === id ? { ...unlock(u), password: hash } : u)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: withinScope(target.companyIds)[0] ?? '',
-            event: 'user.password-reset',
-            target: target.login,
-          },
+          by(user, withinScope(target.companyIds)[0] ?? '', 'user.password-reset', target.login),
         ),
       );
     },
@@ -1127,13 +1071,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           { ...cur, users: cur.users.filter((u) => u.id !== id) },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: withinScope(target.companyIds)[0] ?? '',
-            event: 'user.delete',
-            target: target.login,
-          },
+          by(user, withinScope(target.companyIds)[0] ?? '', 'user.delete', target.login),
         );
       });
     },
@@ -1158,13 +1096,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               ? cur.companies.map((c) => (c.id === company.id ? company : c))
               : [...cur.companies, company],
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: company.id,
-            event: 'company.save',
-            target: company.name,
-          },
+          by(user, company.id, 'company.save', company.name),
         );
       });
     },
@@ -1179,13 +1111,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           dropCompany(cur, id, user?.displayName ?? ''),
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: id,
-            event: 'company.delete',
-            target: target.name,
-          },
+          by(user, id, 'company.delete', target.name),
         );
       });
     },
@@ -1218,13 +1144,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 ? [...cur.employees, employee]
                 : cur.employees.map((e) => (e.id === employee.id ? employee : e)),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: employee.companyId,
-            event: existing === undefined ? 'personnel.create' : 'personnel.update',
-            target: employee.fullName,
-          },
+          by(
+            user,
+            employee.companyId,
+            existing === undefined ? 'personnel.create' : 'personnel.update',
+            employee.fullName,
+          ),
         );
       });
     },
@@ -1239,13 +1164,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         return appendAudit(
           { ...cur, employees: cur.employees.filter((e) => e.id !== id) },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'personnel.delete',
-            target: target.fullName,
-          },
+          by(user, target.companyId, 'personnel.delete', target.fullName),
         );
       });
     },
@@ -1258,13 +1177,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       updateDb((cur: Database) =>
         appendAudit(
           { ...cur, settings },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: '',
-            event: 'settings.save',
-            target: settings.adminIpAllowList.map((a) => a.ip).join(', '),
-          },
+          by(user, '', 'settings.save', settings.adminIpAllowList.map((a) => a.ip).join(', ')),
         ),
       );
     },
@@ -1353,18 +1266,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           {
             ...cur,
             templates: cur.templates.map((tpl) =>
-              tpl.id === id
-                ? { ...tpl, deletedAt: new Date().toISOString(), deletedBy: user?.displayName ?? '' }
-                : tpl,
+              tpl.id === id ? trashed(tpl, user?.displayName ?? '') : tpl,
             ),
           },
-          {
-            userId: user?.id ?? '',
-            userName: user?.displayName ?? '',
-            companyId: target.companyId,
-            event: 'template.delete',
-            target: target.title,
-          },
+          by(user, target.companyId, 'template.delete', target.title),
         );
       });
     },
@@ -1514,6 +1419,14 @@ function peopleReferencedBy(
   }
 
   return snapshot;
+}
+
+/**
+ * Строка журнала от имени того, кто сейчас работает. Одна функция вместо
+ * одинакового блока в каждом действии сессии.
+ */
+function by(user: User | null, companyId: string, event: string, target: string) {
+  return { userId: user?.id ?? '', userName: user?.displayName ?? '', companyId, event, target };
 }
 
 /**

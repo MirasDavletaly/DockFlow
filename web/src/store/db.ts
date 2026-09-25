@@ -250,10 +250,8 @@ export function pruneImages(db: Database): Database {
  */
 export function dropCompany(db: Database, id: string, by: string): Database {
   const now = new Date().toISOString();
-  const trash = <T extends { companyId: string; deletedAt?: string }>(item: T): T =>
-    item.companyId !== id || item.deletedAt !== undefined
-      ? item
-      : { ...item, deletedAt: now, deletedBy: by };
+  const trash = <T extends Trashable & { companyId: string }>(item: T): T =>
+    item.companyId !== id || item.deletedAt !== undefined ? item : trashed(item, by, now);
 
   return {
     ...db,
@@ -266,6 +264,26 @@ export function dropCompany(db: Database, id: string, by: string): Database {
     archive: db.archive.map(trash),
     templates: db.templates.map(trash),
   };
+}
+
+/** Запись, которую удаляют пометкой: документ, файл архива, шаблон. */
+interface Trashable {
+  deletedAt?: string;
+  deletedBy?: string;
+}
+
+/** Пометка «удалено»: запись уходит в корзину, а не стирается. */
+export function trashed<T extends Trashable>(item: T, by: string, at = new Date().toISOString()): T {
+  return { ...item, deletedAt: at, deletedBy: by };
+}
+
+/**
+ * Возврат из корзины. Свойства именно удаляются, а не ставятся в
+ * `undefined`: при `exactOptionalPropertyTypes` это разные вещи.
+ */
+export function restored<T extends Trashable>(item: T): T {
+  const { deletedAt: _at, deletedBy: _by, ...alive } = item;
+  return alive as T;
 }
 
 /**

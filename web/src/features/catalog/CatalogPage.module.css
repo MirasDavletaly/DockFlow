@@ -218,3 +218,44 @@ a.item:focus-visible .itemGo {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Шаблоны компании («Тест день 3») ─────────────────────────────────── */
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.newTemplate {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent-on);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.newTemplate:hover {
+  background: var(--accent-hover);
+  text-decoration: none;
+}
+
+/* Строка шаблона компании: ссылка на документ и рядом «Изменить». */
+.ownRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.editTemplate {
+  padding: 0 var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--accent);
+  white-space: nowrap;
+}

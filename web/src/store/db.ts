@@ -24,6 +24,7 @@ import type {
   ArchiveFile,
   AuditEntry,
   Company,
+  CustomTemplate,
   DocumentRecord,
   EmployeeBrief,
   PlatformSettings,
@@ -60,6 +61,8 @@ export interface Database {
   documents: DocumentRecord[];
   /** Загруженные в архив файлы: здесь только описание, сам файл – в IndexedDB. */
   archive: ArchiveFile[];
+  /** Шаблоны из конструктора («Тест день 3»): у каждого своя компания. */
+  templates: CustomTemplate[];
   audit: AuditEntry[];
   settings: PlatformSettings;
 }
@@ -88,6 +91,7 @@ function seed(): Database {
     users: [],
     documents: [],
     archive: [],
+    templates: [],
     audit: [],
     settings: { adminIpAllowList: [] },
   };
@@ -153,6 +157,7 @@ function migrate(raw: Partial<Database>): Database {
     users: raw.users ?? [],
     documents,
     archive: raw.archive ?? [],
+    templates: raw.templates ?? [],
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: migrateAllowList(raw.settings?.adminIpAllowList) },
   };
@@ -187,6 +192,7 @@ export function dropCompany(db: Database, id: string, by: string): Database {
     ),
     documents: db.documents.map(trash),
     archive: db.archive.map(trash),
+    templates: db.templates.map(trash),
   };
 }
 

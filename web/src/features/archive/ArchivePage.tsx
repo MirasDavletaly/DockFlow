@@ -25,7 +25,7 @@ import { today } from '@/features/document-form/validation';
 import { searchDocuments } from '@/features/documents/search';
 import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
-import { tc } from '@/i18n/content';
+import { documentTitle, tc } from '@/i18n/content';
 import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
@@ -242,7 +242,7 @@ export default function ArchivePage() {
                           </td>
                           <td>
                             <Link className={styles.link} to={`/documents/${row.doc.id}`}>
-                              {tc(row.doc.title)}
+                              {documentTitle(row.doc)}
                             </Link>
                             {row.doc.subject === '' ? null : (
                               <div className={styles.sub}>{documentSubject(row.doc)}</div>

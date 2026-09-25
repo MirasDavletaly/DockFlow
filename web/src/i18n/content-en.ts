@@ -75,6 +75,7 @@ export const contentEn: Record<string, string> = {
     'Creates documents in the sections granted to them. Sees their own documents, and other people documents only in sections opened to them or by granted access.',
 
   // ── Документы каталога ──────────────────────────────────────────────────
+  'Поля документа': 'Document fields',
   'Приказ о приёме на работу': 'Hiring order',
   'Приказ о предоставлении ежегодного трудового отпуска': 'Annual paid leave order',
   'Приказ о предоставлении отпуска без сохранения заработной платы': 'Unpaid leave order',

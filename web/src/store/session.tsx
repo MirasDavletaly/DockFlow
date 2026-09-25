@@ -35,13 +35,18 @@ import {
   canRestoreDocument,
   canSeeAuditEntry,
   canSeeUser,
+  canCreateTemplate,
+  canEditTemplate,
   canUploadArchive,
   canUseCompany,
   canViewArchiveFile,
+  grantableActions,
   managedCompanyIds,
   visibleArchive,
   visibleDocuments,
+  visibleTemplates,
 } from '@/access/policy';
+import { checkTemplate, toDocumentTemplate } from '@/api/mock/customTemplates';
 import {
   appendAudit,
   dropCompany,
@@ -61,10 +66,13 @@ import { withRussianSpelling } from '@/utils/names';
 import { MAX_PDF_BYTES, isPdf, readBytes, sha256Hex } from '@/utils/pdf';
 
 import type {
+  Action,
   ArchiveFile,
   AuditEntry,
   Company,
+  CustomTemplate,
   DocumentRecord,
+  DocumentTemplate,
   EmployeeBrief,
   PlatformSettings,
   RoleId,
@@ -102,6 +110,8 @@ export interface NewUserInput {
   companyIds: string[];
   sectionIds: string[];
   viewSectionIds: string[];
+  /** Права поверх роли: только из тех, что выдающий может выдать. */
+  grantedActions?: Action[];
   position?: string;
   email?: string;
   phone?: string;
@@ -115,8 +125,15 @@ export interface UserAccessPatch {
   companyIds?: string[];
   sectionIds?: string[];
   viewSectionIds?: string[];
+  grantedActions?: Action[];
   blocked?: boolean;
 }
+
+/** Шаблон из конструктора, каким его отдаёт экран: без компании и автора. */
+export type TemplateInput = Omit<
+  CustomTemplate,
+  'id' | 'companyId' | 'authorId' | 'authorName' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'deletedBy'
+> & { id?: string };
 
 /** Старый документ, который кладут в архив файлом PDF. */
 export interface ArchiveUploadInput {
@@ -147,6 +164,8 @@ export interface SaveDocumentInput {
   /** Раздел каталога: по нему открывается просмотр документов раздела. */
   sectionId: string;
   title: string;
+  /** Английское название шаблона из конструктора. */
+  titleEn?: string;
   number: string;
   description: string;
   subject: string;
@@ -243,6 +262,21 @@ interface SessionValue {
   removeEmployee: (id: string) => void;
 
   saveSettings: (settings: PlatformSettings) => void;
+
+  /** Шаблоны из конструктора текущей компании, которые человеку видны. */
+  templates: CustomTemplate[];
+  /**
+   * Шаблон компании для формы и листа. У сохранённого документа – его снимок:
+   * правка и удаление шаблона выпущенный документ не меняют (CLAUDE.md,
+   * п. 3.4). Шаблоны каталога здесь не ищутся – их экраны берут сами.
+   */
+  findCompanyTemplate: (id: string, record?: DocumentRecord) => DocumentTemplate | undefined;
+  /** Шаблон для правки в конструкторе, если человеку его можно править. */
+  editableTemplate: (id: string) => CustomTemplate | undefined;
+  /** Сохраняет шаблон. Нет права или шаблон не заполнен – `null`. */
+  saveTemplate: (input: TemplateInput) => CustomTemplate | null;
+  /** Убирает шаблон из каталога. Созданные по нему документы остаются. */
+  deleteTemplate: (id: string) => void;
 }
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -502,6 +536,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         sectionId: input.sectionId,
         companyId: companyId ?? '',
         title: input.title,
+        ...(input.titleEn === undefined || input.titleEn === '' ? {} : { titleEn: input.titleEn }),
         description: input.description.trim(),
         subject: input.subject.trim(),
         status: input.status,
@@ -520,6 +555,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         ...(input.status === 'saved'
           ? { peopleSnapshot: peopleReferencedBy(input.values, companyId ?? '') }
           : {}),
+        ...templateSnapshotFor(input.templateId, companyId ?? '', existing),
         authorId: existing?.authorId ?? user?.id ?? '',
         authorName: existing?.authorName ?? user?.displayName ?? '',
         // Выданный доступ переживает правку документа.
@@ -921,6 +957,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [subject],
   );
 
+  /** Права поверх роли для новой учётной записи – только выдаваемые. */
+  const grantedFor = useCallback(
+    (requested: Action[] | undefined): { grantedActions?: Action[] } => {
+      const allowed = grantableActions(subject);
+      const granted = (requested ?? []).filter((a) => allowed.includes(a));
+      return granted.length === 0 ? {} : { grantedActions: granted };
+    },
+    [subject],
+  );
+
   const createUser = useCallback<SessionValue['createUser']>(
     async (input) => {
       // Проверка и здесь, а не только на экране (CLAUDE.md, п. 3.2): директор
@@ -951,6 +997,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 companyIds,
                 sectionIds: input.sectionIds,
                 viewSectionIds: input.viewSectionIds,
+                ...grantedFor(input.grantedActions),
                 createdAt: new Date().toISOString(),
                 password,
                 failedAttempts: 0,
@@ -972,7 +1019,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       return { ok: true };
     },
-    [subject, user, withinScope],
+    [grantedFor, subject, user, withinScope],
   );
 
   const updateUser = useCallback<SessionValue['updateUser']>(
@@ -988,6 +1035,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (patch.role !== undefined) next.role = patch.role;
         if (patch.sectionIds !== undefined) next.sectionIds = patch.sectionIds;
         if (patch.viewSectionIds !== undefined) next.viewSectionIds = patch.viewSectionIds;
+        if (patch.grantedActions !== undefined) {
+          // Выдаётся только то, что выдающий может выдать; права, которых он
+          // выдавать не может, остаются как были.
+          const allowed = grantableActions(subject);
+          const kept = (target.grantedActions ?? []).filter((a) => !allowed.includes(a));
+          const granted = [...kept, ...patch.grantedActions.filter((a) => allowed.includes(a))];
+          if (granted.length === 0) delete next.grantedActions;
+          else next.grantedActions = granted;
+        }
         if (patch.blocked !== undefined) next.blocked = patch.blocked;
         if (patch.companyIds !== undefined) {
           // Компании вне своей зоны директор не видит и снять не может: они
@@ -1202,6 +1258,106 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [subject, user],
   );
 
+  const templates = useMemo(
+    () =>
+      visibleTemplates(subject, db.templates).sort((a, b) => a.title.localeCompare(b.title, 'ru')),
+    [db.templates, subject],
+  );
+
+  const findCompanyTemplate = useCallback<SessionValue['findCompanyTemplate']>(
+    (id, record) => {
+      if (record?.status === 'saved' && record.templateSnapshot !== undefined) {
+        return record.templateSnapshot;
+      }
+      const live = templates.find((tpl) => tpl.id === id);
+      return live === undefined ? record?.templateSnapshot : toDocumentTemplate(live);
+    },
+    [templates],
+  );
+
+  const editableTemplate = useCallback<SessionValue['editableTemplate']>(
+    (id) => {
+      const found = db.templates.find((tpl) => tpl.id === id);
+      return found !== undefined && canEditTemplate(subject, found) ? found : undefined;
+    },
+    [db.templates, subject],
+  );
+
+  const saveTemplate = useCallback<SessionValue['saveTemplate']>(
+    (input) => {
+      // Компания – только из сессии (CLAUDE.md, п. 3.1): шаблон не завести в
+      // чужой компании, подменив поле в запросе.
+      if (companyId === null || user === null) return null;
+
+      const existing =
+        input.id === undefined ? undefined : loadDb().templates.find((tpl) => tpl.id === input.id);
+      if (existing !== undefined && !canEditTemplate(subject, existing)) return null;
+      if (!canCreateTemplate(subject, input.sectionId)) return null;
+
+      const now = new Date().toISOString();
+      const { id: _id, ...fields } = input;
+      const record: CustomTemplate = {
+        ...fields,
+        id: existing?.id ?? newId('custom'),
+        companyId,
+        authorId: existing?.authorId ?? user.id,
+        authorName: existing?.authorName ?? user.displayName,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      };
+      if (checkTemplate(record).length > 0) return null;
+
+      updateDb((cur) =>
+        appendAudit(
+          {
+            ...cur,
+            templates:
+              existing === undefined
+                ? [...cur.templates, record]
+                : cur.templates.map((tpl) => (tpl.id === record.id ? record : tpl)),
+          },
+          {
+            userId: user.id,
+            userName: user.displayName,
+            companyId,
+            event: existing === undefined ? 'template.create' : 'template.update',
+            target: record.title,
+          },
+        ),
+      );
+      return record;
+    },
+    [companyId, subject, user],
+  );
+
+  const deleteTemplate = useCallback<SessionValue['deleteTemplate']>(
+    (id) => {
+      updateDb((cur) => {
+        const target = cur.templates.find((tpl) => tpl.id === id);
+        if (target === undefined || !canEditTemplate(subject, target)) return cur;
+
+        return appendAudit(
+          {
+            ...cur,
+            templates: cur.templates.map((tpl) =>
+              tpl.id === id
+                ? { ...tpl, deletedAt: new Date().toISOString(), deletedBy: user?.displayName ?? '' }
+                : tpl,
+            ),
+          },
+          {
+            userId: user?.id ?? '',
+            userName: user?.displayName ?? '',
+            companyId: target.companyId,
+            event: 'template.delete',
+            target: target.title,
+          },
+        );
+      });
+    },
+    [subject, user],
+  );
+
   const value = useMemo<SessionValue>(
     () => ({
       user,
@@ -1254,8 +1410,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       saveEmployee,
       removeEmployee,
       saveSettings,
+      templates,
+      findCompanyTemplate,
+      editableTemplate,
+      saveTemplate,
+      deleteTemplate,
     }),
     [
+      templates,
+      findCompanyTemplate,
+      editableTemplate,
+      saveTemplate,
+      deleteTemplate,
       user,
       companyId,
       companies,
@@ -1329,6 +1495,28 @@ function peopleReferencedBy(
   }
 
   return snapshot;
+}
+
+/**
+ * Снимок шаблона компании для записи документа.
+ *
+ * Выпущенный документ держит тот шаблон, по которому его выпустили: правка
+ * сохранённого документа снимок не меняет. Черновик и новый документ берут
+ * текущую версию шаблона. У шаблонов каталога снимка нет.
+ */
+function templateSnapshotFor(
+  templateId: string,
+  companyId: string,
+  existing: DocumentRecord | undefined,
+): { templateSnapshot?: DocumentTemplate } {
+  if (existing?.status === 'saved' && existing.templateSnapshot !== undefined) {
+    return { templateSnapshot: existing.templateSnapshot };
+  }
+  const custom = loadDb().templates.find(
+    (tpl) => tpl.id === templateId && tpl.companyId === companyId && tpl.deletedAt === undefined,
+  );
+  if (custom !== undefined) return { templateSnapshot: toDocumentTemplate(custom) };
+  return existing?.templateSnapshot === undefined ? {} : { templateSnapshot: existing.templateSnapshot };
 }
 
 /**

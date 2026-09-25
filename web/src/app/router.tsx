@@ -23,6 +23,7 @@ const ArchivePage = lazy(() => import('@/features/archive/ArchivePage'));
 const CompanyPage = lazy(() => import('@/features/company/CompanyPage'));
 const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'));
 const AdminPage = lazy(() => import('@/features/admin/AdminPage'));
+const TemplateEditorPage = lazy(() => import('@/features/templates/TemplateEditorPage'));
 const NotFoundPage = lazy(() => import('@/features/errors/NotFoundPage'));
 
 export function AppRoutes() {
@@ -60,6 +61,8 @@ export function AppRoutes() {
           <Route path="/company" element={<CompanyPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/templates/new" element={<TemplateEditorPage />} />
+          <Route path="/templates/:templateId" element={<TemplateEditorPage />} />
         </Route>
 
         <Route path="/404" element={<NotFoundPage />} />

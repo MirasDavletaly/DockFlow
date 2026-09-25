@@ -13,7 +13,6 @@
  * В документ это не идёт: колонки на трёх языках решает бланк.
  */
 import { lang } from './index';
-import { translateJobTitle } from '@/utils/jobTitles';
 import { englishName, russianLetters } from '@/utils/names';
 
 import type { DocumentRecord } from '@/api/types';
@@ -31,11 +30,6 @@ export function personName(name: string, card?: Card): string {
     return own !== undefined && own !== '' ? own : englishName(name);
   }
   return russianLetters(name);
-}
-
-/** Должность на языке интерфейса: из словаря должностей, иначе как записана. */
-export function positionName(position: string): string {
-  return lang === 'en' ? (translateJobTitle(position, 'en') ?? position) : position;
 }
 
 /**

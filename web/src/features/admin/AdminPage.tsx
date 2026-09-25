@@ -29,6 +29,7 @@ import {
   canPurgeDocument,
   canRestoreArchiveFile,
   canRestoreDocument,
+  grantableActions,
   managedCompanyIds,
 } from '@/access/policy';
 import { roles } from '@/api/mock/roles';
@@ -38,8 +39,9 @@ import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { searchDocuments } from '@/features/documents/search';
 import { lang, t } from '@/i18n';
 import { companyDirector, companyName } from '@/i18n/company';
-import { tc } from '@/i18n/content';
-import { documentSubject, personName, positionName } from '@/i18n/person';
+import { documentTitle, tc } from '@/i18n/content';
+import { documentSubject, personName } from '@/i18n/person';
+import { positionName } from '@/i18n/position';
 import { newId, resetDb } from '@/store/db';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
@@ -416,6 +418,11 @@ function UsersTab({ subject, query }: TabProps) {
                       {user.blocked === true ? (
                         <span className={styles.badge}>{t.admin.userBlocked}</span>
                       ) : null}
+                      {user.grantedActions?.includes('templates.create') === true ? (
+                        <span className={styles.badge} title={t.templates.grantLabel}>
+                          {t.templates.grantBadge}
+                        </span>
+                      ) : null}
                     </td>
                     <td className={styles.muted}>{companiesOf(user)}</td>
                     <td className={styles.muted}>{sectionNames(user, user.sectionIds)}</td>
@@ -518,6 +525,12 @@ function UserForm({
   );
   const [sectionIds, setSectionIds] = useState<string[]>(editing?.sectionIds ?? []);
   const [viewSectionIds, setViewSectionIds] = useState<string[]>(editing?.viewSectionIds ?? []);
+  // Доступ к конструктору шаблонов выдают директор и администратор
+  // («Тест день 3»); у них самих он есть по роли.
+  const canGrantTemplates = grantableActions(subject).includes('templates.create');
+  const [templateAccess, setTemplateAccess] = useState(
+    editing?.grantedActions?.includes('templates.create') === true,
+  );
   const [error, setError] = useState<string | null>(null);
 
   function toggle(list: string[], value: string): string[] {
@@ -538,6 +551,12 @@ function UserForm({
       companyIds: role === 'platform-admin' ? [] : companyIds,
       sectionIds: role === 'employee' ? sectionIds : [],
       viewSectionIds: role === 'employee' ? viewSectionIds : [],
+      ...(canGrantTemplates
+        ? {
+            grantedActions:
+              role === 'employee' && templateAccess ? (['templates.create'] as Action[]) : [],
+          }
+        : {}),
     };
 
     if (editing !== null) {
@@ -676,6 +695,20 @@ function UserForm({
               ))}
             </div>
           </fieldset>
+
+          {canGrantTemplates ? (
+            <label className={styles.checkItem}>
+              <input
+                type="checkbox"
+                checked={templateAccess}
+                onChange={(e) => setTemplateAccess(e.target.checked)}
+              />
+              <span>
+                {t.templates.grantLabel}
+                <span className={styles.fieldHint}> – {t.templates.grantHint}</span>
+              </span>
+            </label>
+          ) : null}
 
           <fieldset className={styles.check}>
             <legend className={styles.fieldLabel}>{t.admin.userViewSections}</legend>
@@ -1079,7 +1112,7 @@ function DocumentsTab({ subject, query }: TabProps) {
                 <td className="tabular">{doc.number ?? t.registry.noNumber}</td>
                 <td>
                   <Link className={styles.link} to={`/documents/${doc.id}`}>
-                    {tc(doc.title)}
+                    {documentTitle(doc)}
                   </Link>
                 </td>
                 <td className={styles.muted}>{nameOf(doc.companyId)}</td>

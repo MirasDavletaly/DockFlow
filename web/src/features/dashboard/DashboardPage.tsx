@@ -14,7 +14,7 @@ import { can } from '@/access/policy';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
-import { tc } from '@/i18n/content';
+import { documentTitle } from '@/i18n/content';
 import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { formatShortDate, partOfDay } from '@/utils/format';
@@ -83,7 +83,7 @@ export default function DashboardPage() {
               {recent.map((doc) => (
                 <li key={doc.id}>
                   <Link className={styles.recentItem} to={`/documents/${doc.id}`}>
-                    <span className={styles.recentTitle}>{tc(doc.title)}</span>
+                    <span className={styles.recentTitle}>{documentTitle(doc)}</span>
                     <span className={styles.recentSubject}>{documentSubject(doc)}</span>
                     <StatusStamp status={doc.status} size="sm" />
                     <span className={`${styles.recentDate} tabular`}>

@@ -17,6 +17,7 @@ import type {
   Action,
   ArchiveFile,
   AuditEntry,
+  CustomTemplate,
   DocumentGrant,
   DocumentRecord,
   RoleId,
@@ -29,10 +30,29 @@ export interface Subject {
   companyId: string | null;
 }
 
+/**
+ * Права, которые выдаются человеку поверх роли («Тест день 3»: доступ к
+ * созданию шаблонов выдают директор и администратор). Всё, чего нет в этом
+ * списке, выдачей не получить: запись в учётной записи не превратит
+ * работника в администратора.
+ */
+export const GRANTABLE_ACTIONS: readonly Action[] = ['templates.create'];
+
 /** Может ли человек выполнить действие. Без входа — ничего. */
 export function can(subject: Subject, action: Action): boolean {
   if (subject.user === null || subject.user.blocked === true) return false;
-  return roleCan(subject.user.role, action);
+  if (roleCan(subject.user.role, action)) return true;
+  return GRANTABLE_ACTIONS.includes(action) && (subject.user.grantedActions ?? []).includes(action);
+}
+
+/**
+ * Какие права поверх роли человек может выдавать сотрудникам. Выдаёт тот,
+ * кто управляет людьми, и только то, что может сам.
+ */
+export function grantableActions(subject: Subject): Action[] {
+  const scope = managedCompanyIds(subject);
+  if (scope !== null && scope.length === 0) return [];
+  return GRANTABLE_ACTIONS.filter((action) => can(subject, action));
 }
 
 /** Работает ли человек во всех компаниях группы или только в своих. */
@@ -263,6 +283,44 @@ export function canSeeAuditEntry(subject: Subject, entry: AuditEntry): boolean {
   if (!can(subject, 'audit.view') || subject.user === null) return false;
   if (isPlatformWide(subject.user)) return true;
   return entry.companyId !== '' && subject.user.companyIds.includes(entry.companyId);
+}
+
+/* ── Шаблоны из конструктора ───────────────────────────────────────────── */
+
+/**
+ * Может ли человек создать шаблон в разделе («Тест день 3»).
+ *
+ * Директор и администратор – по роли, работник – если доступ ему выдали, и
+ * только в разделах, где он сам создаёт документы. Шаблон создаётся в той
+ * компании, где человек работает сейчас: компания берётся из сессии, а не
+ * из формы (CLAUDE.md, п. 3.1).
+ */
+export function canCreateTemplate(subject: Subject, sectionId: string): boolean {
+  if (subject.companyId === null || !canUseCompany(subject.user, subject.companyId)) return false;
+  return can(subject, 'templates.create') && canUseSection(subject.user, sectionId);
+}
+
+/**
+ * Видит ли человек шаблон в каталоге.
+ *
+ * Шаблон принадлежит компании, как документ, и виден только в ней – даже
+ * администратору, пока он работает в другой компании: в каталоге одной
+ * компании не должно быть бланков другой.
+ */
+export function canSeeTemplate(subject: Subject, tpl: CustomTemplate): boolean {
+  if (tpl.deletedAt !== undefined) return false;
+  if (subject.companyId === null || tpl.companyId !== subject.companyId) return false;
+  return canUseCompany(subject.user, tpl.companyId) && canUseSection(subject.user, tpl.sectionId);
+}
+
+/** Правит и убирает шаблон его автор, директор и администратор своей компании. */
+export function canEditTemplate(subject: Subject, tpl: CustomTemplate): boolean {
+  if (!canSeeTemplate(subject, tpl) || !can(subject, 'templates.create')) return false;
+  return tpl.authorId === subject.user?.id || can(subject, 'documents.editAny');
+}
+
+export function visibleTemplates(subject: Subject, list: CustomTemplate[]): CustomTemplate[] {
+  return list.filter((tpl) => canSeeTemplate(subject, tpl));
 }
 
 /* ── Архив загруженных файлов ──────────────────────────────────────────── */

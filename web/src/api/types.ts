@@ -405,6 +405,11 @@ export type DocBlock =
 export interface DocumentTemplate {
   id: string;
   title: string;
+  /**
+   * Название на английском интерфейсе, если его нет в таблице переводов
+   * каталога: у шаблонов из конструктора его вписывает автор.
+   */
+  titleEn?: string;
   /** Раздел, которому документ принадлежит: по нему проверяется право. */
   sectionId: string;
   subsectionId: string;
@@ -446,6 +451,63 @@ export interface DocumentTemplate {
    * неконкретный; на самом листе пометки нет.
    */
   generic?: boolean;
+  /**
+   * Шаблон собран в конструкторе компании, а не прислан в каталог
+   * («Тест день 3»). Интерфейс помечает его как «шаблон компании».
+   */
+  custom?: boolean;
+}
+
+/** Поле шаблона из конструктора: то, что человек заполняет в форме. */
+export interface TemplateField {
+  id: string;
+  /** Название поля. По нему же поле вставляется в текст: «{Дата приказа}». */
+  label: string;
+  kind: Exclude<FieldKind, 'counterparty'>;
+  required: boolean;
+  /** Варианты для списка. */
+  options?: string[];
+  /** Значение пишется на каждом языке документа отдельно (`FieldDef.perLang`). */
+  perLang?: boolean;
+}
+
+/**
+ * Шаблон, собранный в конструкторе («Тест день 3»: «кнопка, чтобы создать
+ * новый шаблон, для директора, для админа и у кого есть доступ»).
+ *
+ * Принадлежит компании, в которой его создали: другая компания его не видит,
+ * как не видит и её документов (CLAUDE.md, п. 3.1). Текст хранится так, как
+ * его написал человек, – с названиями полей в фигурных скобках; в шаблон
+ * листа он превращается функцией `toDocumentTemplate`.
+ */
+export interface CustomTemplate {
+  id: string;
+  companyId: string;
+  title: string;
+  /** Название на английском интерфейсе. Пусто – показывается русское. */
+  titleEn?: string;
+  /** Когда этот документ нужен: подзаголовок формы. */
+  purpose: string;
+  sectionId: string;
+  subsectionId: string;
+  /** Серия номера (catalog/series.yaml). */
+  series: string;
+  /** Заголовок на бланке: «БҰЙРЫҚ / ПРИКАЗ / ORDER». */
+  heading: TriText;
+  /** Языки текста – они же колонки на листе. */
+  langs: DocLang[];
+  fields: TemplateField[];
+  /** Текст на каждом языке: абзац на строку, поля – «{Название поля}». */
+  body: Partial<Record<DocLang, string>>;
+  /** Лист ознакомления под подписью. */
+  acquaint: boolean;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Шаблон убран из каталога. Созданные по нему документы остаются. */
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 /**
@@ -481,6 +543,8 @@ export interface DocumentRecord {
   templateId: string;
   companyId: string;
   title: string;
+  /** Название на английском – у документов по шаблону из конструктора. */
+  titleEn?: string;
   /**
    * Пояснение для реестра: чем этот документ отличается от соседних.
    * Заполняется по желанию и в сам документ не попадает – в приказе нет
@@ -518,6 +582,13 @@ export interface DocumentRecord {
    * идентификатор работника.
    */
   peopleSnapshot?: Record<string, EmployeeBrief>;
+  /**
+   * Снимок шаблона из конструктора на момент записи. Шаблон компании можно
+   * править и удалять, а документ, выпущенный по нему, меняться не должен
+   * (CLAUDE.md, п. 3.4). У шаблонов каталога снимка нет: они меняются только
+   * с выпуском новой версии сайта.
+   */
+  templateSnapshot?: DocumentTemplate;
   /** Кто заполнил: идентификатор нужен, чтобы работник видел только свои. */
   authorId: string;
   authorName: string;
@@ -591,6 +662,8 @@ export type Action =
   | 'documents.restore'
   /** Стереть документ или файл из корзины навсегда («Тест день 3»). */
   | 'documents.purge'
+  /** Создавать шаблоны документов в конструкторе («Тест день 3»). */
+  | 'templates.create'
   | 'documents.grant'
   | 'settings.manage'
   | 'audit.view';
@@ -635,6 +708,12 @@ export interface User {
   email?: string;
   /** Аватар: изображение в data:URL, заполняет сам человек. */
   avatar?: string;
+  /**
+   * Права поверх роли, выданные этому человеку («Тест день 3»: доступ к
+   * созданию шаблонов выдают директор и администратор). Выдаются только
+   * права из `GRANTABLE_ACTIONS` политики.
+   */
+  grantedActions?: Action[];
   /** Учётная запись заблокирована администратором. */
   blocked?: boolean;
   createdAt: string;

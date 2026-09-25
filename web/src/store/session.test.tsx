@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { SessionProvider, useSession } from './session';
+import type { TemplateInput } from './session';
 import { loadDb, resetDb, updateDb } from '@/store/db';
 
 import type { StoredUser } from './db';
@@ -363,5 +364,110 @@ describe('удаление навсегда («Тест день 3»)', () => {
     });
     expect(loadDb().archive).toEqual([]);
     expect(loadDb().audit.some((e) => e.event === 'archive.purge')).toBe(true);
+  });
+});
+
+describe('шаблоны из конструктора («Тест день 3»)', () => {
+  const input = (overrides: Partial<TemplateInput> = {}): TemplateInput => ({
+    title: 'Приказ о стажировке',
+    purpose: '',
+    sectionId: 'hr',
+    subsectionId: 'hr-personnel-orders',
+    series: 'К',
+    heading: { kk: 'Б Ұ Й Р Ы Қ', ru: 'ПРИКАЗ', en: 'ORDER' },
+    langs: ['ru'],
+    fields: [{ id: 'f1', label: 'Срок', kind: 'text', required: true }],
+    body: { ru: 'Направить на стажировку сроком {Срок}.' },
+    acquaint: false,
+    ...overrides,
+  });
+
+  it('директор создаёт шаблон в своей компании; другая компания его не видит', () => {
+    signInAs('director-a', A);
+    let saved: ReturnType<typeof session.saveTemplate> = null;
+    act(() => {
+      saved = session.saveTemplate(input());
+    });
+
+    expect(saved).not.toBeNull();
+    expect(loadDb().templates[0]?.companyId).toBe(A);
+    expect(session.templates.map((t) => t.title)).toEqual(['Приказ о стажировке']);
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    signInAs('director-b', B);
+    expect(session.templates).toEqual([]);
+    expect(session.findCompanyTemplate(loadDb().templates[0]?.id ?? '')).toBeUndefined();
+  });
+
+  it('работник без выданного доступа шаблон не создаёт, с доступом – создаёт', () => {
+    updateDb((db) => ({
+      ...db,
+      users: db.users.map((u) => (u.id === 'worker-a' ? { ...u, sectionIds: ['hr'] } : u)),
+    }));
+    signInAs('worker-a', A);
+    act(() => {
+      session.saveTemplate(input());
+    });
+    expect(loadDb().templates).toEqual([]);
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    signInAs('director-a', A);
+    act(() => session.updateUser('worker-a', { grantedActions: ['templates.create'] }));
+    expect(user('worker-a')?.grantedActions).toEqual(['templates.create']);
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    signInAs('worker-a', A);
+    act(() => {
+      session.saveTemplate(input());
+    });
+    expect(loadDb().templates).toHaveLength(1);
+  });
+
+  it('директор не выдаёт право, которого нет в списке, и не выдаёт в чужой компании', () => {
+    signInAs('director-a', A);
+    act(() => session.updateUser('worker-a', { grantedActions: ['documents.purge', 'templates.create'] }));
+    act(() => session.updateUser('worker-b', { grantedActions: ['templates.create'] }));
+
+    expect(user('worker-a')?.grantedActions).toEqual(['templates.create']);
+    expect(user('worker-b')?.grantedActions).toBeUndefined();
+  });
+
+  it('выпущенный документ не меняется, когда шаблон правят или удаляют', () => {
+    signInAs('director-a', A);
+    let id = '';
+    act(() => {
+      id = session.saveTemplate(input())?.id ?? '';
+    });
+
+    let docId = '';
+    act(() => {
+      docId = session.saveDocument({
+        templateId: id,
+        sectionId: 'hr',
+        title: 'Приказ о стажировке',
+        number: '1',
+        description: '',
+        subject: '',
+        values: { f1: 'месяц' },
+        status: 'saved',
+      }).id;
+    });
+
+    act(() => {
+      session.saveTemplate(input({ id, body: { ru: 'Совсем другой текст {Срок}.' } }));
+    });
+    act(() => session.deleteTemplate(id));
+
+    const record = session.findDocument(docId);
+    const tpl = record === undefined ? undefined : session.findCompanyTemplate(record.templateId, record);
+    const table = tpl?.body.find((b) => b.kind === 'tri-table');
+    expect(table?.kind === 'tri-table' ? table.rows[0]?.ru?.[0]?.[0] : undefined).toEqual({
+      text: 'Направить на стажировку сроком ',
+    });
+    // Удалённый шаблон пропал из каталога.
+    expect(session.templates).toEqual([]);
   });
 });

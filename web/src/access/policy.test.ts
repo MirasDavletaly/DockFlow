@@ -14,8 +14,11 @@ import { describe, expect, it } from 'vitest';
 import {
   assignableRoles,
   can,
+  canCreateTemplate,
   canDeleteArchiveFile,
   canDeleteDocument,
+  canEditTemplate,
+  grantableActions,
   canEditDocument,
   canGrantDocument,
   canManageUser,
@@ -35,9 +38,10 @@ import {
   sectionOfDocument,
   visibleArchive,
   visibleDocuments,
+  visibleTemplates,
 } from './policy';
 
-import type { ArchiveFile, DocumentRecord, RoleId, User } from '@/api/types';
+import type { ArchiveFile, CustomTemplate, DocumentRecord, RoleId, User } from '@/api/types';
 
 const COMPANY_A = 'c-a';
 const COMPANY_B = 'c-b';
@@ -434,5 +438,82 @@ describe('удаление навсегда («Тест день 3»)', () => {
     expect(
       visibleArchive({ user: employee, companyId: COMPANY_A }, [file, gone], { withDeleted: true }),
     ).toHaveLength(1);
+  });
+});
+
+describe('шаблоны из конструктора («Тест день 3»)', () => {
+  const tpl = (overrides: Partial<CustomTemplate> = {}): CustomTemplate => ({
+    id: 'custom-1',
+    companyId: COMPANY_A,
+    title: 'Приказ о стажировке',
+    purpose: '',
+    sectionId: 'hr',
+    subsectionId: 'hr-personnel-orders',
+    series: 'К',
+    heading: { kk: 'Б', ru: 'П', en: 'O' },
+    langs: ['ru'],
+    fields: [],
+    body: { ru: 'текст' },
+    acquaint: false,
+    authorId: director.id,
+    authorName: 'Директор',
+    createdAt: '2026-09-25T00:00:00.000Z',
+    updatedAt: '2026-09-25T00:00:00.000Z',
+    ...overrides,
+  });
+  const author = user('u-author', 'employee', {
+    sectionIds: ['hr'],
+    grantedActions: ['templates.create'],
+  });
+
+  it('создают директор и администратор, работник – только по выданному доступу', () => {
+    expect(canCreateTemplate({ user: director, companyId: COMPANY_A }, 'hr')).toBe(true);
+    expect(canCreateTemplate({ user: admin, companyId: COMPANY_A }, 'hr')).toBe(true);
+    expect(canCreateTemplate({ user: employee, companyId: COMPANY_A }, 'hr')).toBe(false);
+    expect(canCreateTemplate({ user: author, companyId: COMPANY_A }, 'hr')).toBe(true);
+  });
+
+  it('работник с доступом – только в своих разделах и своей компании', () => {
+    expect(canCreateTemplate({ user: author, companyId: COMPANY_A }, 'legal')).toBe(false);
+    expect(canCreateTemplate({ user: author, companyId: COMPANY_B }, 'hr')).toBe(false);
+  });
+
+  it('роль-ограничение не обходится выдачей: выдать можно только право из списка', () => {
+    const sneaky = user('u-sneaky', 'employee', { grantedActions: ['documents.purge', 'admin.panel'] });
+    expect(can({ user: sneaky, companyId: COMPANY_A }, 'documents.purge')).toBe(false);
+    expect(can({ user: sneaky, companyId: COMPANY_A }, 'admin.panel')).toBe(false);
+  });
+
+  it('выдают доступ директор и администратор, работник – нет', () => {
+    expect(grantableActions({ user: director, companyId: COMPANY_A })).toEqual(['templates.create']);
+    expect(grantableActions({ user: admin, companyId: COMPANY_A })).toEqual(['templates.create']);
+    expect(grantableActions({ user: author, companyId: COMPANY_A })).toEqual([]);
+  });
+
+  it('шаблон компании А не виден и не правится в компании Б', () => {
+    const other = tpl({ companyId: COMPANY_B });
+    const directorB = user('u-director-b', 'director', { companyIds: [COMPANY_B] });
+
+    expect(visibleTemplates({ user: director, companyId: COMPANY_A }, [tpl(), other])).toHaveLength(1);
+    expect(visibleTemplates({ user: directorB, companyId: COMPANY_B }, [tpl()])).toEqual([]);
+    expect(canEditTemplate({ user: directorB, companyId: COMPANY_B }, tpl())).toBe(false);
+    // Даже администратор видит шаблон только в той компании, где работает сейчас.
+    expect(visibleTemplates({ user: admin, companyId: COMPANY_B }, [tpl()])).toEqual([]);
+  });
+
+  it('работник видит шаблоны только своих разделов и удалённых не видит', () => {
+    const legal = tpl({ id: 'custom-2', sectionId: 'legal' });
+    const gone = tpl({ id: 'custom-3', deletedAt: '2026-09-25T00:00:00.000Z' });
+    expect(
+      visibleTemplates({ user: employee, companyId: COMPANY_A }, [tpl(), legal, gone]).map((t) => t.id),
+    ).toEqual(['custom-1']);
+  });
+
+  it('правит автор, директор и администратор; работник без доступа – нет', () => {
+    const own = tpl({ authorId: author.id });
+    expect(canEditTemplate({ user: author, companyId: COMPANY_A }, own)).toBe(true);
+    expect(canEditTemplate({ user: author, companyId: COMPANY_A }, tpl())).toBe(false);
+    expect(canEditTemplate({ user: director, companyId: COMPANY_A }, own)).toBe(true);
+    expect(canEditTemplate({ user: employee, companyId: COMPANY_A }, own)).toBe(false);
   });
 });

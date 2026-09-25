@@ -25,7 +25,7 @@ import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { Field } from '@/components/fields/Field';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { lang, t } from '@/i18n';
-import { tc } from '@/i18n/content';
+import { documentTitle, tc } from '@/i18n/content';
 import { DocumentNumberTakenError } from '@/store/documentNumber';
 import { useSession } from '@/store/session';
 import { translateJobTitle } from '@/utils/jobTitles';
@@ -45,13 +45,19 @@ export default function DocumentFormPage() {
   const { templateId } = useParams<{ templateId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { company, employees, saveDocument, findDocument, numberTaken } = useSession();
-
-  const template = templateId === undefined ? undefined : findTemplate(templateId);
+  const { company, employees, saveDocument, findDocument, numberTaken, findCompanyTemplate } =
+    useSession();
 
   // Правим существующую запись, если её идентификатор пришёл в адресе.
   const editingId = params.get('doc');
   const existing = editingId === null ? undefined : findDocument(editingId);
+
+  // Шаблон каталога или шаблон компании из конструктора; у выпущенного
+  // документа по шаблону компании – его снимок.
+  const template =
+    templateId === undefined
+      ? undefined
+      : (findTemplate(templateId) ?? findCompanyTemplate(templateId, existing));
 
   const [values, setValues] = useState<Record<string, string>>(() =>
     existing === undefined ? initialValues(template?.fields ?? [], company) : existing.values,
@@ -100,6 +106,7 @@ export default function DocumentFormPage() {
       templateId: template.id,
       sectionId: template.sectionId,
       title: template.title,
+      ...(template.titleEn === undefined ? {} : { titleEn: template.titleEn }),
       number: current.number,
       description: current.description,
       subject: current.subject,
@@ -268,6 +275,7 @@ export default function DocumentFormPage() {
         templateId: doc.id,
         sectionId: doc.sectionId,
         title: doc.title,
+        ...(doc.titleEn === undefined ? {} : { titleEn: doc.titleEn }),
         number,
         description,
         subject,
@@ -307,7 +315,7 @@ export default function DocumentFormPage() {
     <div className={styles.page}>
       <PageHeader
         eyebrow={`${path} · ${t.form.series} ${lang === 'en' ? transliterate(doc.series) : doc.series}`}
-        title={tc(doc.title)}
+        title={documentTitle(doc)}
         subtitle={tc(doc.purpose)}
         actions={
           <Link className={styles.backLink} to="/create">
@@ -434,6 +442,11 @@ export default function DocumentFormPage() {
             <div className={styles.legalNotice} role="note">
               <div className={styles.legalTitle}>{t.form.genericTitle}</div>
               <p className={styles.legalBody}>{t.form.genericBody}</p>
+            </div>
+          ) : doc.custom === true ? (
+            <div className={styles.legalNotice} role="note">
+              <div className={styles.legalTitle}>{t.templates.previewTitle}</div>
+              <p className={styles.legalBody}>{t.templates.previewBody}</p>
             </div>
           ) : doc.reviewed ? null : (
             <div className={styles.legalNotice}>

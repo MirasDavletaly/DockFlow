@@ -10,7 +10,7 @@
  * слово в колонке «Откуда» (`utils/xlsx.ts`).
  */
 import { t } from '@/i18n';
-import { tc } from '@/i18n/content';
+import { documentTitle } from '@/i18n/content';
 import { documentSubject, personName } from '@/i18n/person';
 import { formatShortDate } from '@/utils/format';
 import { XLSX_TYPE, buildXlsx } from '@/utils/xlsx';
@@ -33,7 +33,7 @@ export function registryRows(rows: RegistryRow[]): string[][] {
       ? [
           String(index + 1),
           row.doc.number ?? t.registry.noNumber,
-          tc(row.doc.title),
+          documentTitle(row.doc),
           documentSubject(row.doc),
           row.doc.description,
           formatShortDate(row.doc.createdAt),

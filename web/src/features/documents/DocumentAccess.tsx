@@ -8,7 +8,8 @@
  */
 import { canGrantDocument, canReceiveGrant, grantOf } from '@/access/policy';
 import { t } from '@/i18n';
-import { personName, positionName } from '@/i18n/person';
+import { personName } from '@/i18n/person';
+import { positionName } from '@/i18n/position';
 import { useSession } from '@/store/session';
 
 import styles from './DocumentAccess.module.css';

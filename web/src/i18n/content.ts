@@ -18,3 +18,13 @@ export function tc(ru: string): string {
   if (lang === 'ru') return ru;
   return contentEn[ru] ?? ru;
 }
+
+/**
+ * Название документа или шаблона на языке интерфейса. У шаблона из
+ * конструктора английское название вписывает автор («Тест день 3»), у
+ * документов каталога оно берётся из таблицы переводов.
+ */
+export function documentTitle(doc: { title: string; titleEn?: string }): string {
+  if (lang === 'en' && doc.titleEn !== undefined && doc.titleEn.trim() !== '') return doc.titleEn;
+  return tc(doc.title);
+}

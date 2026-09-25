@@ -26,7 +26,7 @@ import { SheetViewport } from '@/components/DocumentSheet/SheetViewport';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
-import { tc } from '@/i18n/content';
+import { documentTitle } from '@/i18n/content';
 import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { formatDateTime } from '@/utils/format';
@@ -40,14 +40,24 @@ export default function DocumentPage() {
   const { documentId } = useParams<{ documentId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { findDocument, company, user, deleteDocument, restoreDocument, purgeDocument } =
-    useSession();
+  const {
+    findDocument,
+    findCompanyTemplate,
+    company,
+    user,
+    deleteDocument,
+    restoreDocument,
+    purgeDocument,
+  } = useSession();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfFailed, setPdfFailed] = useState(false);
 
   const record = documentId === undefined ? undefined : findDocument(documentId);
-  const template = record === undefined ? undefined : findTemplate(record.templateId);
+  const template =
+    record === undefined
+      ? undefined
+      : (findTemplate(record.templateId) ?? findCompanyTemplate(record.templateId, record));
 
   if (record === undefined || template === undefined || company === null) {
     return (
@@ -73,7 +83,7 @@ export default function DocumentPage() {
     setPdfBusy(true);
     setPdfFailed(false);
     try {
-      const title = tc(record.title);
+      const title = documentTitle(record);
       await exportPdf(root, pdfFileName(title, record.number), title);
     } catch {
       setPdfFailed(true);
@@ -194,7 +204,7 @@ export default function DocumentPage() {
             </div>
           ) : null}
 
-          <h1 className={styles.title}>{tc(record.title)}</h1>
+          <h1 className={styles.title}>{documentTitle(record)}</h1>
 
           <dl className={styles.meta}>
             <div className={styles.metaRow}>

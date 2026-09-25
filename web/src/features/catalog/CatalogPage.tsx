@@ -8,24 +8,25 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-import { canUseSection } from '@/access/policy';
+import { canCreateTemplate, canEditTemplate, canUseSection } from '@/access/policy';
 import { useLanguage } from '@/app/App';
 import { sections } from '@/api/mock/sections';
 import { catalogEntries, findTemplate } from '@/api/mock/templates';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
-import { tc } from '@/i18n/content';
+import { documentTitle, tc } from '@/i18n/content';
 import { useSession } from '@/store/session';
 
 import styles from './CatalogPage.module.css';
 
-import type { CatalogEntry } from '@/api/types';
+import type { CatalogEntry, CustomTemplate } from '@/api/types';
 
 export default function CatalogPage() {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const { user } = useSession();
+  const { user, company, templates } = useSession();
   const { lang } = useLanguage();
+  const subject = { user, companyId: company?.id ?? null };
 
   const activeSection = params.get('section');
 
@@ -39,11 +40,29 @@ export default function CatalogPage() {
     [user],
   );
 
+  // Шаблоны компании из конструктора («Тест день 3») стоят в каталоге рядом
+  // с присланными, в своём разделе, и помечены как шаблоны компании.
+  const custom = useMemo(
+    () => new Map<string, CustomTemplate>(templates.map((tpl) => [tpl.id, tpl])),
+    [templates],
+  );
+  const canCreate = allowed.some((section) => canCreateTemplate(subject, section.id));
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const allowedIds = new Set(allowed.map((s) => s.id));
+    const entries: CatalogEntry[] = [
+      ...catalogEntries,
+      ...templates.map<CatalogEntry>((tpl) => ({
+        id: tpl.id,
+        title: tpl.title,
+        sectionId: tpl.sectionId,
+        subsectionId: tpl.subsectionId,
+        state: 'ready',
+      })),
+    ];
 
-    return catalogEntries.filter((entry) => {
+    return entries.filter((entry) => {
       if (!allowedIds.has(entry.sectionId)) return false;
       if (activeSection !== null && entry.sectionId !== activeSection) return false;
       if (needle === '') return true;
@@ -51,15 +70,15 @@ export default function CatalogPage() {
       // по бумаге, а видят его сейчас переведённым.
       return (
         entry.title.toLowerCase().includes(needle) ||
-        tc(entry.title).toLowerCase().includes(needle)
+        titleOf(entry, custom).toLowerCase().includes(needle)
       );
     });
-  }, [activeSection, allowed, query]);
+  }, [activeSection, allowed, query, templates, custom]);
 
   /** Группируем по разделу и подразделу — так же, как документы лежат в деле. */
   // Язык в зависимостях: заголовки групп переводятся здесь, а экран при
   // смене языка не пересоздаётся, только перерисовывается.
-  const grouped = useMemo(() => groupEntries(visible), [visible, lang]);
+  const grouped = useMemo(() => groupEntries(visible, custom), [visible, custom, lang]);
 
   function selectSection(sectionId: string | null) {
     if (sectionId === null) {
@@ -77,16 +96,23 @@ export default function CatalogPage() {
       <PageHeader
         title={t.catalog.title}
         actions={
-          <label className={styles.searchWrap}>
-            <input
-              className={styles.search}
-              type="search"
-              value={query}
-              placeholder={t.catalog.search}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={t.catalog.search}
-            />
-          </label>
+          <div className={styles.headerActions}>
+            <label className={styles.searchWrap}>
+              <input
+                className={styles.search}
+                type="search"
+                value={query}
+                placeholder={t.catalog.search}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label={t.catalog.search}
+              />
+            </label>
+            {canCreate ? (
+              <Link className={styles.newTemplate} to="/templates/new">
+                {t.templates.create}
+              </Link>
+            ) : null}
+          </div>
         }
       />
 
@@ -144,12 +170,17 @@ export default function CatalogPage() {
                 </h2>
 
                 <ul className={styles.list}>
-                  {group.entries.map((entry) =>
-                    entry.state === 'ready' ? (
-                      <li key={entry.id}>
+                  {group.entries.map((entry) => {
+                    const own = custom.get(entry.id);
+                    return entry.state === 'ready' ? (
+                      <li key={entry.id} className={own === undefined ? undefined : styles.ownRow}>
                         <Link className={styles.item} to={`/create/${entry.id}`}>
-                          <span className={styles.itemTitle}>{tc(entry.title)}</span>
-                          {findTemplate(entry.id)?.generic === true ? (
+                          <span className={styles.itemTitle}>{titleOf(entry, custom)}</span>
+                          {own !== undefined ? (
+                            <span className={styles.genericMark} title={t.templates.previewBody}>
+                              {t.templates.catalogMark}
+                            </span>
+                          ) : findTemplate(entry.id)?.generic === true ? (
                             <span className={styles.genericMark} title={t.form.genericBody}>
                               {t.catalog.generic}
                             </span>
@@ -158,6 +189,11 @@ export default function CatalogPage() {
                             →
                           </span>
                         </Link>
+                        {own !== undefined && canEditTemplate(subject, own) ? (
+                          <Link className={styles.editTemplate} to={`/templates/${own.id}`}>
+                            {t.templates.edit}
+                          </Link>
+                        ) : null}
                       </li>
                     ) : (
                       <li key={entry.id}>
@@ -166,8 +202,8 @@ export default function CatalogPage() {
                           <span className={styles.soonMark}>{t.catalog.soon}</span>
                         </div>
                       </li>
-                    ),
-                  )}
+                    );
+                  })}
                 </ul>
               </section>
             ))}
@@ -185,7 +221,13 @@ interface Group {
   entries: CatalogEntry[];
 }
 
-function groupEntries(entries: CatalogEntry[]): Group[] {
+/** Название строки каталога: у шаблона компании – его английское, если вписано. */
+function titleOf(entry: CatalogEntry, custom: Map<string, CustomTemplate>): string {
+  const own = custom.get(entry.id);
+  return own === undefined ? tc(entry.title) : documentTitle(own);
+}
+
+function groupEntries(entries: CatalogEntry[], custom: Map<string, CustomTemplate>): Group[] {
   const groups = new Map<string, Group>();
 
   for (const entry of entries) {
@@ -211,7 +253,7 @@ function groupEntries(entries: CatalogEntry[]): Group[] {
   for (const group of groups.values()) {
     group.entries.sort((a, b) => {
       if (a.state !== b.state) return a.state === 'ready' ? -1 : 1;
-      return tc(a.title).localeCompare(tc(b.title), 'ru');
+      return titleOf(a, custom).localeCompare(titleOf(b, custom), 'ru');
     });
   }
 

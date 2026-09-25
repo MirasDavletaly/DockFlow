@@ -15,6 +15,9 @@ export const en: Dictionary = {
   app: {
     name: 'DocFlow',
     tagline: 'Documents of the group',
+    storageFullTitle: 'Changes are not saved: the browser storage is full',
+    storageFullBody:
+      'Everything done after this message is lost when the page reloads. Free some space: delete unneeded documents for good in the admin panel bin, remove uploaded logos or profile photos. The message disappears as soon as saving works again.',
   },
 
   auth: {

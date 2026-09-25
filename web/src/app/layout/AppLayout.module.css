@@ -273,6 +273,25 @@
   min-width: 0;
 }
 
+/* Хранилище браузера заполнено: предупреждение над любым экраном. */
+.storageFull {
+  padding: var(--space-5) var(--space-9);
+  background: var(--state-rejected-soft);
+  border-bottom: 1px solid var(--state-rejected);
+}
+
+.storageFullTitle {
+  font-weight: 600;
+  color: var(--state-rejected);
+}
+
+.storageFullBody {
+  margin-top: var(--space-2);
+  max-width: 90ch;
+  font-size: var(--text-sm);
+  color: var(--ink-700);
+}
+
 /* На узком экране панель уезжает наверх и сворачивается в строку разделов.
    Полноценной мобильной работы здесь не предполагается: документы заполняют
    за столом, но открыть и распечатать с планшета должно быть можно. */

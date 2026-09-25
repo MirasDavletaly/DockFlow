@@ -5,18 +5,24 @@
  * свой, и запись, сохранённая прежней версией сайта, читается без «undefined»
  * на экране и без состояний, которых больше нет.
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   employeesOf,
   findEmployeeIn,
+  internImage,
   isFirstRun,
   loadDb,
   migrateAllowList,
+  pruneImages,
   reloadDb,
   resetDb,
+  resolveImage,
+  storageFailing,
   updateDb,
 } from './db';
+
+import type { Company } from '@/api/types';
 
 beforeEach(() => {
   localStorage.clear();
@@ -198,6 +204,72 @@ describe('русское написание имён в справочнике (
     expect(loadDb().documents[0]?.peopleSnapshot?.['e-1']?.fullName).toBe(
       'Оспанов Нұрлан Ерболатович',
     );
+  });
+});
+
+describe('картинки в снимках хранятся один раз (оценка 25.09)', () => {
+  const logo = `data:image/png;base64,${'A'.repeat(50_000)}`;
+
+  it('логотип в снимке – ссылка на общее хранилище, копия одна на все документы', () => {
+    updateDb((db) => {
+      let next = db;
+      for (const id of ['d-1', 'd-2', 'd-3']) {
+        const [withImage, ref] = internImage(next, logo);
+        next = {
+          ...withImage,
+          documents: [
+            ...withImage.documents,
+            { id, templateId: 'hr-hire-order', companyId: 'c-a', title: 'Приказ', description: '', subject: '', status: 'saved', number: null, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', values: {}, authorId: '', authorName: '', companySnapshot: { ...(db.companies[0] as Company), logo: ref } },
+          ],
+        };
+      }
+      return next;
+    });
+
+    const raw = localStorage.getItem('docflow.local.db') ?? '';
+    expect(raw.split(logo).length - 1).toBe(1);
+    expect(resolveImage(loadDb().documents[0]?.companySnapshot?.logo)).toBe(logo);
+  });
+
+  it('база прежней версии: логотипы из снимков переезжают в общее хранилище', () => {
+    const before = loadDb();
+    const company = { ...(before.companies[0] as Company), logo };
+    localStorage.setItem(
+      'docflow.local.db',
+      JSON.stringify({
+        ...before,
+        documents: ['d-1', 'd-2'].map((id) => ({
+          id, templateId: 'hr-hire-order', companyId: company.id, title: 'Приказ', status: 'saved', createdAt: '2026-01-01T00:00:00.000Z', values: {}, companySnapshot: company,
+        })),
+      }),
+    );
+    reloadDb();
+
+    const db = loadDb();
+    expect(Object.keys(db.images)).toHaveLength(1);
+    expect(db.documents[0]?.companySnapshot?.logo).toMatch(/^image:/u);
+    expect(resolveImage(db.documents[1]?.companySnapshot?.logo)).toBe(logo);
+  });
+});
+
+describe('неиспользуемые картинки', () => {
+  it('убираются, когда на них больше не ссылается ни один снимок', () => {
+    const [withImage] = internImage(loadDb(), 'data:image/png;base64,QQ==');
+    expect(Object.keys(pruneImages(withImage).images)).toEqual([]);
+  });
+});
+
+describe('хранилище браузера заполнено (оценка 25.09)', () => {
+  it('сбой записи не глотается молча, а виден; следующая удачная запись его снимает', () => {
+    const quota = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('переполнено', 'QuotaExceededError');
+    });
+    updateDb((db) => ({ ...db, audit: [] }));
+    expect(storageFailing()).toBe(true);
+
+    quota.mockRestore();
+    updateDb((db) => ({ ...db, audit: [] }));
+    expect(storageFailing()).toBe(false);
   });
 });
 

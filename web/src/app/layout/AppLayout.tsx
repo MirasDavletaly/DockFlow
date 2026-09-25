@@ -4,6 +4,7 @@
  * Боковая панель тёмная и плотная — она не должна спорить с листом за
  * внимание. Всё светлое пространство справа принадлежит документу.
  */
+import { useSyncExternalStore } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { can, canUseSection, isPlatformWide } from '@/access/policy';
@@ -13,6 +14,7 @@ import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { personName } from '@/i18n/person';
+import { storageFailing, subscribeDb } from '@/store/db';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 
@@ -23,6 +25,9 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
+  // Запись в хранилище браузера не прошла: всё, что сделано после этого,
+  // пропадёт при перезагрузке. Человек должен узнать об этом сразу.
+  const storageFull = useSyncExternalStore(subscribeDb, storageFailing);
 
   if (company === null || user === null) return null;
 
@@ -171,6 +176,12 @@ export function AppLayout() {
       </nav>
 
       <div className={styles.work}>
+        {storageFull ? (
+          <div className={styles.storageFull} role="alert">
+            <div className={styles.storageFullTitle}>{t.app.storageFullTitle}</div>
+            <p className={styles.storageFullBody}>{t.app.storageFullBody}</p>
+          </div>
+        ) : null}
         <Outlet />
       </div>
     </div>

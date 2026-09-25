@@ -53,9 +53,12 @@ import {
   employeesOf,
   findCompanyIn,
   findEmployeeIn,
+  internImage,
   loadDb,
   newId,
+  pruneImages,
   publicUser,
+  resolveImage,
   subscribeDb,
   updateDb,
 } from '@/store/db';
@@ -562,11 +565,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         ...(existing?.grants === undefined ? {} : { grants: existing.grants }),
       };
 
-      updateDb((cur) => {
+      updateDb((current) => {
+        // Логотип из снимка – в общее хранилище картинок, в снимке – ссылка:
+        // иначе каждый документ нёс бы свою копию картинки (`Database.images`).
+        const logo = record.companySnapshot?.logo;
+        const [cur, logoRef] =
+          logo === undefined ? [current, undefined] : internImage(current, logo);
+        const stored: DocumentRecord =
+          record.companySnapshot === undefined || logoRef === undefined
+            ? record
+            : { ...record, companySnapshot: { ...record.companySnapshot, logo: logoRef } };
+
         const documents =
           existing === undefined
-            ? [record, ...cur.documents]
-            : cur.documents.map((d) => (d.id === record.id ? record : d));
+            ? [stored, ...cur.documents]
+            : cur.documents.map((d) => (d.id === stored.id ? stored : d));
 
         // Черновик пишется при каждом нажатии клавиши — в журнал попадает
         // только создание и сохранение, иначе журнал станет нечитаемым.
@@ -667,7 +680,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (target === undefined || !canPurgeDocument(subject, target)) return cur;
 
         return appendAudit(
-          { ...cur, documents: cur.documents.filter((d) => d.id !== id) },
+          pruneImages({ ...cur, documents: cur.documents.filter((d) => d.id !== id) }),
           {
             userId: user?.id ?? '',
             userName: user?.displayName ?? '',
@@ -1397,7 +1410,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (found === undefined) return undefined;
         // Удалённый документ открывается из корзины админ-панели: политика
         // пустит к нему только того, кто может его вернуть.
-        return visibleDocuments(subject, [found], { withDeleted: true })[0];
+        const visible = visibleDocuments(subject, [found], { withDeleted: true })[0];
+        const snapshot = visible?.companySnapshot;
+        if (visible === undefined || snapshot?.logo === undefined) return visible;
+        // В снимке – ссылка на картинку в общем хранилище; лист получает саму картинку.
+        const logo = resolveImage(snapshot.logo);
+        const { logo: _ref, ...rest } = snapshot;
+        return { ...visible, companySnapshot: logo === undefined ? rest : { ...rest, logo } };
       },
       updateProfile,
       changePassword,

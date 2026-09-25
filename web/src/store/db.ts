@@ -63,6 +63,16 @@ export interface Database {
   archive: ArchiveFile[];
   /** Шаблоны из конструктора («Тест день 3»): у каждого своя компания. */
   templates: CustomTemplate[];
+  /**
+   * Картинки из снимков документов, по одной копии на картинку.
+   *
+   * Загруженный логотип компании – строка data:URL до ~700 тысяч знаков, и
+   * снимок реквизитов копировал его в каждый сохранённый документ. Хранилище
+   * браузера вмещает около пяти миллионов знаков: на седьмом-восьмом
+   * документе запись переставала проходить (оценка 25.09). Теперь в снимке
+   * ссылка «image:…», а сама картинка лежит здесь один раз.
+   */
+  images: Record<string, string>;
   audit: AuditEntry[];
   settings: PlatformSettings;
 }
@@ -92,6 +102,7 @@ function seed(): Database {
     documents: [],
     archive: [],
     templates: [],
+    images: {},
     audit: [],
     settings: { adminIpAllowList: [] },
   };
@@ -158,14 +169,75 @@ function migrate(raw: Partial<Database>): Database {
     documents,
     archive: raw.archive ?? [],
     templates: raw.templates ?? [],
+    images: raw.images ?? {},
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: migrateAllowList(raw.settings?.adminIpAllowList) },
   };
 
-  return REMOVED_COMPANY_IDS.reduce(
+  const withoutRemoved = REMOVED_COMPANY_IDS.reduce(
     (db, id) => (db.companies.some((c) => c.id === id) ? dropCompany(db, id, '') : db),
     migrated,
   );
+  return internSnapshotImages(withoutRemoved);
+}
+
+/**
+ * Логотипы, которые прежняя версия сайта копировала в снимок каждого
+ * документа, переезжают в общее хранилище картинок: база сжимается сразу,
+ * при первом чтении.
+ */
+function internSnapshotImages(db: Database): Database {
+  let next = db;
+  const documents = db.documents.map((doc) => {
+    const logo = doc.companySnapshot?.logo;
+    if (doc.companySnapshot === undefined || logo === undefined || !logo.startsWith('data:')) return doc;
+    const [withImage, ref] = internImage(next, logo);
+    next = withImage;
+    return { ...doc, companySnapshot: { ...doc.companySnapshot, logo: ref } };
+  });
+  return next === db ? db : { ...next, documents };
+}
+
+/** Короткая сумма строки (cyrb53): ключ картинки в хранилище. */
+function hashOf(text: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+const IMAGE_REF = 'image:';
+
+/**
+ * Кладёт картинку в общее хранилище и отдаёт ссылку на неё. Та же картинка
+ * второй раз не копируется. Не data:URL (логотип из сборки сайта – обычный
+ * адрес файла) остаётся как есть.
+ */
+export function internImage(db: Database, image: string): [Database, string] {
+  if (!image.startsWith('data:')) return [db, image];
+  // Длина в ключе – вторая защита от совпадения сумм у разных картинок.
+  const ref = `${IMAGE_REF}${hashOf(image)}.${image.length.toString(36)}`;
+  if (db.images[ref] === image) return [db, ref];
+  return [{ ...db, images: { ...db.images, [ref]: image } }, ref];
+}
+
+/** Картинка по ссылке из снимка; обычный адрес и data:URL – как есть. */
+export function resolveImage(ref: string | undefined): string | undefined {
+  if (ref === undefined || !ref.startsWith(IMAGE_REF)) return ref;
+  return loadDb().images[ref];
+}
+
+/** Убирает картинки, на которые больше не ссылается ни один снимок. */
+export function pruneImages(db: Database): Database {
+  const used = new Set(db.documents.map((d) => d.companySnapshot?.logo).filter((l) => l !== undefined));
+  const kept = Object.fromEntries(Object.entries(db.images).filter(([ref]) => used.has(ref)));
+  return Object.keys(kept).length === Object.keys(db.images).length ? db : { ...db, images: kept };
 }
 
 /**
@@ -264,12 +336,28 @@ function withSeedDefaults(company: Company, seeded: Company[]): Company {
   return changed ? { ...company, ...missing } : company;
 }
 
+/** Последняя запись в хранилище браузера не прошла. */
+let failing = false;
+
+/**
+ * Не прошла ли последняя запись («хранилище заполнено»).
+ *
+ * Раньше сбой глотался молча: сайт продолжал работать в памяти, человек
+ * видел «сохранено», а после перезагрузки всё сделанное пропадало. Теперь
+ * боковая панель показывает предупреждение, пока запись снова не пройдёт.
+ */
+export function storageFailing(): boolean {
+  return failing;
+}
+
 export function saveDb(next: Database): void {
   cache = next;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    failing = false;
   } catch {
-    // Не сохранилось — работаем в памяти до перезагрузки.
+    // Не сохранилось: работаем в памяти до перезагрузки и говорим об этом.
+    failing = true;
   }
   for (const listener of listeners) listener();
 }
@@ -350,7 +438,11 @@ export function findCompanyIn(id: string): Company | undefined {
   return loadDb().companies.find((c) => c.id === id);
 }
 
-/** Пишет строку в журнал действий. Журнал не редактируется и не чистится. */
+/**
+ * Пишет строку в журнал действий. Журнал не редактируется; в браузере
+ * хранятся последние 500 записей, чтобы не переполнить хранилище. Полный
+ * журнал без удаления – на сервере (CLAUDE.md, п. 3.4).
+ */
 export function appendAudit(db: Database, entry: Omit<AuditEntry, 'id' | 'at'>): Database {
   return {
     ...db,

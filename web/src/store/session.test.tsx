@@ -471,3 +471,37 @@ describe('шаблоны из конструктора («Тест день 3»)
     expect(session.templates).toEqual([]);
   });
 });
+
+describe('снимок реквизитов с загруженным логотипом (оценка 25.09)', () => {
+  it('документы хранят одну копию логотипа, а открытый документ получает сам логотип', () => {
+    const logo = `data:image/png;base64,${'B'.repeat(40_000)}`;
+    updateDb((db) => ({
+      ...db,
+      companies: db.companies.map((c) => (c.id === A ? { ...c, logo } : c)),
+    }));
+    signInAs('director-a', A);
+
+    const ids: string[] = [];
+    act(() => {
+      for (const number of ['1', '2', '3']) {
+        ids.push(
+          session.saveDocument({
+            templateId: 'hr-hire-order',
+            sectionId: 'hr',
+            title: 'Приказ о приёме на работу',
+            number,
+            description: '',
+            subject: '',
+            values: {},
+            status: 'saved',
+          }).id,
+        );
+      }
+    });
+
+    const raw = localStorage.getItem('docflow.local.db') ?? '';
+    // Одна копия в хранилище картинок и одна в карточке компании.
+    expect(raw.split(logo).length - 1).toBe(2);
+    expect(session.findDocument(ids[0] ?? '')?.companySnapshot?.logo).toBe(logo);
+  });
+});

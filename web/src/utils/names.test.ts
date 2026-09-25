@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { englishName, kazakhDative, transliterate } from './names';
+import { englishName, kazakhDative, russianLetters, transliterate } from './names';
 
 describe('имя латиницей', () => {
   it.each([
@@ -34,5 +34,30 @@ describe('казахский дательный падеж', () => {
     ['Асхат', 'Асхатқа'],
   ])('«%s» – «%s»', (name, dative) => {
     expect(kazakhDative(name)).toBe(dative);
+  });
+});
+
+describe('казахское имя по-русски («Нұрлан» – «Нурлан», «Тест день 3»)', () => {
+  it.each([
+    ['Нұрлан', 'Нурлан'],
+    ['Оспанов Нұрлан Ерболатович', 'Оспанов Нурлан Ерболатович'],
+    ['Жақсылықова Динара Талғатқызы', 'Жаксылыкова Динара Талгаткызы'],
+    ['Сулейменова Айгерим Бақытқызы', 'Сулейменова Айгерим Бакыткызы'],
+    ['Әлібек Өмірзақ Үсенұлы', 'Алибек Омирзак Усенулы'],
+    ['Ақжол Жаңабай', 'Акжол Жанабай'],
+    ['ҺӘҒҚҢӨҰҮІ', 'ХАГКНОУУИ'],
+  ])('«%s» – «%s»', (kk, ru) => {
+    expect(russianLetters(kk)).toBe(ru);
+  });
+
+  it('русское имя не меняется', () => {
+    expect(russianLetters('Ахметов Асхат Каирович')).toBe('Ахметов Асхат Каирович');
+    expect(russianLetters('Miras')).toBe('Miras');
+  });
+
+  it('латиницей имя выходит тем же, что и из казахского написания', () => {
+    expect(englishName(russianLetters('Оспанов Нұрлан Ерболатович'))).toBe(
+      englishName('Оспанов Нұрлан Ерболатович'),
+    );
   });
 });

@@ -52,6 +52,7 @@ import {
 import { DocumentNumberTakenError, findNumberHolder } from '@/store/documentNumber';
 import { getFile, putFile } from '@/store/files';
 import { hashPassword, verifyPassword } from '@/store/password';
+import { withRussianSpelling } from '@/utils/names';
 import { MAX_PDF_BYTES, isPdf, readBytes, sha256Hex } from '@/utils/pdf';
 
 import type {
@@ -1031,8 +1032,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const saveEmployee = useCallback<SessionValue['saveEmployee']>(
-    (employee) => {
-      if (!managesCompany(employee.companyId)) return;
+    (input) => {
+      if (!managesCompany(input.companyId)) return;
+      // Правило одно для всех путей записи: русское ФИО – русскими буквами,
+      // казахское – в своём поле (docs/translation-rules.md).
+      const employee = withRussianSpelling(input);
 
       updateDb((cur) => {
         const existing = cur.employees.find((e) => e.id === employee.id);

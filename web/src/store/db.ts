@@ -17,6 +17,7 @@
  */
 import { companies as seedCompanies } from '@/api/mock/companies';
 import { employees as seedEmployees } from '@/api/mock/directory';
+import { withRussianSpelling } from '@/utils/names';
 
 import type {
   AllowedAddress,
@@ -146,7 +147,9 @@ function migrate(raw: Partial<Database>): Database {
       raw.companies !== undefined && raw.companies.length > 0
         ? raw.companies.map((company) => withSeedDefaults(company, base.companies))
         : base.companies,
-    employees: raw.employees ?? base.employees,
+    // Русское ФИО – без казахских букв, казахское – в своём поле («Тест
+    // день 3»). Выпущенные документы от этого не меняются: у них снимок.
+    employees: (raw.employees ?? base.employees).map(withRussianSpelling),
     users: raw.users ?? [],
     documents,
     archive: raw.archive ?? [],

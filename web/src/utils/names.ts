@@ -38,6 +38,54 @@ export function transliterate(text: string): string {
   return out;
 }
 
+/**
+ * Казахские буквы в русском написании – их русские пары («Тест день 3»:
+ * «Нұрлан на русский должен переводиться как Нурлан»). Казахское написание
+ * при этом не теряется: оно лежит в своём поле карточки.
+ */
+const RUSSIAN: Record<string, string> = {
+  ә: 'а', ғ: 'г', қ: 'к', ң: 'н', ө: 'о', ұ: 'у', ү: 'у', һ: 'х', і: 'и',
+  Ә: 'А', Ғ: 'Г', Қ: 'К', Ң: 'Н', Ө: 'О', Ұ: 'У', Ү: 'У', Һ: 'Х', І: 'И',
+};
+
+const KAZAKH_LETTERS = /[әғқңөұүһіӘҒҚҢӨҰҮҺІ]/u;
+
+/** Есть ли в тексте буквы, которых нет в русском алфавите. */
+export function hasKazakhLetters(text: string): boolean {
+  return KAZAKH_LETTERS.test(text);
+}
+
+/** «Оспанов Нұрлан» – «Оспанов Нурлан». Остальное не меняется. */
+export function russianLetters(text: string): string {
+  return hasKazakhLetters(text) ? text.replace(/[әғқңөұүһіӘҒҚҢӨҰҮҺІ]/gu, (c) => RUSSIAN[c] ?? c) : text;
+}
+
+interface Spelled {
+  fullName: string;
+  fullNameGenitive: string;
+  fullNameKk?: string;
+}
+
+/**
+ * Карточка по правилу «русское написание – русскими буквами».
+ *
+ * Имя, вписанное с казахскими буквами, переходит в казахское поле (если оно
+ * ещё пустое), а русское и родительный падеж получают русские пары букв.
+ * Вписанное руками казахское написание не затирается.
+ */
+export function withRussianSpelling<T extends Spelled>(person: T): T {
+  if (!hasKazakhLetters(person.fullName) && !hasKazakhLetters(person.fullNameGenitive)) {
+    return person;
+  }
+  const kk = person.fullNameKk === undefined || person.fullNameKk.trim() === '' ? person.fullName : person.fullNameKk;
+  return {
+    ...person,
+    fullName: russianLetters(person.fullName),
+    fullNameGenitive: russianLetters(person.fullNameGenitive),
+    fullNameKk: kk,
+  };
+}
+
 /** Отчество по окончанию: «-ович», «-овна», «-ұлы», «-қызы». */
 function isPatronymic(word: string): boolean {
   return /(вич|вна|ична|инична|ұлы|улы|қызы|кызы)$/iu.test(word);

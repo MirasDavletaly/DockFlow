@@ -43,10 +43,17 @@ import { cx } from '@/utils/cx';
 import { formatDateTime, formatShortDate } from '@/utils/format';
 import { isValidAddress } from '@/utils/ip';
 import { translateJobTitle } from '@/utils/jobTitles';
-import { englishName, kazakhDative } from '@/utils/names';
+import { englishName, kazakhDative, withRussianSpelling } from '@/utils/names';
 import { matchesQuery } from '@/utils/search';
 
 import styles from './AdminPage.module.css';
+import {
+  auditSearchFields,
+  companyNames,
+  companySearchFields,
+  employeeSearchFields,
+  userSearchFields,
+} from './searchFields';
 
 import type { Subject } from '@/access/policy';
 import type { Action, AllowedAddress, Company, EmployeeBrief, RoleId, User } from '@/api/types';
@@ -226,9 +233,7 @@ function NothingFound() {
 function CompaniesTab({ query }: TabProps) {
   const { companies, saveCompany, removeCompany } = useSession();
 
-  const found = companies.filter((c) =>
-    matchesQuery(query, [c.name, companyName(c), c.legalName, c.bin, c.directorName, companyDirector(c), c.city]),
-  );
+  const found = companies.filter((c) => matchesQuery(query, companySearchFields(c)));
 
   function addCompany() {
     const id = newId('c');
@@ -327,7 +332,7 @@ function UsersTab({ subject, query }: TabProps) {
   const [message, setMessage] = useState<string | null>(null);
 
   const adminCount = users.filter((u) => u.role === 'platform-admin').length;
-  const companyNames = (user: User) =>
+  const companiesOf = (user: User) =>
     user.role === 'platform-admin'
       ? t.common.all
       : companies
@@ -335,9 +340,7 @@ function UsersTab({ subject, query }: TabProps) {
           .map(companyName)
           .join(', ') || t.common.none;
 
-  const found = users.filter((u) =>
-    matchesQuery(query, [u.login, u.displayName, u.position, roleTitle(u.role), companyNames(u)]),
-  );
+  const found = users.filter((u) => matchesQuery(query, userSearchFields(u, companies)));
 
   // Список по ролям: администраторы, директора, работники («Тест день 2»).
   const groups = roles
@@ -410,7 +413,7 @@ function UsersTab({ subject, query }: TabProps) {
                         <span className={styles.badge}>{t.admin.userBlocked}</span>
                       ) : null}
                     </td>
-                    <td className={styles.muted}>{companyNames(user)}</td>
+                    <td className={styles.muted}>{companiesOf(user)}</td>
                     <td className={styles.muted}>{sectionNames(user, user.sectionIds)}</td>
                     <td className={styles.muted}>
                       {sectionNames(user, user.viewSectionIds ?? [])}
@@ -725,18 +728,7 @@ function PeopleTab({ subject, query }: TabProps) {
   // даже у администратора: смешать их значит подставить чужого человека
   // в приказ.
   const visible = allEmployees.filter(
-    (e) =>
-      e.companyId === companyId &&
-      matchesQuery(query, [
-        e.fullName,
-        e.fullNameGenitive,
-        e.fullNameKk,
-        e.fullNameEn,
-        e.position,
-        e.positionKk,
-        e.positionEn,
-        e.unit,
-      ]),
+    (e) => e.companyId === companyId && matchesQuery(query, employeeSearchFields(e)),
   );
 
   return (
@@ -799,7 +791,9 @@ function PeopleTab({ subject, query }: TabProps) {
                 className={styles.input}
                 value={draft.fullName}
                 onChange={(e) => setDraft(withTranslations(draft, { fullName: e.target.value }))}
+                onBlur={() => setDraft(withRussianSpelling(draft))}
               />
+              <span className={styles.fieldHint}>{t.admin.personRussianHint}</span>
             </label>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>{t.admin.personGenitive}</span>
@@ -807,6 +801,7 @@ function PeopleTab({ subject, query }: TabProps) {
                 className={styles.input}
                 value={draft.fullNameGenitive}
                 onChange={(e) => setDraft({ ...draft, fullNameGenitive: e.target.value })}
+                onBlur={() => setDraft(withRussianSpelling(draft))}
               />
               <span className={styles.fieldHint}>{t.admin.personGenitiveHint}</span>
             </label>
@@ -1045,7 +1040,9 @@ function DocumentsTab({ subject, query }: TabProps) {
     const found = companies.find((c) => c.id === id);
     return found === undefined ? id : companyName(found);
   };
-  const found = searchDocuments(allVisibleDocuments, query, (doc) => [nameOf(doc.companyId)]);
+  const found = searchDocuments(allVisibleDocuments, query, (doc) =>
+    companyNames(companies.find((c) => c.id === doc.companyId)),
+  );
 
   return (
     <section className={styles.section}>
@@ -1141,16 +1138,7 @@ function AuditTab({ query }: TabProps) {
   };
   const eventName = (event: string) => t.admin.events[event] ?? event;
 
-  const found = audit.filter((entry) =>
-    matchesQuery(query, [
-      formatDateTime(entry.at),
-      entry.userName,
-      nameOf(entry.companyId),
-      eventName(entry.event),
-      entry.target,
-      tc(entry.target),
-    ]),
-  );
+  const found = audit.filter((entry) => matchesQuery(query, auditSearchFields(entry, companies)));
 
   return (
     <section className={styles.section}>

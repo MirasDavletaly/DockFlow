@@ -161,6 +161,46 @@ describe('компания, убранная из группы («удали к�
   });
 });
 
+describe('русское написание имён в справочнике («Нұрлан» – «Нурлан»)', () => {
+  it('имя с казахскими буквами переходит в казахское поле, русское – русскими буквами', () => {
+    const before = loadDb();
+    const [first] = before.companies;
+    if (first === undefined) throw new Error('нет компаний');
+
+    localStorage.setItem(
+      'docflow.local.db',
+      JSON.stringify({
+        ...before,
+        employees: [
+          { id: 'e-1', companyId: first.id, fullName: 'Оспанов Нұрлан Ерболатович', fullNameGenitive: 'Оспанова Нұрлана Ерболатовича', position: '', unit: '' },
+          { id: 'e-2', companyId: first.id, fullName: 'Серіков Ержан', fullNameGenitive: 'Серікова Ержана', fullNameKk: 'Серіков Ержан Болатұлы', position: '', unit: '' },
+        ],
+        documents: [
+          {
+            id: 'd-1', templateId: 'hr-hire-order', companyId: first.id, title: 'Приказ', status: 'saved', createdAt: '2026-01-01T00:00:00.000Z', values: { employee: 'e-1' },
+            peopleSnapshot: { 'e-1': { id: 'e-1', companyId: first.id, fullName: 'Оспанов Нұрлан Ерболатович', fullNameGenitive: 'Оспанова Нұрлана Ерболатовича', position: '', unit: '' } },
+          },
+        ],
+      }),
+    );
+    reloadDb();
+
+    const [nurlan, erzhan] = loadDb().employees;
+    expect(nurlan?.fullName).toBe('Оспанов Нурлан Ерболатович');
+    expect(nurlan?.fullNameGenitive).toBe('Оспанова Нурлана Ерболатовича');
+    expect(nurlan?.fullNameKk).toBe('Оспанов Нұрлан Ерболатович');
+
+    // Казахское написание, вписанное руками, не затирается.
+    expect(erzhan?.fullName).toBe('Сериков Ержан');
+    expect(erzhan?.fullNameKk).toBe('Серіков Ержан Болатұлы');
+
+    // Выпущенный документ не переписывается (CLAUDE.md, п. 3.4).
+    expect(loadDb().documents[0]?.peopleSnapshot?.['e-1']?.fullName).toBe(
+      'Оспанов Нұрлан Ерболатович',
+    );
+  });
+});
+
 describe('журнал действий', () => {
   it('запись переживает перезагрузку страницы', () => {
     updateDb((db) => ({

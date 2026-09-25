@@ -133,6 +133,8 @@ export const en: Dictionary = {
     placeholderTitle: 'Sample details',
     placeholderBody:
       'The company is here as an example: its BIN is invented and fails the check. Its documents must not be signed.',
+    autoTranslateHint:
+      'The Kazakh and English name, city, address and director fill in by the translation rules. Whatever you correct by hand stays. Enter the genitive case yourself.',
     editAction: 'Edit details',
     saved: 'Details saved',
   },
@@ -444,6 +446,8 @@ export const en: Dictionary = {
     personUnitKk: 'Unit in Kazakh',
     personUnitEn: 'Unit in English',
     personNameRu: 'Full name in Russian',
+    personRussianHint:
+      'Kazakh letters in the Russian spelling are replaced with Russian ones: Нұрлан becomes Нурлан. The Kazakh spelling moves to its own field.',
     personAutoHint:
       'The name in Latin script and in Kazakh, the position and the unit in Kazakh and English are filled in automatically. Check and correct them if needed.',
 

@@ -18,6 +18,7 @@ import { companyBasis, companyDirector, companyDirectorTitle } from '@/i18n/comp
 import { tc } from '@/i18n/content';
 import { englishAddress } from '@/utils/address';
 import { useSession } from '@/store/session';
+import { withCompanyTranslations } from '@/utils/companyTranslations';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
 
@@ -210,7 +211,9 @@ interface EditProps {
  * приходят выписками и правятся в админ-панели целиком, а не по буквам.
  */
 function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
-  const set = (patch: Partial<Company>) => onChange({ ...draft, ...patch });
+  // Казахские и английские реквизиты заполняются сами по правилам
+  // (docs/translation-rules.md); поправленное руками не затирается.
+  const set = (patch: Partial<Company>) => onChange(withCompanyTranslations(draft, patch));
   const fileInput = useRef<HTMLInputElement>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
 
@@ -296,6 +299,8 @@ function EditView({ draft, onChange, onCancel, onSave }: EditProps) {
           />
         </div>
       </div>
+
+      <p className={styles.fieldHint}>{t.company.autoTranslateHint}</p>
 
       <div className={styles.formGrid}>
         <Text label={t.company.shortName} value={draft.name} onChange={(v) => set({ name: v })} />

@@ -288,7 +288,12 @@
 
 /* ── Правая половина: лист ────────────────────────────────────────────── */
 
+/* Лист остаётся на виду, пока человек пишет текст внизу левой колонки. */
 .sheetColumn {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100vh;
   min-width: 0;
   padding: var(--space-8) var(--space-9) var(--space-11);
   background: var(--surface);
@@ -332,6 +337,11 @@
   .formColumn {
     border-right: none;
     border-bottom: 1px solid var(--line);
+  }
+
+  .sheetColumn {
+    position: static;
+    max-height: none;
   }
 
   .row,

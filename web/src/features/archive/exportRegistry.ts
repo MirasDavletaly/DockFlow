@@ -38,7 +38,7 @@ export function registryRows(rows: RegistryRow[]): string[][] {
           row.doc.description,
           formatShortDate(row.doc.createdAt),
           row.section,
-          t.archive.filterCreated,
+          t.archive.exportCreated,
           personName(row.doc.authorName),
         ]
       : [
@@ -49,7 +49,7 @@ export function registryRows(rows: RegistryRow[]): string[][] {
           row.file.description,
           formatShortDate(row.file.documentDate),
           row.section,
-          t.archive.filterUploaded,
+          t.archive.exportUploaded,
           personName(row.file.uploadedByName),
         ],
   );

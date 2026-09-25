@@ -284,6 +284,8 @@ export const en: Dictionary = {
     export: 'Export to Excel',
     exportHint: 'A table of the rows on screen now, with the search and filter applied.',
     exportFileName: 'Document register',
+    exportCreated: 'Created in the system',
+    exportUploaded: 'Uploaded as PDF',
     title: 'Archive',
     subtitle:
       'All saved documents of the company and old documents uploaded as PDF. Drafts are not here.',

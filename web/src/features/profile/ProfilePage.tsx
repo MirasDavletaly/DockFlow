@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
+import { personName } from '@/i18n/person';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
 
@@ -127,7 +128,7 @@ export default function ProfilePage() {
             <span className={styles.avatar}>
               {user.avatar === undefined ? (
                 <span className={styles.avatarLetters} aria-hidden="true">
-                  {initials(user.displayName)}
+                  {initials(personName(user.displayName))}
                 </span>
               ) : (
                 <img className={styles.avatarImage} src={user.avatar} alt="" />

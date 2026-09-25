@@ -197,6 +197,13 @@ export default function DocumentPage() {
             </div>
           ) : null}
 
+          {template.custom === true ? (
+            <div className={styles.draftNote} role="note">
+              <div className={styles.savedTitle}>{t.templates.previewTitle}</div>
+              <p className={styles.savedBody}>{t.templates.previewBody}</p>
+            </div>
+          ) : null}
+
           {isDraft ? (
             <div className={styles.draftNote} role="note">
               <div className={styles.savedTitle}>{t.document.draftTitle}</div>

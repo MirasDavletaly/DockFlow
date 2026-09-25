@@ -153,7 +153,7 @@ export function AppLayout() {
           <NavLink to="/profile" className={cx(styles.user)}>
             <span className={styles.avatar} aria-hidden="true">
               {user.avatar === undefined ? (
-                initials(user.displayName)
+                initials(personName(user.displayName))
               ) : (
                 <img className={styles.avatarImage} src={user.avatar} alt="" />
               )}

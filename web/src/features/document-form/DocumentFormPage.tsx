@@ -238,10 +238,13 @@ export default function DocumentFormPage() {
     });
 
     // «Для кого» заполняется само по выбранному работнику: спрашивать то,
-    // что система уже знает, значит заставлять вводить дважды.
-    if (field.kind === 'employee' && subject.trim() === '') {
-      const employee = employees.find((e) => e.id === next);
-      setSubject(employee?.fullName ?? next);
+    // что система уже знает, значит заставлять вводить дважды. Пока его не
+    // поправили руками, оно идёт следом за полем работника: ФИО, вписанное
+    // по буквам, раньше оставляло в «для кого» только первую букву.
+    if (field.kind === 'employee') {
+      const nameOf = (value: string) => employees.find((e) => e.id === value)?.fullName ?? value;
+      const before = nameOf(values[field.id] ?? '');
+      if (subject.trim() === '' || subject === before) setSubject(nameOf(next));
     }
   }
 

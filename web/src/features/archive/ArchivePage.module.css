@@ -18,6 +18,18 @@
   gap: var(--space-4);
 }
 
+.toolbarEnd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

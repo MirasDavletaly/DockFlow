@@ -24,6 +24,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { today } from '@/features/document-form/validation';
 import { searchDocuments } from '@/features/documents/search';
 import { t } from '@/i18n';
+import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
 import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
@@ -32,6 +33,7 @@ import { formatShortDate } from '@/utils/format';
 import { matchesQuery } from '@/utils/search';
 
 import styles from './ArchivePage.module.css';
+import { downloadRegistry } from './exportRegistry';
 
 import type { ArchiveFile, DocumentRecord } from '@/api/types';
 import type { ArchiveUploadResult } from '@/store/session';
@@ -184,14 +186,35 @@ export default function ArchivePage() {
                 ))}
               </div>
 
-              <input
-                className={styles.search}
-                type="search"
-                value={query}
-                placeholder={t.archive.search}
-                aria-label={t.archive.search}
-                onChange={(e) => setParam('q', e.target.value)}
-              />
+              <div className={styles.toolbarEnd}>
+                <input
+                  className={styles.search}
+                  type="search"
+                  value={query}
+                  placeholder={t.archive.search}
+                  aria-label={t.archive.search}
+                  onChange={(e) => setParam('q', e.target.value)}
+                />
+                <button
+                  type="button"
+                  className={styles.secondary}
+                  title={t.archive.exportHint}
+                  disabled={rows.length === 0}
+                  onClick={() =>
+                    downloadRegistry(
+                      rows.map((row) =>
+                        row.kind === 'document'
+                          ? { ...row, section: sectionTitle(sectionOfDocument(row.doc)) }
+                          : { ...row, section: sectionTitle(row.file.sectionId) },
+                      ),
+                      company === null ? '' : companyName(company),
+                      today(),
+                    )
+                  }
+                >
+                  {t.archive.export}
+                </button>
+              </div>
             </div>
 
             {rows.length === 0 ? (

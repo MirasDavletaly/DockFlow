@@ -20,7 +20,20 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $root
 
-$dirty = & git status --porcelain -- web deploy .dockerignore docs/deploy.md
+# Успех внешней команды решает код возврата. Тесты и git пишут предупреждения
+# в поток ошибок, и Windows PowerShell 5.1 при 'Stop' принял бы их за сбой.
+function Invoke-Native([scriptblock]$command) {
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    & $command 2>&1 | ForEach-Object { "$_" }
+  }
+  finally {
+    $ErrorActionPreference = $previous
+  }
+}
+
+$dirty = Invoke-Native { git status --porcelain -- web deploy .dockerignore docs/deploy.md }
 if ($LASTEXITCODE -ne 0) { throw 'git status не выполнился' }
 if ($dirty) {
   Write-Output $dirty
@@ -30,7 +43,8 @@ if ($dirty) {
 if (-not $SkipCheck) {
   Push-Location (Join-Path $root 'web')
   try {
-    & npm run check
+    Invoke-Native { npm run check } | Select-String -Pattern 'Test Files|Tests|built in|error|FAIL' |
+      ForEach-Object { $_.Line }
     if ($LASTEXITCODE -ne 0) { throw 'Проверка сайта не прошла: пакет не собран.' }
   }
   finally {
@@ -45,7 +59,7 @@ $outDir = Join-Path $root 'dist-deploy'
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $out = Join-Path $outDir "$name.tar.gz"
 
-& git archive --format=tar.gz --prefix=docflow/ -o $out HEAD web deploy .dockerignore docs/deploy.md
+Invoke-Native { git archive --format=tar.gz --prefix=docflow/ -o $out HEAD web deploy .dockerignore docs/deploy.md }
 if ($LASTEXITCODE -ne 0) { throw 'git archive не выполнился' }
 
 $size = [math]::Round((Get-Item $out).Length / 1KB)

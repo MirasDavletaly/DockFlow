@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
 import { tc } from '@/i18n/content';
+import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
@@ -189,7 +190,7 @@ export default function DocumentListPage() {
                         {doc.subject === '' ? (
                           <span className={styles.muted}>{t.registry.noValue}</span>
                         ) : (
-                          doc.subject
+                          documentSubject(doc)
                         )}
                       </td>
 
@@ -207,7 +208,7 @@ export default function DocumentListPage() {
                         <StatusStamp status={doc.status} size="sm" />
                       </td>
 
-                      <td className={styles.colAuthor}>{doc.authorName}</td>
+                      <td className={styles.colAuthor}>{personName(doc.authorName)}</td>
 
                       <td className={cx(styles.colDate, 'tabular')}>
                         {formatShortDate(doc.createdAt)}

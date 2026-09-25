@@ -8,6 +8,7 @@
  */
 import { canGrantDocument, canReceiveGrant, grantOf } from '@/access/policy';
 import { t } from '@/i18n';
+import { personName, positionName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 
 import styles from './DocumentAccess.module.css';
@@ -40,14 +41,14 @@ export function DocumentAccess({ record }: { record: DocumentRecord }) {
           {candidates.map((target) => (
             <li key={target.id} className={styles.row}>
               <span className={styles.person}>
-                {target.displayName}
+                {personName(target.displayName)}
                 {target.position === undefined || target.position === '' ? null : (
-                  <span className={styles.position}>{target.position}</span>
+                  <span className={styles.position}>{positionName(target.position)}</span>
                 )}
               </span>
               <select
                 className={styles.level}
-                aria-label={`${t.document.accessTitle}: ${target.displayName}`}
+                aria-label={`${t.document.accessTitle}: ${personName(target.displayName)}`}
                 value={grantOf(record, target.id)?.level ?? ''}
                 onChange={(e) =>
                   setDocumentGrant(

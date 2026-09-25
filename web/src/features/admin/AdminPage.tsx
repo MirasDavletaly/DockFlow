@@ -36,6 +36,7 @@ import { searchDocuments } from '@/features/documents/search';
 import { lang, t } from '@/i18n';
 import { companyDirector, companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
+import { documentSubject, personName, positionName } from '@/i18n/person';
 import { newId, resetDb } from '@/store/db';
 import { MIN_PASSWORD_LENGTH } from '@/store/password';
 import { useSession } from '@/store/session';
@@ -405,9 +406,9 @@ function UsersTab({ subject, query }: TabProps) {
                   <tr key={user.id}>
                     <td className="tabular">{user.login}</td>
                     <td>
-                      {user.displayName}
+                      {personName(user.displayName)}
                       {user.position === undefined || user.position === '' ? null : (
-                        <div className={styles.muted}>{user.position}</div>
+                        <div className={styles.muted}>{positionName(user.position)}</div>
                       )}
                       {user.blocked === true ? (
                         <span className={styles.badge}>{t.admin.userBlocked}</span>
@@ -1076,8 +1077,8 @@ function DocumentsTab({ subject, query }: TabProps) {
                   </Link>
                 </td>
                 <td className={styles.muted}>{nameOf(doc.companyId)}</td>
-                <td>{doc.subject === '' ? t.registry.noValue : doc.subject}</td>
-                <td className={styles.muted}>{doc.authorName}</td>
+                <td>{doc.subject === '' ? t.registry.noValue : documentSubject(doc)}</td>
+                <td className={styles.muted}>{personName(doc.authorName)}</td>
                 <td>
                   {doc.deletedAt === undefined ? (
                     <StatusStamp status={doc.status} size="sm" />
@@ -1163,7 +1164,7 @@ function AuditTab({ query }: TabProps) {
             {found.map((entry) => (
               <tr key={entry.id}>
                 <td className={cx(styles.muted, 'tabular')}>{formatDateTime(entry.at)}</td>
-                <td>{entry.userName}</td>
+                <td>{personName(entry.userName)}</td>
                 <td className={styles.muted}>{nameOf(entry.companyId)}</td>
                 <td>{eventName(entry.event)}</td>
                 <td className={styles.muted}>{tc(entry.target)}</td>

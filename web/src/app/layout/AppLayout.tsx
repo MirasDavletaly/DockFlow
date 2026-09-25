@@ -12,6 +12,7 @@ import { LanguageSwitch } from '@/components/LanguageSwitch/LanguageSwitch';
 import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
+import { personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 
@@ -158,7 +159,7 @@ export function AppLayout() {
               )}
             </span>
             <span className={styles.userText}>
-              <span className={styles.userName}>{user.displayName}</span>
+              <span className={styles.userName}>{personName(user.displayName)}</span>
               <span className={styles.userLogin}>{t.nav.profile}</span>
             </span>
           </NavLink>

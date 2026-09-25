@@ -24,6 +24,7 @@ import { today } from '@/features/document-form/validation';
 import { searchDocuments } from '@/features/documents/search';
 import { t } from '@/i18n';
 import { tc } from '@/i18n/content';
+import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { cx } from '@/utils/cx';
 import { formatShortDate } from '@/utils/format';
@@ -219,7 +220,7 @@ export default function ArchivePage() {
                               {tc(row.doc.title)}
                             </Link>
                             {row.doc.subject === '' ? null : (
-                              <div className={styles.sub}>{row.doc.subject}</div>
+                              <div className={styles.sub}>{documentSubject(row.doc)}</div>
                             )}
                           </td>
                           <td className="tabular">{formatShortDate(row.doc.createdAt)}</td>
@@ -227,7 +228,7 @@ export default function ArchivePage() {
                           <td>
                             <span className={styles.source}>{t.archive.sourceCreated}</span>
                           </td>
-                          <td className={styles.sub}>{row.doc.authorName}</td>
+                          <td className={styles.sub}>{personName(row.doc.authorName)}</td>
                           <td>
                             <div className={styles.actions}>
                               <Link className={styles.action} to={`/documents/${row.doc.id}`}>
@@ -254,7 +255,7 @@ export default function ArchivePage() {
                               {t.archive.sourceUploaded}
                             </span>
                           </td>
-                          <td className={styles.sub}>{row.file.uploadedByName}</td>
+                          <td className={styles.sub}>{personName(row.file.uploadedByName)}</td>
                           <td>
                             <div className={styles.actions}>
                               <button

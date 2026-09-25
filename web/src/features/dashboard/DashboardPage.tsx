@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
 import { tc } from '@/i18n/content';
+import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { formatShortDate, partOfDay } from '@/utils/format';
 
@@ -53,7 +54,7 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader eyebrow={greeting} title={user?.displayName ?? t.dashboard.title} />
+      <PageHeader eyebrow={greeting} title={user === null ? t.dashboard.title : personName(user.displayName)} />
 
       <div className={styles.body}>
         <section className={styles.counters} aria-label={t.dashboard.title}>
@@ -83,7 +84,7 @@ export default function DashboardPage() {
                 <li key={doc.id}>
                   <Link className={styles.recentItem} to={`/documents/${doc.id}`}>
                     <span className={styles.recentTitle}>{tc(doc.title)}</span>
-                    <span className={styles.recentSubject}>{doc.subject}</span>
+                    <span className={styles.recentSubject}>{documentSubject(doc)}</span>
                     <StatusStamp status={doc.status} size="sm" />
                     <span className={`${styles.recentDate} tabular`}>
                       {formatShortDate(doc.updatedAt)}

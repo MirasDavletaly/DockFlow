@@ -22,6 +22,7 @@ import { StatusStamp } from '@/components/StatusStamp/StatusStamp';
 import { t } from '@/i18n';
 import { companyName } from '@/i18n/company';
 import { tc } from '@/i18n/content';
+import { documentSubject, personName } from '@/i18n/person';
 import { useSession } from '@/store/session';
 import { formatDateTime } from '@/utils/format';
 
@@ -153,7 +154,7 @@ export default function DocumentPage() {
                 {formatDateTime(record.deletedAt)}
                 {record.deletedBy === undefined || record.deletedBy === ''
                   ? null
-                  : `, ${record.deletedBy}`}
+                  : `, ${personName(record.deletedBy)}`}
                 . {t.document.deletedBody}
               </p>
             </div>
@@ -191,7 +192,7 @@ export default function DocumentPage() {
             {record.subject === '' ? null : (
               <div className={styles.metaRow}>
                 <dt>{t.document.meta.subject}</dt>
-                <dd>{record.subject}</dd>
+                <dd>{documentSubject(record)}</dd>
               </div>
             )}
             {/* Дата и время создания и последнего изменения видны всегда:
@@ -206,7 +207,7 @@ export default function DocumentPage() {
             </div>
             <div className={styles.metaRow}>
               <dt>{t.document.meta.author}</dt>
-              <dd>{record.authorName}</dd>
+              <dd>{personName(record.authorName)}</dd>
             </div>
             <div className={styles.metaRow}>
               <dt>{t.document.meta.company}</dt>

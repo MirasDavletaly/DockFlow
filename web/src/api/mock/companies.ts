@@ -1,13 +1,15 @@
 /**
  * Компании группы.
  *
- * Все семь заведены по настоящим реквизитам (ответ на Q16,
+ * Все шесть заведены по настоящим реквизитам (ответ на Q16,
  * `docs/questions.md`). У каждой БИН проверен по контрольной цифре, все
  * счета — по mod-97, БИК соответствует банку.
  *
- * Компаний семь, а `CLAUDE.md` и `docs/architecture.md` говорят о группе из
+ * Компаний шесть, а `CLAUDE.md` и `docs/architecture.md` говорят о группе из
  * четырёх. Для кода это ничего не меняет — изоляция устроена по `company_id`,
- * а не по их числу, — но расхождение отмечено в Q22.
+ * а не по их числу, — но расхождение отмечено в Q22. ТОО NOVALLIANCE убрана
+ * по просьбе человека 25.09; в браузерах, где она уже заведена, её убирает
+ * `store/db.ts` при чтении базы (`REMOVED_COMPANY_IDS`).
  *
  * Логотипы присланы отдельно и лежат в `src/assets/logos`. Они печатаются
  * в шапке каждого документа – там же, где стоят на ваших бланках. Файл
@@ -24,7 +26,6 @@ import exlumenLogo from '@/assets/logos/exlumen.png';
 import greenSparkLimitedLogo from '@/assets/logos/green-spark-limited.png';
 import greenSparkPowerLogo from '@/assets/logos/green-spark-power-01.png';
 import kntLogo from '@/assets/logos/kazakhstan-new-technologies.png';
-import novallianceLogo from '@/assets/logos/novalliance.png';
 
 import type { Company } from '@/api/types';
 
@@ -182,55 +183,6 @@ export const companies: Company[] = [
     taxOffice: {
       name: 'РГУ «УГД по городу Атырау ДГД по Атырауской области КГД МФ РК»',
       bin: '090440011223',
-    },
-  },
-  {
-    id: 'c-novalliance',
-    name: 'ТОО NOVALLIANCE',
-    nameEn: 'NOVALLIANCE LLP',
-    // Полное наименование прислано в кратком виде «ТОО NOVALLIANCE».
-    // Развёрнуто по общему образцу и ждёт сверки с уставом (Q21).
-    legalName: 'Товарищество с ограниченной ответственностью «NOVALLIANCE»',
-    legalNameKk: 'ЖАУАПКЕРШІЛІГІ ШЕКТЕУЛІ СЕРІКТЕСТІК «NOVALLIANCE»',
-    legalNameEn: '«NOVALLIANCE» LLP',
-    bin: '170840033117',
-    postalCode: '090302',
-    address:
-      'Западно-Казахстанская область, Бурлинский район, город Аксай, 5 микрорайон, дом 20, квартира 113',
-    addressEn:
-      'West Kazakhstan Region, Burlin district, Aksai city, 5th microdistrict, house 20, apartment 113',
-    // На бланке компании стоит другой адрес — это её фактический адрес.
-    actualAddress: 'город Аксай, проспект Абая, 20, офис 1',
-    actualAddressEn: 'Aksai city, Abai Ave., 20, office 1',
-    phone: '+7 771 487 87 87',
-    email: 'office@novalliance.kz',
-    // Прислано только «Султангалиева А.Т.»: полного ФИО нет, а в приказе
-    // и доверенности инициалы вместо имени не годятся — Q21.
-    directorName: 'Султангалиева А.Т.',
-    directorNameShort: 'Султангалиева А.Т.',
-    directorTitle: 'Директор',
-    directorTitleKk: 'Директор',
-    directorTitleEn: 'Director',
-    directorTitleGenitive: 'Директора',
-    directorNameGenitive: 'Султангалиевой А.Т.',
-    // Основание полномочий не прислано; «Устава» — обычное для ТОО. Q21.
-    directorBasis: 'Устава',
-    city: 'Аксай',
-    cityKk: 'Ақсай',
-    cityEn: 'Aksai',
-    // Цвет снят с логотипа на глаз по картинке, точного значения нет:
-    // ждёт исходник логотипа (Q21).
-    accent: '#3f4e9e',
-    monogram: 'NA',
-    logo: novallianceLogo,
-    bank: {
-      name: 'АО «Народный Банк Казахстана»',
-      bik: 'HSBKKZKX',
-      accounts: [{ iban: 'KZ206017181000001125', currency: 'KZT' }],
-    },
-    vat: {
-      series: '27001',
-      number: '1010058',
     },
   },
   {

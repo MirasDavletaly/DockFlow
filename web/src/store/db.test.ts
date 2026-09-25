@@ -115,6 +115,52 @@ describe('чтение старой записи', () => {
   });
 });
 
+describe('компания, убранная из группы («удали компанию Nova», 25.09)', () => {
+  it('в исходном наборе её нет', () => {
+    expect(loadDb().companies.some((c) => c.id === 'c-novalliance')).toBe(false);
+  });
+
+  it('из базы прежней версии уходят компания и её люди, документы – в корзину', () => {
+    const before = loadDb();
+    const [first] = before.companies;
+    if (first === undefined) throw new Error('нет компаний');
+
+    localStorage.setItem(
+      'docflow.local.db',
+      JSON.stringify({
+        ...before,
+        companies: [...before.companies, { ...first, id: 'c-novalliance', name: 'ТОО NOVALLIANCE' }],
+        employees: [
+          ...before.employees,
+          { id: 'c-novalliance:e-1', companyId: 'c-novalliance', fullName: 'Кто-то', fullNameGenitive: 'Кого-то', position: '', unit: '' },
+        ],
+        users: [
+          { id: 'u-1', login: 'dir', displayName: 'Д', role: 'director', companyIds: ['c-novalliance', first.id], sectionIds: [], createdAt: '2026-01-01T00:00:00.000Z', password: {}, failedAttempts: 0 },
+        ],
+        documents: [
+          { id: 'd-1', templateId: 'hr-hire-order', companyId: 'c-novalliance', title: 'Приказ', status: 'saved', createdAt: '2026-01-01T00:00:00.000Z', values: {} },
+          { id: 'd-2', templateId: 'hr-hire-order', companyId: first.id, title: 'Приказ', status: 'saved', createdAt: '2026-01-01T00:00:00.000Z', values: {} },
+        ],
+        archive: [
+          { id: 'f-1', companyId: 'c-novalliance', title: 'Скан', number: null, documentDate: '2026-01-01', sectionId: 'hr', description: '', fileName: 'a.pdf', size: 1, sha256: 'x', uploadedBy: 'u-1', uploadedByName: 'Д', uploadedAt: '2026-01-01T00:00:00.000Z' },
+        ],
+      }),
+    );
+    reloadDb();
+
+    const db = loadDb();
+    expect(db.companies.some((c) => c.id === 'c-novalliance')).toBe(false);
+    expect(db.employees.some((e) => e.companyId === 'c-novalliance')).toBe(false);
+    expect(db.users[0]?.companyIds).toEqual([first.id]);
+
+    // Документы не стираются молча: они в корзине, откуда их возвращают или
+    // удаляют навсегда. Документы других компаний не тронуты.
+    expect(db.documents.find((d) => d.id === 'd-1')?.deletedAt).toBeDefined();
+    expect(db.documents.find((d) => d.id === 'd-2')?.deletedAt).toBeUndefined();
+    expect(db.archive[0]?.deletedAt).toBeDefined();
+  });
+});
+
 describe('журнал действий', () => {
   it('запись переживает перезагрузку страницы', () => {
     updateDb((db) => ({

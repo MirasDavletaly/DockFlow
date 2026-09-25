@@ -33,6 +33,15 @@ import type { PasswordHash } from './password';
 const STORAGE_KEY = 'docflow.local.db';
 const VERSION = 2;
 
+/**
+ * Компании, убранные из группы после того, как попали в браузеры.
+ *
+ * Исходный набор читается из хранилища, а не из кода, поэтому компания,
+ * вычеркнутая из `companies.ts`, осталась бы у всех, кто уже работал в
+ * системе. ТОО NOVALLIANCE убрана по просьбе человека 25.09.
+ */
+const REMOVED_COMPANY_IDS = ['c-novalliance'];
+
 /** Учётная запись вместе с хешем пароля. Наружу отдаётся без него. */
 export interface StoredUser extends User {
   password: PasswordHash;
@@ -129,7 +138,7 @@ function migrate(raw: Partial<Database>): Database {
     authorName: typeof doc.authorName === 'string' ? doc.authorName : '',
   }));
 
-  return {
+  const migrated: Database = {
     version: VERSION,
     // Компании и справочник людей правятся в админ-панели, поэтому берутся
     // из хранилища. Если их там нет — подставляется исходный набор.
@@ -143,6 +152,38 @@ function migrate(raw: Partial<Database>): Database {
     archive: raw.archive ?? [],
     audit: raw.audit ?? [],
     settings: { adminIpAllowList: migrateAllowList(raw.settings?.adminIpAllowList) },
+  };
+
+  return REMOVED_COMPANY_IDS.reduce(
+    (db, id) => (db.companies.some((c) => c.id === id) ? dropCompany(db, id, '') : db),
+    migrated,
+  );
+}
+
+/**
+ * Убирает компанию из базы.
+ *
+ * Уходят реквизиты, персонал и доступ людей к этой компании. Документы и
+ * файлы архива не стираются молча: они ложатся в корзину админ-панели,
+ * откуда их возвращают или удаляют навсегда – это решает человек, а не
+ * побочный эффект удаления компании.
+ */
+export function dropCompany(db: Database, id: string, by: string): Database {
+  const now = new Date().toISOString();
+  const trash = <T extends { companyId: string; deletedAt?: string }>(item: T): T =>
+    item.companyId !== id || item.deletedAt !== undefined
+      ? item
+      : { ...item, deletedAt: now, deletedBy: by };
+
+  return {
+    ...db,
+    companies: db.companies.filter((c) => c.id !== id),
+    employees: db.employees.filter((e) => e.companyId !== id),
+    users: db.users.map((u) =>
+      u.companyIds.includes(id) ? { ...u, companyIds: u.companyIds.filter((c) => c !== id) } : u,
+    ),
+    documents: db.documents.map(trash),
+    archive: db.archive.map(trash),
   };
 }
 

@@ -22,12 +22,11 @@ describe('логотипы компаний', () => {
     expect(new Set(logos).size).toBe(companies.length);
   });
 
-  it('семь компаний идут в том же порядке, в каком присланы логотипы', () => {
+  it('компании идут в том же порядке, в каком присланы логотипы', () => {
     expect(companies.map((c) => c.id)).toEqual([
       'c-exlumen',
       'c-knt',
       'c-algoritmi',
-      'c-novalliance',
       'c-greenspark-power',
       'c-greensparklimited',
       'c-effegi',
@@ -48,7 +47,7 @@ describe('трёхъязычная шапка', () => {
     'directorTitleEn',
   ] as const;
 
-  it('заполнена у всех семи компаний', () => {
+  it('заполнена у всех компаний', () => {
     for (const company of companies) {
       for (const key of REQUIRED) {
         expect(company[key], `${company.name}: ${key}`).toBeTruthy();

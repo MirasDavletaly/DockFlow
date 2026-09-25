@@ -39,6 +39,7 @@ import {
 } from '@/access/policy';
 import {
   appendAudit,
+  dropCompany,
   employeesOf,
   findCompanyIn,
   findEmployeeIn,
@@ -1009,15 +1010,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (target === undefined || !can(subject, 'company.create')) return cur;
 
         return appendAudit(
-          {
-            ...cur,
-            companies: cur.companies.filter((c) => c.id !== id),
-            employees: cur.employees.filter((e) => e.companyId !== id),
-            users: cur.users.map((u) => ({
-              ...u,
-              companyIds: u.companyIds.filter((c) => c !== id),
-            })),
-          },
+          dropCompany(cur, id, user?.displayName ?? ''),
           {
             userId: user?.id ?? '',
             userName: user?.displayName ?? '',

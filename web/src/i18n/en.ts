@@ -397,7 +397,7 @@ export const en: Dictionary = {
     companiesBody: 'Companies of the group. Their details go into the documents.',
     companyAdd: 'Add a company',
     companyRemoveConfirm:
-      'Delete the company together with its personnel? Documents stay, but the company disappears from the lists.',
+      'Delete the company together with its personnel? Its documents and archive files go to the bin, where they can be restored or deleted for good.',
 
     usersBody:
       'Employee accounts by role: who signs in and which documents they see. The password is set here and known only to the person it is issued to.',
